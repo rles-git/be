@@ -14,7 +14,7 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false, loading: 
 type Station = {
   lat: number; lng: number; id: number; name: string; shortName: string; address: string; plugs: number;
   available: number; power: number; price: number; kind: "DC fast" | "AC";
-  x: number; y: number; distance: string; minutes: number;
+  distance: string; minutes: number;
 };
 
 const stations: Station[] = [
@@ -118,31 +118,21 @@ function MapArtwork({ routeMode = false }: { routeMode?: boolean }) {
       <path d="M98 420 L220 300 L275 350 L210 415 L245 447" fill="none" stroke="#dce2dc" strokeWidth="26" />
       {routeMode && <path d="M98 420 L170 350 L220 390 L303 305" fill="none" stroke="#8fa795" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />}
       <g fill="#7e827d" fontSize="9" fontFamily="Arial, sans-serif" letterSpacing=".6">
-        <text x="37" y="235">FINANCIAL DISTRICT</text>
+        <text x="37" y="235">WEST BAY</text>
         <text x="36" y="555">SOMA</text>
-        <text x="116" y="365" transform="rotate(-43 116 365)">MARKET ST</text>
-        <text x="242" y="345" transform="rotate(-48 242 345)">MISSION ST</text>
-        <text x="298" y="390" transform="rotate(70 298 390)">EMBARCADERO</text>
+        <text x="116" y="365" transform="rotate(-43 116 365)">SOUQ WAQIF</text>
+        <text x="242" y="345" transform="rotate(-48 242 345)">MSHEIREB</text>
+        <text x="298" y="390" transform="rotate(70 298 390)">CORNICHE</text>
         <text x="305" y="620">DOHA, QATAR</text>
       </g>
       <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
       <circle cx="98" cy="420" r="9" fill="#91a795" stroke="#fff" strokeWidth="4" />
-      <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif"><text x="52" y="449">Market &amp; 2nd</text><text x="20" y="600">500 ft</text></g>
+      <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif"><text x="52" y="449">Souq Waqif</text><text x="20" y="600">Doha</text></g>
       <path d="M20 610 H62" stroke="#8f938d" strokeWidth="2" />
     </svg>
   );
 }
 
-function StationMarker({ station, selected, onClick }: { station: Station; selected: boolean; onClick: () => void }) {
-  return (
-    <button className={`station-marker ${selected ? "selected" : ""} ${station.available === 0 ? "offline" : ""}`}
-      style={{ left: `${station.x}%`, top: `${station.y}%` }} onClick={onClick} aria-label={`Select ${station.name}`}>
-      <Zap size={18} strokeWidth={1.5} />
-      <span>{station.available}</span>
-      {selected && <small>SELECTED</small>}
-    </button>
-  );
-}
 
 export default function Home() {
   const [selectedId, setSelectedId] = useState(1);
@@ -193,7 +183,7 @@ export default function Home() {
         <h1>Find your charge.<br /><em>Keep moving.</em></h1>
         <p>A clickable prototype of your Be-Electric mobile experience. Explore charging stations, preview routes, and try the interface right here.</p>
         <div className="intro-points">
-          <div><span><MapPin size={17}/></span><div><b>Explore nearby</b><small>Search stations around San Francisco.</small></div></div>
+          <div><span><MapPin size={17}/></span><div><b>Explore nearby</b><small>Search stations around Doha, Qatar.</small></div></div>
           <div><span><Route size={17}/></span><div><b>Preview your route</b><small>See a route summary before navigating.</small></div></div>
           <div><span><BatteryCharging size={17}/></span><div><b>Check availability</b><small>Compare plugs, power, and prices.</small></div></div>
         </div>
@@ -212,7 +202,7 @@ export default function Home() {
                   {panel === "route" ? (
                     <><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false)}} aria-label="Close route"><X size={19}/></button></>
                   ) : (
-                    <><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> SAN FRANCISCO</div></>
+                    <><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></>
                   )}
                 </header>
 
@@ -223,12 +213,12 @@ export default function Home() {
                   <button className={`filter-chip ${availableOnly ? "active" : ""}`} onClick={() => setAvailableOnly(!availableOnly)}>2+ Plugs Available</button>
                 </div>}
 
-                {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Market St &amp; 2nd St</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
+                {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Doha, Qatar</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
                 {panel === "route" && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
                 <div className="map-tools">
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
-                  <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Market Street"); }} aria-label="Locate me"><Crosshair size={19}/></button>
+                  <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Doha, Qatar"); }} aria-label="Locate me"><Crosshair size={19}/></button>
                   {layersOpen && <div className="layers-popover"><b>Map layers</b><button onClick={() => {setLayersOpen(false);notify("Standard map selected")}}>Standard <Check size={14}/></button><button onClick={() => {setLayersOpen(false);notify("Charging overlay enabled")}}>Charging overlay</button></div>}
                 </div>
 
@@ -268,7 +258,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="other-tab-screen">
-                <header className="simple-tab-header"><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> SAN FRANCISCO</div></header>
+                <header className="simple-tab-header"><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></header>
                 {activeTab === "Saved" && <><h2>Saved stations</h2><p className="tab-subtitle">Your favorite charging spots, all in one place.</p>{savedStations.length ? savedStations.map(s => <button className="saved-card" key={s.id} onClick={() => {setSelectedId(s.id);setActiveTab("Explore");setPanel("station")}}><span className="saved-zap"><Zap size={19}/></span><span><b>{s.name}</b><small>{s.available} of {s.plugs} plugs available · {s.distance}</small></span><ChevronRight size={18}/></button>) : <div className="empty-state"><span><Bookmark size={26}/></span><b>No saved stations yet</b><p>Open a station and tap the bookmark to keep it here.</p><button onClick={() => setActiveTab("Explore")}>Explore stations</button></div>}</>}
                 {activeTab === "Activity" && <><h2>Your activity</h2><p className="tab-subtitle">A quick look at your charging journey.</p><div className="activity-card"><span><History size={20}/></span><div><b>Recent routes</b><small>No recent routes in this demo.</small></div></div><div className="activity-card"><span><PlugZap size={20}/></span><div><b>Charging sessions</b><small>Your sessions will appear here.</small></div></div><div className="stat-cards"><div><b>{saved.length}</b><small>Saved stations</small></div><div><b>{stations.length}</b><small>Nearby stations</small></div></div></>}
                 {activeTab === "Profile" && <><h2>Your profile</h2><p className="tab-subtitle">Manage your Be-Electric preferences.</p><div className="profile-card"><div className="avatar"><UserRound size={25}/></div><div><b>Guest driver</b><small>Demo account</small></div><span className="demo-tag">DEMO</span></div>{["Account details","Notifications","Charging preferences","Privacy & security"].map((x,i)=><button key={x} className="settings-row" onClick={() => notify(`${x} is a demo setting`)}><span>{[<UserRound size={18}/>,<Activity size={18}/>,<Settings2 size={18}/>,<CircleDot size={18}/>][i]}</span>{x}<ChevronRight size={18}/></button>)}</>}
