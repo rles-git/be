@@ -379,11 +379,26 @@ button { cursor: pointer; }
   position: absolute;
   z-index: 4;
   top: 76px;
-  left: 16px;
-  right: -15px;
+  left: 0;               /* Stretch edge-to-edge inside the phone screen */
+  right: 0;
   display: flex;
   gap: 7px;
-  overflow: visible;
+  
+  /* --- Horizontal Scroll Settings --- */
+  overflow-x: auto;      /* Enables horizontal scroll */
+  overflow-y: hidden;    /* Prevents vertical shifting */
+  white-space: nowrap;   /* Keeps all chips in one row */
+  padding: 0 16px;       /* Keeps 16px inset on start & end when scrolling */
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
+
+  /* --- Optional: Hide scrollbars cleanly across browsers --- */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge */
+}
+
+/* Hide scrollbar in Chrome, Safari, and Opera */
+.filter-row::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-chip {
@@ -400,6 +415,9 @@ button { cursor: pointer; }
   font-weight: 600;
   color: #242824;
   box-shadow: 0 1px 3px #00000004;
+
+  /* --- CRITICAL: Prevent chips from shrinking or compressing --- */
+  flex-shrink: 0; 
 }
 
 .filter-chip.active {
