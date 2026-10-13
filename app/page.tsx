@@ -237,7 +237,6 @@ export default function Home() {
                 {panel !== "route" && <div className="filter-row">
                   <button className={`filter-chip ${acOnly ? "active" : ""}`} onClick={() => {setAcOnly(!acOnly); if (!acOnly) setFastOnly(false);}}>AC Charging</button>
                   <button className={`filter-chip ${fastOnly ? "active" : ""}`} onClick={() => {setFastOnly(!fastOnly); if (!fastOnly) setAcOnly(false);}}>{fastOnly && <Check size={13}/>} DC Fast Charger</button>
-                  <button className={`filter-chip ${fastOnly ? "active" : ""}`} onClick={() => {setFastOnly(!fastOnly); if (!fastOnly) setAcOnly(false);}}>{fastOnly && <Check size={13}/>} DC Fast Charger</button>
                   <button className={`filter-chip ${availableOnly ? "active" : ""}`} onClick={() => setAvailableOnly(!availableOnly)}>2+ Plugs Available</button>
                 </div>}
 
