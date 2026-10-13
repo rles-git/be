@@ -12,7 +12,7 @@ type Station = {
 };
 
 type Props = { stations: Station[]; selectedId: number; routeMode: boolean; onSelect: (id: number) => void };
-const start: [number, number] = [37.7895, -122.4008];
+const start: [number, number] = [25.2867, 51.5333];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
