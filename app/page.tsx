@@ -265,7 +265,26 @@ export default function Home() {
                   </div>
                 ) : panel === "chooser" ? (
                   <div className="sheet-overlay">
-                    <div className="bottom-sheet chooser-sheet"><div className="sheet-grabber"/><div className="sheet-title-row"><div><h2>Choose your route</h2><p>{selected.shortName} · {selected.distance} · {selected.minutes} min</p></div><button className="sheet-close" onClick={() => setPanel("station")}><X size={17}/></button></div>
+                    <div
+                      className={`bottom-sheet chooser-sheet ${
+                        sheetDragging ? "sheet-dragging" : ""
+                      }`}
+                      style={{
+                        transform: `translateY(${sheetDragY}px)`,
+                        transition: sheetDragging
+                          ? "none"
+                          : "transform 180ms ease-out",
+                      }}
+                    ><div
+                       className="sheet-grabber sheet-drag-handle"
+                       onPointerDown={handleSheetPointerDown}
+                       onPointerMove={handleSheetPointerMove}
+                       onPointerUp={handleSheetPointerUp}
+                       onPointerCancel={handleSheetPointerUp}
+                       role="separator"
+                       aria-label="Drag route chooser panel"
+                     />
+                     <div className="sheet-title-row"><div><h2>Choose your route</h2><p>{selected.shortName} · {selected.distance} · {selected.minutes} min</p></div><button className="sheet-close" onClick={() => setPanel("station")}><X size={17}/></button></div>
                       {[
                         {name:"Google Maps", desc:"Traffic-aware directions", icon:<MapPin size={19}/>},
                         {name:"Apple Maps", desc:"Navigate with your iPhone", icon:<Map size={19}/>},
