@@ -123,7 +123,7 @@ function MapArtwork({ routeMode = false }: { routeMode?: boolean }) {
         <text x="116" y="365" transform="rotate(-43 116 365)">MARKET ST</text>
         <text x="242" y="345" transform="rotate(-48 242 345)">MISSION ST</text>
         <text x="298" y="390" transform="rotate(70 298 390)">EMBARCADERO</text>
-        <text x="305" y="620">SAN FRANCISCO</text>
+        <text x="305" y="620">DOHA, QATAR</text>
       </g>
       <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
       <circle cx="98" cy="420" r="9" fill="#91a795" stroke="#fff" strokeWidth="4" />
