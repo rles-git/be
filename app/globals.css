@@ -123,7 +123,7 @@ button,input{font:inherit}button{cursor:pointer}
 
 @media (max-width: 520px) {
   .route-bottom-sheet {
-    bottom: 82px;
+    bottom: 0px;
     max-height: calc(100% - 220px);
     padding-left: 16px;
     padding-right: 16px;
@@ -197,7 +197,7 @@ button,input{font:inherit}button{cursor:pointer}
 
 @media (max-width: 520px) {
   .station-sheet {
-    bottom: 64px;
+    bottom: 0px;
     width: auto;
     max-height: calc(100% - 100px);
     padding: 18px 16px 28px;
@@ -206,7 +206,7 @@ button,input{font:inherit}button{cursor:pointer}
 
   .route-bottom-sheet {
     position: absolute;
-    bottom: 82px;
+    bottom: 0px;
     left: 0;
     right: 0;
     width: 100%;
