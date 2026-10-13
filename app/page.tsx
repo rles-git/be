@@ -150,6 +150,30 @@ export default function Home() {
   const [sheetDragging, setSheetDragging] = useState(false);
   const sheetPointerStart = useRef<number | null>(null);
 
+  // Separate drag state for the "Choose your route" sheet.
+  const [chooserDragY, setChooserDragY] = useState(0);
+  const [chooserDragging, setChooserDragging] = useState(false);
+  const chooserPointerStart = useRef<number | null>(null);
+
+  function handleChooserPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    chooserPointerStart.current = event.clientY;
+    setChooserDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleChooserPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!chooserDragging || chooserPointerStart.current === null) return;
+    const delta = event.clientY - chooserPointerStart.current;
+    setChooserDragY(Math.max(-150, Math.min(180, delta)));
+  }
+
+  function handleChooserPointerUp() {
+    setChooserDragging(false);
+    chooserPointerStart.current = null;
+    // Snap to expanded, original, or lower peek position.
+    setChooserDragY(current => current < -55 ? -72 : current > 65 ? 80 : 0);
+  }
+
   function handleSheetPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     sheetPointerStart.current = event.clientY;
     setSheetDragging(true);
@@ -158,14 +182,14 @@ export default function Home() {
 
   function handleSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!sheetDragging || sheetPointerStart.current === null) return;
-    setSheetDragY(Math.max(-90, Math.min(150, event.clientY - sheetPointerStart.current)));
+    setSheetDragY(Math.max(-120, Math.min(240, event.clientY - sheetPointerStart.current)));
   }
 
   function handleSheetPointerUp() {
     setSheetDragging(false);
     sheetPointerStart.current = null;
     // Snap to a compact or expanded position after dragging.
-    setSheetDragY(current => current < -45 ? -55 : current > 55 ? 90 : 0);
+    setSheetDragY(current => current < -55 ? -72 : current > 65 ? 48 : 0);
   }
 
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
@@ -182,7 +206,6 @@ export default function Home() {
     window.setTimeout(() => setMessage(""), 2400);
   }
   function openRoute() {
-    setSheetDragY(0);
     setPanel("route");
     setRouteMode(true);
   }
@@ -238,15 +261,7 @@ export default function Home() {
                 {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Doha, Qatar</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
                 {panel === "route" && routeMode && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
-                <div
-                  className={`map-tools ${
-                    panel === "station"
-                      ? "map-tools-sheet-open"
-                      : panel === "route"
-                        ? "map-tools-route-open"
-                        : ""
-                  }`}
-                >
+                <div className="map-tools">
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
                   <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Doha, Qatar"); }} aria-label="Locate me"><Crosshair size={19}/></button>
                   {layersOpen && <div className="layers-popover"><b>Map layers</b><button onClick={() => {setLayersOpen(false);notify("Standard map selected")}}>Standard <Check size={14}/></button><button onClick={() => {setLayersOpen(false);notify("Charging overlay enabled")}}>Charging overlay</button></div>}
@@ -269,11 +284,27 @@ export default function Home() {
                     <div className="route-time"><strong>{selected.minutes} min</strong><span>{selected.distance}</span><small><CarFront size={13}/> Drive</small></div>
                     <h3>{selected.name}</h3>
                     <div className="route-availability"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.power} kW · ${selected.price.toFixed(2)}/kWh</small></div>
-                    <button className="primary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Open in Google Maps</button>
+                    <button className="primary-button" onClick={() => {setSheetDragY(0); setChooserDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Open in Google Maps</button>
                   </div>
                 ) : panel === "chooser" ? (
                   <div className="sheet-overlay">
-                    <div className="bottom-sheet chooser-sheet"><div className="sheet-grabber"/><div className="sheet-title-row"><div><h2>Choose your route</h2><p>{selected.shortName} · {selected.distance} · {selected.minutes} min</p></div><button className="sheet-close" onClick={() => setPanel("station")}><X size={17}/></button></div>
+                    <div
+                      className={`bottom-sheet chooser-sheet ${chooserDragging ? "sheet-dragging" : ""}`}
+                      style={{
+                        transform: `translateY(${chooserDragY}px)`,
+                        transition: chooserDragging ? "none" : "transform 180ms ease-out",
+                      }}
+                    >
+                      <div
+                        className="sheet-grabber sheet-drag-handle"
+                        onPointerDown={handleChooserPointerDown}
+                        onPointerMove={handleChooserPointerMove}
+                        onPointerUp={handleChooserPointerUp}
+                        onPointerCancel={handleChooserPointerUp}
+                        role="separator"
+                        aria-label="Drag Choose Your Route panel"
+                      />
+                      <div className="sheet-title-row"><div><h2>Choose your route</h2><p>{selected.shortName} · {selected.distance} · {selected.minutes} min</p></div><button className="sheet-close" onClick={() => {setPanel("station"); setChooserDragY(0);}}><X size={17}/></button></div>
                       {[
                         {name:"Google Maps", desc:"Traffic-aware directions", icon:<MapPin size={19}/>},
                         {name:"Apple Maps", desc:"Navigate with your iPhone", icon:<Map size={19}/>},
@@ -284,18 +315,7 @@ export default function Home() {
                     </div>
                   </div>
                 ) : panel === "station" ? (
-                  <div
-                    className={`station-sheet ${sheetDragging ? "sheet-dragging" : ""}`}
-                    style={{ transform: `translateY(${sheetDragY}px)`, transition: sheetDragging ? "none" : "transform 180ms ease-out" }}
-                  ><div
-                    className="sheet-grabber sheet-drag-handle"
-                    onPointerDown={handleSheetPointerDown}
-                    onPointerMove={handleSheetPointerMove}
-                    onPointerUp={handleSheetPointerUp}
-                    onPointerCancel={handleSheetPointerUp}
-                    role="separator"
-                    aria-label="Drag station details panel"
-                  /><div className="sheet-overline">BE-ELECTRIC NETWORK</div><div className="station-title-row"><h2>{selected.name}</h2><button className={`save-button ${saved.includes(selected.id) ? "saved" : ""}`} onClick={() => setSaved(prev => prev.includes(selected.id) ? prev.filter(id => id !== selected.id) : [...prev, selected.id])} aria-label="Save station">{saved.includes(selected.id) ? <BookmarkCheck size={19}/> : <Bookmark size={19}/>}</button></div>
+                  <div className="station-sheet"><div className="sheet-grabber"/><div className="sheet-overline">BE-ELECTRIC NETWORK</div><div className="station-title-row"><h2>{selected.name}</h2><button className={`save-button ${saved.includes(selected.id) ? "saved" : ""}`} onClick={() => setSaved(prev => prev.includes(selected.id) ? prev.filter(id => id !== selected.id) : [...prev, selected.id])} aria-label="Save station">{saved.includes(selected.id) ? <BookmarkCheck size={19}/> : <Bookmark size={19}/>}</button></div>
                     <p className="station-address">{selected.address}</p><div className="station-summary"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.distance} · {selected.minutes} min drive</small></div>
                     <div className="spec-grid"><div><small>MAX SPEED</small><b>{selected.power} kW</b><span>{selected.kind} · CCS</span></div><div><small>ENERGY PRICE</small><b>${selected.price.toFixed(2)} /kWh</b><span>Open 24/7</span></div></div>
                     <button className="primary-button" onClick={openRoute}><Navigation size={18}/> Get Directions</button>
