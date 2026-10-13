@@ -35,11 +35,17 @@ function MapEvents() {
 
 export default function LeafletMap({ stations, selectedId, routeMode, onSelect }: Props) {
   const selected = stations.find((station) => station.id === selectedId);
-  const route: [number, number][] = selected ? [start, [37.7932, -122.3988], [selected.lat, selected.lng]] : [start];
+  const route: [number, number][] = selected ? [start, [25.2867, 51.5333], [selected.lat, selected.lng]] : [start];
 
   return (
     <div className="leaflet-map-root">
-      <MapContainer center={[37.7898, -122.401]} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
+      <MapContainer
+          center={[25.2867, 51.5333]}
+          zoom={15}
+          zoomControl={false}
+          scrollWheelZoom={true}
+          attributionControl={true}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
