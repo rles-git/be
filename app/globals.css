@@ -237,3 +237,34 @@ button,input{font:inherit}button{cursor:pointer}
     bottom: 128px;
   }
 }
+
+
+/* Default map bottom content */
+.map-screen {
+  --bottom-content-offset: 104px;
+}
+
+.map-bottom-content {
+  bottom: var(--bottom-content-offset);
+}
+
+/* Locate Me and Map Layers controls */
+.map-tools {
+  bottom: calc(var(--bottom-content-offset) + 150px);
+  transition: bottom 0.25s ease;
+}
+
+/* Mobile */
+@media (max-width: 520px) {
+  .map-screen {
+    --bottom-content-offset: 128px;
+  }
+
+  .map-bottom-content {
+    bottom: var(--bottom-content-offset);
+  }
+
+  .map-tools {
+    bottom: calc(var(--bottom-content-offset) + 150px);
+  }
+}
