@@ -174,7 +174,7 @@ button,input{font:inherit}button{cursor:pointer}
 .station-sheet,
 .route-bottom-sheet {
   position: absolute;
-  bottom: 22px;
+  bottom: 24px;
   width: auto;
   max-height: calc(100% - 110px);
   overflow-y: auto;
@@ -195,7 +195,7 @@ button,input{font:inherit}button{cursor:pointer}
 @media (max-width: 520px) {
   
   .station-sheet {
-    bottom: 25px;
+    bottom: 32px;
     width: auto;
     max-height: calc(100% - 100px);
     padding: 18px 16px 28px;
