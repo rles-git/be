@@ -216,10 +216,8 @@ export default function Home() {
       </aside>
 
       <section className="emulator-column">
-        <div className="emulator-caption"><span>LIVE PREVIEW</span><span>390 × 844 · Mobile</span></div>
         <div className="phone-frame">
           <div className="phone-screen">
-            <div className="status-bar"><span>9:41</span><div className="status-icons"><span className="signal"><i/><i/><i/><i/></span><span className="wifi">⌁</span><span className="battery"><i/></span></div></div>
             {activeTab === "Explore" ? (
               <div className="map-screen">
                 <LeafletMap
@@ -235,10 +233,6 @@ export default function Home() {
                       }}
                       onRouteCalculated={(metrics) => setCalculatedRoute(metrics)}
                 />
-                <header className="mobile-header">
-                  {panel === "route" ? (<><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false); setSheetDragY(0);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false);setSheetDragY(0)}} aria-label="Close route"><X size={19}/></button></>) : (<><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></>)}
-                </header>
-
                 {panel !== "route" && <div className="search-wrap"><Search size={17}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search city, landmark, or charger ID" aria-label="Search chargers"/>{search && <button onClick={() => setSearch("")}><X size={15}/></button>}</div>}
                 {panel !== "route" && <div className="filter-row">
                   <button className={`filter-chip ${acOnly ? "active" : ""}`} onClick={() => {setAcOnly(!acOnly); if (!acOnly) setFastOnly(false);}}>AC Charging</button>
