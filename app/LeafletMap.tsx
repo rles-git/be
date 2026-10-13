@@ -36,7 +36,7 @@ type Props = {
   onSelect: (id: number) => void;
 };
 
-const start: [number, number] = [25.2867, 51.5333]; // Doha, Qatar
+const start: [number, number] = [25.25468856846239, 51.47922635804704]; // Doha, Qatar
 
 type OsrmRoute = {
   geometry: {
