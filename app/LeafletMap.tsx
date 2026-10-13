@@ -104,7 +104,7 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect, 
         />
         <MapController routeCoords={roadCoordinates} />
         <CircleMarker center={start} radius={8} pathOptions={{ color: "#ffffff", weight: 4, fillColor: "#91a795", fillOpacity: 1 }}>
-          <Popup><strong>Your starting point</strong></Popup>
+          <Popup><strong>Your Location</strong></Popup>
         </CircleMarker>
         {stations.map((station) => (
           <Marker key={station.id} position={[station.lat, station.lng]} icon={stationIcon(station, selectedId === station.id)} eventHandlers={{ click: () => onSelect(station.id) }}>
