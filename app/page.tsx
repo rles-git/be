@@ -149,6 +149,7 @@ export default function Home() {
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const sheetPointerStart = useRef<number | null>(null);
+  const [calculatedRoute, setCalculatedRoute] = useState<{ distance: string; minutes: number } | null>(null);
 
   function handleSheetPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     sheetPointerStart.current = event.clientY;
@@ -169,6 +170,8 @@ export default function Home() {
   }
 
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
+  const activeMinutes = calculatedRoute?.minutes ?? selected.minutes;
+  const activeDistance = calculatedRoute?.distance ?? selected.distance;
   const filtered = useMemo(() => stations.filter(s =>
     (!fastOnly || s.kind === "DC fast") &&
     (!acOnly || s.kind === "AC") &&
@@ -219,13 +222,21 @@ export default function Home() {
             <div className="status-bar"><span>9:41</span><div className="status-icons"><span className="signal"><i/><i/><i/><i/></span><span className="wifi">⌁</span><span className="battery"><i/></span></div></div>
             {activeTab === "Explore" ? (
               <div className="map-screen">
-                <LeafletMap stations={filtered} selectedId={selectedId} routeMode={routeMode} onSelect={(id: number) => { setSelectedId(id); setPanel("station"); setRouteMode(false); setSheetDragY(0); }} />
+                <LeafletMap
+                      stations={filtered}
+                      selectedId={selectedId}
+                      routeMode={routeMode}
+                      onSelect={(id: number) => {
+                        setSelectedId(id);
+                        setPanel("station");
+                        setRouteMode(false);
+                        setSheetDragY(0);
+                        setCalculatedRoute(null);
+                      }}
+                      onRouteCalculated={(metrics) => setCalculatedRoute(metrics)}
+                />
                 <header className="mobile-header">
-                  {panel === "route" ? (
-                    <><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false); setSheetDragY(0);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false);setSheetDragY(0)}} aria-label="Close route"><X size={19}/></button></>
-                  ) : (
-                    <><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></>
-                  )}
+                  {panel === "route" ? (<><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false); setSheetDragY(0);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false);setSheetDragY(0)}} aria-label="Close route"><X size={19}/></button></>) : (<><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></>)}
                 </header>
 
                 {panel !== "route" && <div className="search-wrap"><Search size={17}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search city, landmark, or charger ID" aria-label="Search chargers"/>{search && <button onClick={() => setSearch("")}><X size={15}/></button>}</div>}
@@ -237,7 +248,7 @@ export default function Home() {
 
                 {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Doha, Qatar</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
-                {panel === "route" && routeMode && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
+                {panel === "route" && routeMode && (<><div className="route-pill">{activeMinutes} min</div><div className="route-destination-label">{selected.shortName}</div></>)}
                 <div className="map-tools">
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
                   <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Doha, Qatar"); }} aria-label="Locate me"><Crosshair size={19}/></button>
@@ -258,7 +269,11 @@ export default function Home() {
                       role="separator"
                       aria-label="Drag route details panel"
                     />
-                    <div className="route-time"><strong>{selected.minutes} min</strong><span>{selected.distance}</span><small><CarFront size={13}/> Drive</small></div>
+                    <div className="route-time">
+      <strong>{activeMinutes} min</strong>
+      <span>{activeDistance}</span>
+      <small><CarFront size={13}/> Drive</small>
+    </div>
                     <h3>{selected.name}</h3>
                     <div className="route-availability"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.power} kW · ${selected.price.toFixed(2)}/kWh</small></div>
                     <button className="primary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Choose other service</button>
@@ -284,7 +299,13 @@ export default function Home() {
                        role="separator"
                        aria-label="Drag route chooser panel"
                      />
-                     <div className="sheet-title-row"><div><h2>Choose your route</h2><p>{selected.shortName} · {selected.distance} · {selected.minutes} min</p></div><button className="sheet-close" onClick={() => setPanel("station")}><X size={17}/></button></div>
+                     <div className="sheet-title-row">
+        <div>
+          <h2>Choose your route</h2>
+          <p>{selected.shortName} · {activeDistance} · {activeMinutes} min</p>
+        </div>
+        <button className="sheet-close" onClick={() => setPanel("station")}><X size={17}/></button>
+      </div>
                       {[
                         {name:"Google Maps", desc:"Traffic-aware directions", icon:<MapPin size={19}/>},
                         {name:"Apple Maps", desc:"Navigate with your iPhone", icon:<Map size={19}/>},
