@@ -1662,7 +1662,7 @@ button { cursor: pointer; }
   .station-sheet .primary-button { min-height: 48px; }
 
   .route-top-card {
-    top: 99px;
+    top: 24px;
     left: 10px;
     right: 10px;
     width: auto;
