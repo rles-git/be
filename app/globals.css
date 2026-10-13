@@ -174,38 +174,61 @@ button,input{font:inherit}button{cursor:pointer}
 .station-sheet,
 .route-bottom-sheet {
   position: absolute;
+  left: 0;
+  right: 0;
   bottom: 56px;
-  width: auto;
-  max-height: calc(100% - 110px);
-  overflow-y: auto;
+
+  width: 100%;
+  height: calc(100% - 56px);
+  max-height: none;
+
   box-sizing: border-box;
   padding: 20px 18px 28px;
-  border-radius: 24px;
-  z-index: 10;
+
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-}
-.station-sheet .sheet-drag-handle,
-.route-bottom-sheet .sheet-drag-handle { touch-action: none; }
 
-.leaflet-map-root.is-routing .leaflet-popup {
-  display: none !important;
+  z-index: 10;
+}
+
+.station-sheet .sheet-drag-handle,
+.route-bottom-sheet .sheet-drag-handle {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.sheet-dragging {
+  will-change: transform;
 }
 
 @media (max-width: 520px) {
-  
-  .station-sheet {
-    bottom: 64px;
-    width: auto;
-    max-height: calc(100% - 100px);
-    padding: 18px 16px 28px;
-  }
+  .station-sheet,
   .route-bottom-sheet {
-    bottom: 82px;
-    max-height: min(48%, 360px);
-    padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
-    min-height: 0;
+    left: 0;
+    right: 0;
+    bottom: 64px;
+
+    width: 100%;
+    height: calc(100% - 64px);
+    max-height: none;
+
+    padding: 18px 16px
+      calc(28px + env(safe-area-inset-bottom));
+
+    border-radius: 24px 24px 0 0;
+    background: #fff;
   }
+
+  .route-bottom-sheet {
+    padding-top: 8px;
+  }
+}
+
   .route-bottom-sheet .primary-button,
   .station-sheet .primary-button {
     min-height: 48px;
