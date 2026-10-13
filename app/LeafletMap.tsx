@@ -12,7 +12,7 @@ type Station = {
 };
 
 type Props = { stations: Station[]; selectedId: number; routeMode: boolean; onSelect: (id: number) => void };
-const start: [number, number] = [37.7895, -122.4008];
+const start: [number, number] = [25.25468856846239, 51.47922635804704];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
@@ -35,11 +35,11 @@ function MapEvents() {
 
 export default function LeafletMap({ stations, selectedId, routeMode, onSelect }: Props) {
   const selected = stations.find((station) => station.id === selectedId);
-  const route: [number, number][] = selected ? [start, [37.7932, -122.3988], [selected.lat, selected.lng]] : [start];
+  const route: [number, number][] = selected ? [start, [25.25468856846239, 51.47922635804704], [selected.lat, selected.lng]] : [start];
 
   return (
     <div className="leaflet-map-root">
-      <MapContainer center={[37.7898, -122.401]} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
+      <MapContainer center={[25.25468856846239, 51.47922635804704]} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
