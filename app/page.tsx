@@ -1,6 +1,7 @@
  "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Activity, ArrowLeft, ArrowRight, Bookmark, Check, ChevronRight, CircleDot,
   Clock3, Crosshair, Layers, List, LocateFixed, Map, MapPin, Menu, Navigation,
@@ -8,18 +9,20 @@ import {
   BatteryCharging, Compass, Settings2, History, BookmarkCheck
 } from "lucide-react";
 
+const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false, loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div> });
+
 type Station = {
-  id: number; name: string; shortName: string; address: string; plugs: number;
+  lat: number; lng: number; id: number; name: string; shortName: string; address: string; plugs: number;
   available: number; power: number; price: number; kind: "DC fast" | "AC";
   x: number; y: number; distance: string; minutes: number;
 };
 
 const stations: Station[] = [
-  { id: 1, name: "Embarcadero Charging Hub", shortName: "Embarcadero Hub", address: "Pier 14 · San Francisco, CA", plugs: 6, available: 4, power: 150, price: 0.42, kind: "DC fast", x: 77, y: 43, distance: "1.8 mi", minutes: 7 },
-  { id: 2, name: "Market Street ChargePoint", shortName: "Market Street", address: "Market St & 2nd St", plugs: 4, available: 2, power: 100, price: 0.39, kind: "DC fast", x: 20, y: 42, distance: "0.4 mi", minutes: 3 },
-  { id: 3, name: "Financial District Station", shortName: "Financial District", address: "Pine St · San Francisco, CA", plugs: 8, available: 0, power: 50, price: 0.35, kind: "AC", x: 47, y: 39, distance: "0.8 mi", minutes: 5 },
-  { id: 4, name: "SOMA Power Point", shortName: "SOMA Power", address: "Folsom St · San Francisco, CA", plugs: 5, available: 3, power: 120, price: 0.40, kind: "DC fast", x: 58, y: 76, distance: "1.2 mi", minutes: 6 },
-  { id: 5, name: "Mission Street EV", shortName: "Mission Street", address: "Mission St · San Francisco, CA", plugs: 4, available: 4, power: 75, price: 0.38, kind: "AC", x: 16, y: 70, distance: "1.1 mi", minutes: 6 },
+  { id: 1, name: "Embarcadero Charging Hub", shortName: "Embarcadero Hub", address: "Pier 14 · San Francisco, CA", plugs: 6, available: 4, power: 150, price: 0.42, kind: "DC fast", lat: 37.7994, lng: -122.3971, x: 77, y: 43, distance: "1.8 mi", minutes: 7 },
+  { id: 2, name: "Market Street ChargePoint", shortName: "Market Street", address: "Market St & 2nd St", plugs: 4, available: 2, power: 100, price: 0.39, kind: "DC fast", lat: 37.7895, lng: -122.4008, x: 20, y: 42, distance: "0.4 mi", minutes: 3 },
+  { id: 3, name: "Financial District Station", shortName: "Financial District", address: "Pine St · San Francisco, CA", plugs: 8, available: 0, power: 50, price: 0.35, kind: "AC", lat: 37.7926, lng: -122.4005, x: 47, y: 39, distance: "0.8 mi", minutes: 5 },
+  { id: 4, name: "SOMA Power Point", shortName: "SOMA Power", address: "Folsom St · San Francisco, CA", plugs: 5, available: 3, power: 120, price: 0.40, kind: "DC fast", lat: 37.7818, lng: -122.3997, x: 58, y: 76, distance: "1.2 mi", minutes: 6 },
+  { id: 5, name: "Mission Street EV", shortName: "Mission Street", address: "Mission St · San Francisco, CA", plugs: 4, available: 4, power: 75, price: 0.38, kind: "AC", lat: 37.7754, lng: -122.4142, x: 16, y: 70, distance: "1.1 mi", minutes: 6 },
 ];
 
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
@@ -88,7 +91,7 @@ export default function Home() {
   const filtered = useMemo(() => stations.filter(s =>
     (!fastOnly || s.kind === "DC fast") &&
     (!acOnly || s.kind === "AC") &&
-    (!availableOnly || s.available > 0) &&
+    (!availableOnly || s.available >= 2) &&
     `${s.name} ${s.address} ${s.id}`.toLowerCase().includes(search.toLowerCase())
   ), [search, fastOnly, acOnly, availableOnly]);
   const savedStations = stations.filter(s => saved.includes(s.id));
@@ -134,7 +137,7 @@ export default function Home() {
             <div className="status-bar"><span>9:41</span><div className="status-icons"><span className="signal"><i/><i/><i/><i/></span><span className="wifi">⌁</span><span className="battery"><i/></span></div></div>
             {activeTab === "Explore" ? (
               <div className="map-screen">
-                <MapArtwork routeMode={routeMode} />
+                <LeafletMap stations={filtered} selectedId={selectedId} routeMode={routeMode} onSelect={(id: number) => { setSelectedId(id); setPanel("station"); }} />
                 <header className="mobile-header">
                   {panel === "route" ? (
                     <><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false)}} aria-label="Close route"><X size={19}/></button></>
@@ -152,11 +155,10 @@ export default function Home() {
 
                 {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Market St &amp; 2nd St</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
-                {filtered.map(s => <StationMarker key={s.id} station={s} selected={selectedId === s.id} onClick={() => {setSelectedId(s.id); setPanel("station");}} />)}
                 {panel === "route" && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
                 <div className="map-tools">
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
-                  <button className="tool-button" onClick={() => notify("Map centered on your location")} aria-label="Locate me"><Crosshair size={19}/></button>
+                  <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Market Street"); }} aria-label="Locate me"><Crosshair size={19}/></button>
                   {layersOpen && <div className="layers-popover"><b>Map layers</b><button onClick={() => {setLayersOpen(false);notify("Standard map selected")}}>Standard <Check size={14}/></button><button onClick={() => {setLayersOpen(false);notify("Charging overlay enabled")}}>Charging overlay</button></div>}
                 </div>
 
