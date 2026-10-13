@@ -229,20 +229,22 @@ button,input{font:inherit}button{cursor:pointer}
   }
 }
 
+@media (max-width: 520px) {
   .route-bottom-sheet .primary-button,
   .station-sheet .primary-button {
     min-height: 48px;
   }
+
   .route-top-card {
     max-height: 90px;
     overflow: hidden;
   }
+
   .route-pill,
   .route-destination-label {
     display: none !important;
   }
 }
-
 
 /* Higher peek position for the collapsed bottom content on the map. */
 .map-bottom-content {
