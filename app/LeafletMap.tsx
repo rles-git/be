@@ -12,7 +12,7 @@ type Station = {
 };
 
 type Props = { stations: Station[]; selectedId: number; routeMode: boolean; onSelect: (id: number) => void };
-const start: [number, number] = [25.254727381961203, 51.47907615434592];
+const start: [number, number] = [37.7895, -122.4008];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
@@ -35,11 +35,11 @@ function MapEvents() {
 
 export default function LeafletMap({ stations, selectedId, routeMode, onSelect }: Props) {
   const selected = stations.find((station) => station.id === selectedId);
-  const route: [number, number][] = selected ? [start, [25.254727381961203, 51.47907615434592], [selected.lat, selected.lng]] : [start];
+  const route: [number, number][] = selected ? [start, [37.7932, -122.3988], [selected.lat, selected.lng]] : [start];
 
   return (
     <div className={`leaflet-map-root ${routeMode ? "is-routing" : ""}`}>
-      <MapContainer center={[25.254727381961203, 51.47907615434592]} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
+      <MapContainer center={[37.7898, -122.401]} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -47,7 +47,7 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect }
         />
         <MapEvents />
         <CircleMarker center={start} radius={8} pathOptions={{ color: "#ffffff", weight: 4, fillColor: "#91a795", fillOpacity: 1 }}>
-          <Popup><strong>Your starting point</strong><br />Doha, Qatar</Popup>
+          <Popup><strong>Your starting point</strong><br />Market St &amp; 2nd St</Popup>
         </CircleMarker>
         {stations.map((station) => (
           <Marker key={station.id} position={[station.lat, station.lng]} icon={stationIcon(station, selectedId === station.id)} eventHandlers={{ click: () => onSelect(station.id) }}>

@@ -211,56 +211,20 @@ button,input{font:inherit}button{cursor:pointer}
   }
 }
 
+
+/* Higher peek position for the collapsed bottom content on the map. */
 .map-bottom-content {
-  bottom: 94px;
+  bottom: 124px;
 }
 
 @media (max-width: 850px) {
   .map-bottom-content {
-    bottom: 94px;
+    bottom: 124px;
   }
-}
-.map-tools {
-  transition: bottom 180ms ease-out;
 }
 
 @media (max-width: 520px) {
-  .map-tools-sheet-open {
-    bottom: calc(54% + 100px);
+  .map-bottom-content {
+    bottom: 132px;
   }
-
-  .map-tools-route-open {
-    bottom: calc(48% + 100px);
-  }
-}
-
-.choose-route-sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 75%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border-radius: 24px 24px 0 0;
-  background: white;
-  z-index: 700;
-  will-change: transform;
-}
-
-.sheet-drag-handle {
-  width: 48px;
-  height: 6px;
-  min-height: 18px;
-  margin: 12px auto 16px;
-  border-radius: 999px;
-  background: #d5d9d2;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.sheet-dragging .sheet-drag-handle {
-  cursor: grabbing;
 }
