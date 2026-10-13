@@ -158,14 +158,14 @@ export default function Home() {
 
   function handleSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!sheetDragging || sheetPointerStart.current === null) return;
-    setSheetDragY(Math.max(-120, Math.min(240, event.clientY - sheetPointerStart.current)));
+    setSheetDragY(Math.max(-90, Math.min(150, event.clientY - sheetPointerStart.current)));
   }
 
   function handleSheetPointerUp() {
     setSheetDragging(false);
     sheetPointerStart.current = null;
     // Snap to a compact or expanded position after dragging.
-    setSheetDragY(current => current < -55 ? -72 : current > 65 ? 48 : 0);
+    setSheetDragY(current => current < -45 ? -55 : current > 55 ? 90 : 0);
   }
 
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
@@ -182,6 +182,7 @@ export default function Home() {
     window.setTimeout(() => setMessage(""), 2400);
   }
   function openRoute() {
+    setSheetDragY(0);
     setPanel("route");
     setRouteMode(true);
   }
@@ -275,7 +276,18 @@ export default function Home() {
                     </div>
                   </div>
                 ) : panel === "station" ? (
-                  <div className="station-sheet"><div className="sheet-grabber"/><div className="sheet-overline">BE-ELECTRIC NETWORK</div><div className="station-title-row"><h2>{selected.name}</h2><button className={`save-button ${saved.includes(selected.id) ? "saved" : ""}`} onClick={() => setSaved(prev => prev.includes(selected.id) ? prev.filter(id => id !== selected.id) : [...prev, selected.id])} aria-label="Save station">{saved.includes(selected.id) ? <BookmarkCheck size={19}/> : <Bookmark size={19}/>}</button></div>
+                  <div
+                    className={`station-sheet ${sheetDragging ? "sheet-dragging" : ""}`}
+                    style={{ transform: `translateY(${sheetDragY}px)`, transition: sheetDragging ? "none" : "transform 180ms ease-out" }}
+                  ><div
+                    className="sheet-grabber sheet-drag-handle"
+                    onPointerDown={handleSheetPointerDown}
+                    onPointerMove={handleSheetPointerMove}
+                    onPointerUp={handleSheetPointerUp}
+                    onPointerCancel={handleSheetPointerUp}
+                    role="separator"
+                    aria-label="Drag station details panel"
+                  /><div className="sheet-overline">BE-ELECTRIC NETWORK</div><div className="station-title-row"><h2>{selected.name}</h2><button className={`save-button ${saved.includes(selected.id) ? "saved" : ""}`} onClick={() => setSaved(prev => prev.includes(selected.id) ? prev.filter(id => id !== selected.id) : [...prev, selected.id])} aria-label="Save station">{saved.includes(selected.id) ? <BookmarkCheck size={19}/> : <Bookmark size={19}/>}</button></div>
                     <p className="station-address">{selected.address}</p><div className="station-summary"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.distance} · {selected.minutes} min drive</small></div>
                     <div className="spec-grid"><div><small>MAX SPEED</small><b>{selected.power} kW</b><span>{selected.kind} · CCS</span></div><div><small>ENERGY PRICE</small><b>${selected.price.toFixed(2)} /kWh</b><span>Open 24/7</span></div></div>
                     <button className="primary-button" onClick={openRoute}><Navigation size={18}/> Get Directions</button>

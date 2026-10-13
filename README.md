@@ -21,3 +21,6 @@ Push this folder to a GitHub repository, import it in Vercel, and deploy with th
 - Station details and coordinates are demo data around San Francisco, not verified live charging locations.
 - The displayed route is a visual preview line, not turn-by-turn road routing. For real road routes, integrate a routing service such as OSRM or openrouteservice.
 - OpenStreetMap attribution is included in the map. Follow the OpenStreetMap tile usage policy for production traffic.
+
+
+Mobile layout update: both the station details sheet and route preview sheet have a consistent pill-style drag handle, capped height, and internal scrolling. The selected Leaflet popup is hidden while route preview is active to reduce overlap.
