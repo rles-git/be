@@ -341,7 +341,7 @@ button { cursor: pointer; }
 .search-wrap {
   position: absolute;
   z-index: 4;
-  top: 56px;
+  top: 24px;
   left: 16px;
   right: 16px;
   height: 47px;
