@@ -206,7 +206,6 @@ button,input{font:inherit}button{cursor:pointer}
     padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
     min-height: 0;
   }
-}
   .route-bottom-sheet .primary-button,
   .station-sheet .primary-button {
     min-height: 48px;
@@ -248,4 +247,3 @@ button,input{font:inherit}button{cursor:pointer}
 .map-bottom-content {
   bottom: var(--bottom-content-offset);
 }
-
