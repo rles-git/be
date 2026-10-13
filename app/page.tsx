@@ -1,6 +1,6 @@
  "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Activity, ArrowLeft, ArrowRight, Bookmark, Check, ChevronRight, CircleDot,
@@ -146,6 +146,27 @@ export default function Home() {
   const [saved, setSaved] = useState<number[]>([]);
   const [message, setMessage] = useState("");
   const [layersOpen, setLayersOpen] = useState(false);
+  const [sheetDragY, setSheetDragY] = useState(0);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const sheetPointerStart = useRef<number | null>(null);
+
+  function handleSheetPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    sheetPointerStart.current = event.clientY;
+    setSheetDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!sheetDragging || sheetPointerStart.current === null) return;
+    setSheetDragY(Math.max(-120, Math.min(240, event.clientY - sheetPointerStart.current)));
+  }
+
+  function handleSheetPointerUp() {
+    setSheetDragging(false);
+    sheetPointerStart.current = null;
+    // Snap to a compact or expanded position after dragging.
+    setSheetDragY(current => current < -55 ? -72 : current > 65 ? 48 : 0);
+  }
 
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
   const filtered = useMemo(() => stations.filter(s =>
@@ -197,10 +218,10 @@ export default function Home() {
             <div className="status-bar"><span>9:41</span><div className="status-icons"><span className="signal"><i/><i/><i/><i/></span><span className="wifi">⌁</span><span className="battery"><i/></span></div></div>
             {activeTab === "Explore" ? (
               <div className="map-screen">
-                <LeafletMap stations={filtered} selectedId={selectedId} routeMode={routeMode} onSelect={(id: number) => { setSelectedId(id); setPanel("station"); }} />
+                <LeafletMap stations={filtered} selectedId={selectedId} routeMode={routeMode} onSelect={(id: number) => { setSelectedId(id); setPanel("station"); setRouteMode(false); setSheetDragY(0); }} />
                 <header className="mobile-header">
                   {panel === "route" ? (
-                    <><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false)}} aria-label="Close route"><X size={19}/></button></>
+                    <><button className="square-button" onClick={() => {setPanel(null); setRouteMode(false); setSheetDragY(0);}} aria-label="Back"><ArrowLeft size={19}/></button><div className="route-heading"><b>Route preview</b><small>BE-ELECTRIC · DRIVE</small></div><button className="square-button" onClick={() => {setPanel(null);setRouteMode(false);setSheetDragY(0)}} aria-label="Close route"><X size={19}/></button></>
                   ) : (
                     <><div className="mobile-brand"><span className="brand-icon"><Zap size={18}/></span><span>be-electric</span></div><div className="city-label"><span/> DOHA, QATAR</div></>
                   )}
@@ -215,7 +236,7 @@ export default function Home() {
 
                 {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Doha, Qatar</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
-                {panel === "route" && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
+                {panel === "route" && routeMode && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
                 <div className="map-tools">
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
                   <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Doha, Qatar"); }} aria-label="Locate me"><Crosshair size={19}/></button>
@@ -223,12 +244,23 @@ export default function Home() {
                 </div>
 
                 {panel === "route" ? (
-                  <div className="route-bottom-sheet">
-                    <div className="sheet-grabber"/>
+                  <div
+                    className={`route-bottom-sheet ${sheetDragging ? "sheet-dragging" : ""}`}
+                    style={{ transform: `translateY(${sheetDragY}px)`, transition: sheetDragging ? "none" : "transform 180ms ease-out" }}
+                  >
+                    <div
+                      className="sheet-grabber sheet-drag-handle"
+                      onPointerDown={handleSheetPointerDown}
+                      onPointerMove={handleSheetPointerMove}
+                      onPointerUp={handleSheetPointerUp}
+                      onPointerCancel={handleSheetPointerUp}
+                      role="separator"
+                      aria-label="Drag route details panel"
+                    />
                     <div className="route-time"><strong>{selected.minutes} min</strong><span>{selected.distance}</span><small><CarFront size={13}/> Drive</small></div>
                     <h3>{selected.name}</h3>
                     <div className="route-availability"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.power} kW · ${selected.price.toFixed(2)}/kWh</small></div>
-                    <button className="primary-button" onClick={() => setPanel("chooser")}><Navigation size={18}/> Open in Google Maps</button>
+                    <button className="primary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Open in Google Maps</button>
                   </div>
                 ) : panel === "chooser" ? (
                   <div className="sheet-overlay">
@@ -247,7 +279,7 @@ export default function Home() {
                     <p className="station-address">{selected.address}</p><div className="station-summary"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.distance} · {selected.minutes} min drive</small></div>
                     <div className="spec-grid"><div><small>MAX SPEED</small><b>{selected.power} kW</b><span>{selected.kind} · CCS</span></div><div><small>ENERGY PRICE</small><b>${selected.price.toFixed(2)} /kWh</b><span>Open 24/7</span></div></div>
                     <button className="primary-button" onClick={openRoute}><Navigation size={18}/> Get Directions</button>
-                    <button className="sheet-back-link" onClick={() => setPanel(null)}>Back to map</button>
+                    <button className="sheet-back-link" onClick={() => {setPanel(null);setRouteMode(false);setSheetDragY(0)}}>Back to map</button>
                   </div>
                 ) : (
                   <div className="map-bottom-content">
@@ -266,7 +298,7 @@ export default function Home() {
               </div>
             )}
             <nav className="bottom-nav">
-              {([{name:"Explore", icon:<Map size={19}/>},{name:"Saved",icon:<Bookmark size={19}/>},{name:"Activity",icon:<Activity size={19}/>},{name:"Profile",icon:<UserRound size={19}/>} ] as {name:Tab;icon:React.ReactNode}[]).map(item => <button key={item.name} className={activeTab === item.name ? "active" : ""} onClick={() => {setActiveTab(item.name);setPanel(null);setRouteMode(false)}}>{item.icon}<span>{item.name}</span></button>)}
+              {([{name:"Explore", icon:<Map size={19}/>},{name:"Saved",icon:<Bookmark size={19}/>},{name:"Activity",icon:<Activity size={19}/>},{name:"Profile",icon:<UserRound size={19}/>} ] as {name:Tab;icon:React.ReactNode}[]).map(item => <button key={item.name} className={activeTab === item.name ? "active" : ""} onClick={() => {setActiveTab(item.name);setPanel(null);setRouteMode(false);setSheetDragY(0)}}>{item.icon}<span>{item.name}</span></button>)}
             </nav>
             <div className="home-indicator"><span/></div>
             {message && <div className="toast">{message}</div>}
