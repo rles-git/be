@@ -220,3 +220,16 @@ button,input{font:inherit}button{cursor:pointer}
     bottom: 94px;
   }
 }
+.map-tools {
+  transition: bottom 180ms ease-out;
+}
+
+@media (max-width: 520px) {
+  .map-tools-sheet-open {
+    bottom: calc(54% + 100px);
+  }
+
+  .map-tools-route-open {
+    bottom: calc(48% + 100px);
+  }
+}
