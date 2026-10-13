@@ -183,8 +183,8 @@ export default function Home() {
   }
   function openRoute() {
     setSheetDragY(0);
-    setPanel("route");
-    setRouteMode(true);
+    setPanel("chooser");
+    setRouteMode(false);
   }
   function externalMap(app: string) {
     const destination = encodeURIComponent(`${selected.name}, ${selected.address}`);
