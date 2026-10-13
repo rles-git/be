@@ -739,7 +739,7 @@ button { cursor: pointer; }
 .route-top-card {
   position: absolute;
   z-index: 5;
-  top: 99px;
+  top: 24px;
   left: 16px;
   right: 16px;
   max-width: calc(100% - 28px);
