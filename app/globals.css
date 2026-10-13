@@ -214,17 +214,17 @@ button,input{font:inherit}button{cursor:pointer}
 
 /* Higher peek position for the collapsed bottom content on the map. */
 .map-bottom-content {
-  bottom: 124px;
+  bottom: 104px;
 }
 
 @media (max-width: 850px) {
   .map-bottom-content {
-    bottom: 124px;
+    bottom: 104px;
   }
 }
 
 @media (max-width: 520px) {
   .map-bottom-content {
-    bottom: 132px;
+    bottom: 128px;
   }
 }
