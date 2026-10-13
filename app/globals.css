@@ -378,7 +378,7 @@ button { cursor: pointer; }
 .filter-row {
   position: absolute;
   z-index: 4;
-  top: 158px;
+  top: 76px;
   left: 16px;
   right: -15px;
   display: flex;
