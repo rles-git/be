@@ -17,9 +17,14 @@ export default function Home(){
  const visible=useMemo(()=>stations.filter(s=>(filter==='2+ Plugs Available'?s.plugs>=2:filter==='AC Charging'?s.type==='AC charging':filter==='DC Fast Charger'?s.type==='DC fast':true)&&(`${s.name} ${s.address} ${s.id}`).toLowerCase().includes(query.toLowerCase())),[filter,query]);
  const station=selected||stations[0];
  const handleSearch = useCallback(()=>{if(query.trim()){setSearchRequest(query.trim());setSearchMessage('Searching…')}},[query]);
- const searchResult = useCallback((message:string)=>setSearchMessage(message),[]);
- function startDirections(s:Station){setSelected(s);setModal('routes')}
- return <main className="site-shell"><header className="site-header"><div className="brand-mark"><Zap size={20} fill="currentColor"/></div><div><strong>be-electric</strong><span>EV CHARGING, SIMPLIFIED</span></div><div className="header-right"><span className="live-dot"/> Interactive prototype <a href="#phone">Preview app</a></div></header>
+ const searchResult = useCallback((message: string) => setSearchMessage(message), []);
+
+ function startDirections(s: Station) {
+   setSelected(s);
+   setModal('routes');
+ }
+
+return <main className="site-shell"> <header className="site-header"><div className="brand-mark"><Zap size={20} fill="currentColor"/></div><div><strong>be-electric</strong><span>EV CHARGING, SIMPLIFIED</span></div><div className="header-right"><span className="live-dot"/> Interactive prototype <a href="#phone">Preview app</a></div></header>
  <section className="intro"><div><p className="eyebrow">MOBILE EXPERIENCE / 01</p><h1>Find your next charge.</h1><p className="intro-copy">A clean, map-first EV charging experience. Try the filters, explore a station, and preview a route inside the phone.</p></div><div className="intro-note"><span className="note-icon"><BatteryCharging size={19}/></span><div><b>Designed for the road</b><small>Mobile-first · Interactive prototype</small></div></div></section>
  <section className="workspace"><div className="side-copy"><div className="side-kicker">THE EXPERIENCE</div><h2>Everything you need, at a glance.</h2><p>Browse nearby chargers, check live availability, and get directions without losing your place.</p><div className="feature-list"><div><span><MapPin size={17}/></span><div><b>Explore nearby</b><small>Map pins show availability and plug count.</small></div></div><div><span><SlidersHorizontal size={17}/></span><div><b>Filter your search</b><small>Switch between AC, DC fast, and available plugs.</small></div></div><div><span><Navigation size={17}/></span><div><b>Plan your route</b><small>Preview the trip or choose your navigation app.</small></div></div></div><div className="tip"><b>Try it out</b><p>Select a charger pin or tap the station card to see details. Use “Get Directions” to open route options.</p></div></div>
  <div className="phone-wrap" id="phone"><div className="phone"><div className="status-bar"><span>9:41</span><div className="status-icons"><span className="signal">▮▮▮</span><span>◔</span><span className="battery"/></div></div>
