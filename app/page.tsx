@@ -238,7 +238,7 @@ export default function Home() {
                 {panel === "route" && <div className="route-top-card"><div><span className="route-origin-dot"/><span>Your location · Doha, Qatar</span></div><div><Zap size={16}/><b>{selected.name}</b></div></div>}
 
                 {panel === "route" && routeMode && <><div className="route-pill">{selected.minutes} min</div><div className="route-destination-label">{selected.shortName}</div></>}
-                <div className="map-tools">
+                <div className="map-tools"style={{bottom: `calc(128px + ${Math.max(0, -sheetDragY)}px)`,}}>
                   <button className="tool-button" onClick={() => setLayersOpen(!layersOpen)} aria-label="Map layers"><Layers size={19}/></button>
                   <button className="tool-button" onClick={() => { window.dispatchEvent(new Event("be-electric-locate")); notify("Map centered on Doha, Qatar"); }} aria-label="Locate me"><Crosshair size={19}/></button>
                   {layersOpen && <div className="layers-popover"><b>Map layers</b><button onClick={() => {setLayersOpen(false);notify("Standard map selected")}}>Standard <Check size={14}/></button><button onClick={() => {setLayersOpen(false);notify("Charging overlay enabled")}}>Charging overlay</button></div>}
