@@ -566,6 +566,7 @@ button { cursor: pointer; }
   text-align: left;
   padding: 0 15px;
   color: #8e958d;
+  margin-bottom:36px;
 }
 
 .nearby-icon {
