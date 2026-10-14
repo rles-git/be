@@ -760,7 +760,12 @@ export default function Home() {
                       </small>
                     </div>
 
-                    {/* Choose Another Service appears above Confirm Arrival. */}
+                    <button
+                      className="primary-button"
+                      onClick={handleConfirmArrival}
+                    >
+                      <Check size={18} /> Confirm Arrival
+                    </button>
                     <button
                       className="sheet-back-link"
                       onClick={() => {
@@ -770,13 +775,6 @@ export default function Home() {
                       }}
                     >
                       Choose Another Service
-                    </button>
-
-                    <button
-                      className="primary-button"
-                      onClick={handleConfirmArrival}
-                    >
-                      <Check size={18} /> Confirm Arrival
                     </button>
                   </div>
                 ) : panel === "chooser" ? (
