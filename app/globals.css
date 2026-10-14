@@ -935,6 +935,30 @@ button { cursor: pointer; }
 
 .primary-button:hover { background: #829a86; }
 
+.secondary-button {
+  width: 100%;
+  min-height: 48px;
+  height: 56px;
+  border: 1.5px solid #d4ddd6;
+  border-radius: 15px;
+  background: #f1f5f2;
+  color: #26352a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 5px 12px #526a550d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondary-button:hover {
+  background: #e6ede8;
+  border-color: #bccac0;
+}
+
 /* =========================================================
    8. Station details sheet and shared sheet elements
    ========================================================= */
