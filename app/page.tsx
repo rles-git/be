@@ -477,15 +477,19 @@ const nearbyStations = useMemo(
                     
 <button
   className="nearby-card"
-  onClick={() => notify(`${filtered.length} stations shown on the map`)}
+  onClick={() =>
+    notify(`${nearbyStations.length} stations nearby within 1–5 km`)
+  }
 >
   <span className="nearby-icon">
     <LocateFixed size={19} />
   </span>
-  <span>  
-   <b>{filtered.length} nearby stations</b>
-   <small>Within 1–5 km of your location</small>
+
+  <span>
+    <b>{nearbyStations.length} stations nearby</b>
+    <small>Charging stations within 1–5 km</small>
   </span>
+
   <List size={19} />
 </button>
 
