@@ -944,6 +944,9 @@ export default function Home() {
                     <button className="primary-button" onClick={openRoute}>
                       <Navigation size={18} /> Get Directions
                     </button>
+                    <button className="secondary-button" onClick={openRoute}>
+                      <Navigation size={18} /> More Details
+                    </button>
 
                     <button
                       className="sheet-back-link"
