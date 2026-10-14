@@ -1076,7 +1076,7 @@ export default function Home() {
                             marginTop: "10px",
                           }}
                         >
-                          {recentRoutes.map((route) => (
+                          {recentRoutes.slice(0, 3).map((route) => (
                             <button
                               key={route.id}
                               className="saved-card"
