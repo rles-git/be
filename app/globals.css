@@ -1115,11 +1115,8 @@ button { cursor: pointer; }
   width: 100%;
   background: #fff;
   border-radius: 27px 27px 0 0;
-  bottom: calc(70px + env(safe-area-inset-bottom))
   padding: 12px 20px 31px;
   box-shadow: 0 -5px 22px #00000012;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
 }
 
 .sheet-title-row {
