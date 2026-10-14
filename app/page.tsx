@@ -487,9 +487,9 @@ const filtered = useMemo(
   <span className="nearby-icon">
     <LocateFixed size={19} />
   </span>
-  <span>
-    <b>{filtered.length} stations nearby</b>
-    <small>Charging stations currently shown on the map</small>
+  <span>  
+   <b>{filtered.length} nearby stations</b>
+   <small>Within 1–5 km of your location</small>
   </span>
   <List size={19} />
 </button>
