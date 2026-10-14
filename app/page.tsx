@@ -451,7 +451,7 @@ export default function Home() {
           s.lng
         );
 
-        return distance >= 1 && distance <= 5;
+        return distance >= 0 && distance <= 5;
       }),
     [filtered]
   );
