@@ -950,6 +950,7 @@ button { cursor: pointer; }
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 5px 12px #526a550d;
+  margin-top: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
