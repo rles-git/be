@@ -295,7 +295,22 @@ export default function Home() {
   
 const filtered = useMemo(
   () =>
-    stations.filter((s) => {
+    stations.filter(
+      (s) =>
+        (!fastOnly || s.kind === "DC fast") &&
+        (!acOnly || s.kind === "AC") &&
+        (!availableOnly || s.available >= 2) &&
+        `${s.name} ${s.address} ${s.id}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+    ),
+  [search, fastOnly, acOnly, availableOnly]
+);
+
+// Only stations 1–5 km from the starting point.
+const nearbyStations = useMemo(
+  () =>
+    filtered.filter((s) => {
       const distance = getDistanceKm(
         START_LOCATION[0],
         START_LOCATION[1],
@@ -303,30 +318,10 @@ const filtered = useMemo(
         s.lng
       );
 
-      const withinRadius = distance >= 1 && distance <= 5;
-
-      const matchesType =
-        (!fastOnly || s.kind === "DC fast") &&
-        (!acOnly || s.kind === "AC");
-
-      const matchesAvailability =
-        !availableOnly || s.available >= 2;
-
-      const matchesSearch =
-        `${s.name} ${s.address} ${s.id}`
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
-      return (
-        withinRadius &&
-        matchesType &&
-        matchesAvailability &&
-        matchesSearch
-      );
+      return distance >= 1 && distance <= 5;
     }),
-  [search, fastOnly, acOnly, availableOnly]
+  [filtered]
 );
-
   const savedStations = stations.filter(s => saved.includes(s.id));
 
   function notify(text: string) {
