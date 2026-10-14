@@ -1,14 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
+import {
+  CircleMarker,
+  MapContainer,
+  Marker,
+  Polyline,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 type Station = {
-  lat: number; lng: number; id: number; name: string; shortName: string; address: string; plugs: number;
-  available: number; power: number; price: number; kind: "DC fast" | "AC";
-  distance: string; minutes: number;
+  lat: number;
+  lng: number;
+  id: number;
+  name: string;
+  shortName: string;
+  address: string;
+  plugs: number;
+  available: number;
+  power: number;
+  price: number;
+  kind: "DC fast" | "AC";
+  distance: string;
+  minutes: number;
 };
 
 type Props = {
@@ -30,8 +48,15 @@ function stationIcon(station: Station, selected: boolean) {
   });
 }
 
-function MapController({ routeCoords }: { routeCoords: [number, number][] }) {
+function MapController({
+  routeCoords,
+  routeMode,
+}: {
+  routeCoords: [number, number][];
+  routeMode: boolean;
+}) {
   const map = useMap();
+  const lastFittedRouteKey = useRef<string | null>(null);
 
   useEffect(() => {
     const locate = () => map.flyTo(start, 15, { duration: 0.7 });
@@ -39,22 +64,62 @@ function MapController({ routeCoords }: { routeCoords: [number, number][] }) {
     return () => window.removeEventListener("be-electric-locate", locate);
   }, [map]);
 
+  // The map container can resize when the route sheet opens. Tell Leaflet to
+  // recalculate its dimensions without changing the user's chosen zoom.
   useEffect(() => {
-    if (routeCoords.length > 1) {
-      const bounds = L.latLngBounds(routeCoords);
-      map.fitBounds(bounds, { padding: [60, 60] });
+    const timer = window.setTimeout(() => {
+      map.invalidateSize({ pan: false, animate: false });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [map, routeMode]);
+
+  useEffect(() => {
+    if (routeCoords.length < 2) {
+      lastFittedRouteKey.current = null;
+      return;
     }
+
+    const first = routeCoords[0];
+    const last = routeCoords[routeCoords.length - 1];
+    const routeKey = `${first[0]},${first[1]}:${last[0]},${last[1]}`;
+
+    // Route fetching may rerun after parent renders. Don't fit the same route
+    // again, because fitBounds would override any manual zoom/pan.
+    if (lastFittedRouteKey.current === routeKey) return;
+    lastFittedRouteKey.current = routeKey;
+
+    map.fitBounds(L.latLngBounds(routeCoords), {
+      padding: [60, 60],
+      animate: false,
+    });
   }, [map, routeCoords]);
 
   return null;
 }
 
-export default function LeafletMap({ stations, selectedId, routeMode, onSelect, onRouteCalculated }: Props) {
+export default function LeafletMap({
+  stations,
+  selectedId,
+  routeMode,
+  onSelect,
+  onRouteCalculated,
+}: Props) {
   const selected = stations.find((station) => station.id === selectedId);
   const [roadCoordinates, setRoadCoordinates] = useState<[number, number][]>([]);
+  const onRouteCalculatedRef = useRef(onRouteCalculated);
+
+  // Keep the latest callback without making route fetching depend on the
+  // callback's identity (which can change on every parent render).
+  useEffect(() => {
+    onRouteCalculatedRef.current = onRouteCalculated;
+  }, [onRouteCalculated]);
+
+  const selectedLat = selected?.lat;
+  const selectedLng = selected?.lng;
+  const selectedStationId = selected?.id;
 
   useEffect(() => {
-    if (!routeMode || !selected) {
+    if (!routeMode || selectedLat == null || selectedLng == null) {
       setRoadCoordinates([]);
       return;
     }
@@ -63,8 +128,9 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect, 
 
     async function fetchDrivingRoute() {
       try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${selected!.lng},${selected!.lat}?overview=full&geometries=geojson`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${selectedLng},${selectedLat}?overview=full&geometries=geojson`;
         const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`Route request failed: ${res.status}`);
         const data = await res.json();
 
         if (data.code === "Ok" && data.routes?.[0]) {
@@ -74,14 +140,10 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect, 
           );
           setRoadCoordinates(latLngs);
 
-          if (onRouteCalculated) {
-            const distanceKm = (route.distance / 1000).toFixed(1);
-            const durationMin = Math.max(1, Math.round(route.duration / 60));
-            onRouteCalculated({
-              distance: `${distanceKm} km`,
-              minutes: durationMin,
-            });
-          }
+          onRouteCalculatedRef.current?.({
+            distance: `${(route.distance / 1000).toFixed(1)} km`,
+            minutes: Math.max(1, Math.round(route.duration / 60)),
+          });
         }
       } catch (err: unknown) {
         if ((err as Error)?.name !== "AbortError") {
@@ -92,22 +154,42 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect, 
 
     fetchDrivingRoute();
     return () => controller.abort();
-  }, [routeMode, selected, onRouteCalculated]);
+  }, [routeMode, selectedStationId, selectedLat, selectedLng]);
 
   return (
     <div className={`leaflet-map-root ${routeMode ? "is-routing" : ""}`}>
-      <MapContainer center={start} zoom={15} zoomControl={false} scrollWheelZoom={true} attributionControl={true}>
+      <MapContainer
+        center={start}
+        zoom={15}
+        zoomControl={false}
+        scrollWheelZoom={true}
+        attributionControl={true}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        <MapController routeCoords={roadCoordinates} />
-        <CircleMarker center={start} radius={8} pathOptions={{ color: "#ffffff", weight: 4, fillColor: "#91a795", fillOpacity: 1 }}>
+        <MapController routeCoords={roadCoordinates} routeMode={routeMode} />
+        <CircleMarker
+          center={start}
+          radius={8}
+          pathOptions={{
+            color: "#ffffff",
+            weight: 4,
+            fillColor: "#91a795",
+            fillOpacity: 1,
+          }}
+        >
           <Popup><strong>Your Location</strong></Popup>
         </CircleMarker>
         {stations.map((station) => (
-          <Marker key={station.id} position={[station.lat, station.lng]} icon={stationIcon(station, selectedId === station.id)} eventHandlers={{ click: () => onSelect(station.id) }}>
+          <Marker
+            key={station.id}
+            position={[station.lat, station.lng]}
+            icon={stationIcon(station, selectedId === station.id)}
+            eventHandlers={{ click: () => onSelect(station.id) }}
+          >
             <Popup>
               <div className="station-popup">
                 <strong>{station.name}</strong>
@@ -120,8 +202,26 @@ export default function LeafletMap({ stations, selectedId, routeMode, onSelect, 
         ))}
         {routeMode && roadCoordinates.length > 0 && (
           <>
-            <Polyline positions={roadCoordinates} pathOptions={{ color: "#ffffff", weight: 8, opacity: 0.9, lineCap: "round", lineJoin: "round" }} />
-            <Polyline positions={roadCoordinates} pathOptions={{ color: "#58715d", weight: 5, opacity: 0.95, lineCap: "round", lineJoin: "round" }} />
+            <Polyline
+              positions={roadCoordinates}
+              pathOptions={{
+                color: "#ffffff",
+                weight: 8,
+                opacity: 0.9,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+            <Polyline
+              positions={roadCoordinates}
+              pathOptions={{
+                color: "#58715d",
+                weight: 5,
+                opacity: 0.95,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
           </>
         )}
       </MapContainer>
