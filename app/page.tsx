@@ -171,6 +171,19 @@ export default function Home() {
     setSheetDragY(current => current < -45 ? -70 : current > 80 ? 320 : 0);
   }
 
+  // Keep the route sheet's handle visible so it can always be pulled back up.
+  function handleRouteSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!sheetDragging || sheetPointerStart.current === null) return;
+    const delta = event.clientY - sheetPointerStart.current;
+    setSheetDragY(Math.max(-120, Math.min(105, delta)));
+  }
+
+  function handleRouteSheetPointerUp() {
+    setSheetDragging(false);
+    sheetPointerStart.current = null;
+    setSheetDragY(current => current < -45 ? -70 : current > 55 ? 65 : 0);
+  }
+
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
   const activeMinutes = calculatedRoute?.minutes ?? selected.minutes;
   const activeDistance = calculatedRoute?.distance ?? selected.distance;
@@ -259,9 +272,9 @@ export default function Home() {
                     <div
                       className="sheet-grabber sheet-drag-handle"
                       onPointerDown={handleSheetPointerDown}
-                      onPointerMove={handleSheetPointerMove}
-                      onPointerUp={handleSheetPointerUp}
-                      onPointerCancel={handleSheetPointerUp}
+                      onPointerMove={handleRouteSheetPointerMove}
+                      onPointerUp={handleRouteSheetPointerUp}
+                      onPointerCancel={handleRouteSheetPointerUp}
                       role="separator"
                       aria-label="Drag route details panel"
                     />
