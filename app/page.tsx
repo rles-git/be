@@ -209,6 +209,36 @@ function MapArtwork({ routeMode = false }: { routeMode?: boolean }) {
 }
 
 
+const START_LOCATION: [number, number] = [
+  25.25443628041169,
+  51.47908688248179,
+];
+
+function getDistanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return (
+    earthRadiusKm *
+    2 *
+    Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  );
+}
+
 export default function Home() {
   const [selectedId, setSelectedId] = useState(1);
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
@@ -262,12 +292,41 @@ export default function Home() {
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
   const activeMinutes = calculatedRoute?.minutes ?? selected.minutes;
   const activeDistance = calculatedRoute?.distance ?? selected.distance;
-  const filtered = useMemo(() => stations.filter(s =>
-    (!fastOnly || s.kind === "DC fast") &&
-    (!acOnly || s.kind === "AC") &&
-    (!availableOnly || s.available >= 2) &&
-    `${s.name} ${s.address} ${s.id}`.toLowerCase().includes(search.toLowerCase())
-  ), [search, fastOnly, acOnly, availableOnly]);
+  
+const filtered = useMemo(
+  () =>
+    stations.filter((s) => {
+      const distance = getDistanceKm(
+        START_LOCATION[0],
+        START_LOCATION[1],
+        s.lat,
+        s.lng
+      );
+
+      const withinRadius = distance >= 1 && distance <= 5;
+
+      const matchesType =
+        (!fastOnly || s.kind === "DC fast") &&
+        (!acOnly || s.kind === "AC");
+
+      const matchesAvailability =
+        !availableOnly || s.available >= 2;
+
+      const matchesSearch =
+        `${s.name} ${s.address} ${s.id}`
+          .toLowerCase()
+          .includes(search.toLowerCase());
+
+      return (
+        withinRadius &&
+        matchesType &&
+        matchesAvailability &&
+        matchesSearch
+      );
+    }),
+  [search, fastOnly, acOnly, availableOnly]
+);
+
   const savedStations = stations.filter(s => saved.includes(s.id));
 
   function notify(text: string) {
