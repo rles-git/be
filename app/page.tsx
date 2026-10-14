@@ -420,7 +420,21 @@ export default function Home() {
                 ) : (
                   <div className="map-bottom-content">
                     <div className="legend"><span><i className="green-dot"/> Available</span><span><i className="gray-dot"/> Busy</span><span><i className="gray-dot"/> Offline</span></div>
-                    <button className="nearby-card" onClick={() => notify(`${filtered.length} stations match your filters`)}><span className="nearby-icon"><LocateFixed size={19}/></span><span><b>{filtered.length + 3} stations nearby</b><small>DC fast chargers · Updated just now</small></span><List size={19}/></button>
+                    
+<button
+  className="nearby-card"
+  onClick={() => notify(`${filtered.length} stations shown on the map`)}
+>
+  <span className="nearby-icon">
+    <LocateFixed size={19} />
+  </span>
+  <span>
+    <b>{filtered.length} stations nearby</b>
+    <small>Charging stations currently shown on the map</small>
+  </span>
+  <List size={19} />
+</button>
+
                   </div>
                 )}
               </div>
