@@ -1696,3 +1696,20 @@ button { cursor: pointer; }
   .eyebrow { margin-top: 36px; }
   .desktop-hint { margin-top: 35px; }
 }
+
+
+/* Draggable station, chooser, and route sheets */
+.sheet-drag-handle {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sheet-dragging .sheet-drag-handle {
+  cursor: grabbing;
+}
+.station-sheet,
+.route-bottom-sheet,
+.chooser-sheet {
+  will-change: transform;
+}

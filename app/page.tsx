@@ -159,14 +159,16 @@ export default function Home() {
 
   function handleSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!sheetDragging || sheetPointerStart.current === null) return;
-    setSheetDragY(Math.max(-90, Math.min(150, event.clientY - sheetPointerStart.current)));
+    // Allow sheets to slide down behind the bottom navigation.
+    const delta = event.clientY - sheetPointerStart.current;
+    setSheetDragY(Math.max(-120, Math.min(520, delta)));
   }
 
   function handleSheetPointerUp() {
     setSheetDragging(false);
     sheetPointerStart.current = null;
-    // Snap to a compact or expanded position after dragging.
-    setSheetDragY(current => current < -45 ? -55 : current > 55 ? 90 : 0);
+    // Snap up, back to rest, or down near the bottom navigation.
+    setSheetDragY(current => current < -45 ? -70 : current > 80 ? 320 : 0);
   }
 
   const selected = stations.find(s => s.id === selectedId) ?? stations[0];
