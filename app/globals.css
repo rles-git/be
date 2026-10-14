@@ -584,7 +584,7 @@ button { cursor: pointer; }
   text-align: left;
   padding: 0 15px;
   color: #8e958d;
-  margin-bottom:36px;
+  margin-bottom:0px;
 }
 
 .nearby-icon {
@@ -1581,6 +1581,7 @@ button { cursor: pointer; }
   display: none !important;
 }
 
+
 /* =========================================================
    12. Responsive: tablet and smaller desktop
    ========================================================= */
@@ -1588,49 +1589,118 @@ button { cursor: pointer; }
   .desktop-shell {
     display: flex;
     justify-content: center;
-    padding: 20px 14px;
-    min-height: 100dvh;
+    align-items: center;
+    padding: 14px;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
   }
 
-  .desktop-intro { display: none; }
+  .desktop-intro {
+    display: none;
+  }
 
-  .emulator-column { max-width: 390px; }
+  .emulator-column {
+    width: 100%;
+    max-width: 390px;
+    height: 100%;
+    min-height: 0;
+  }
 
   .emulator-caption,
-  .emulator-footer { display: none; }
+  .emulator-footer {
+    display: none;
+  }
 
   .phone-frame {
-    height: calc(100dvh - 28px);
-    min-height: 600px;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
     border-radius: 43px;
   }
+
+  .phone-screen {
+    height: 100%;
+    min-height: 0;
+  }
 }
+
+
 
 /* =========================================================
    13. Responsive: phones
    ========================================================= */
 @media (max-width: 520px) {
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
   .desktop-shell {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
     padding: 0;
+    margin: 0;
+    overflow: hidden;
     background: #f5f5f2;
   }
 
+  .emulator-column {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+  }
+
   .phone-frame {
-    width: 100vw;
+    width: 100%;
+    height: 100%;
     height: 100dvh;
-    min-height: 550px;
+    max-height: 100dvh;
+    min-height: 0;
+    padding: 0;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .phone-screen { border-radius: 0; }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border-radius: 0;
+  }
 
-  .status-bar { padding-top: 2px; }
+  .emulator-caption,
+  .emulator-footer {
+    display: none;
+  }
 
-  .home-indicator { height: 20px; }
-  .bottom-nav { bottom: 20px; }
-  .map-bottom-content { bottom: 72px; }
+  .status-bar {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .home-indicator {
+    height: calc(20px + env(safe-area-inset-bottom, 0px));
+    bottom: 0;
+  }
+
+  .bottom-nav {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-bottom-content {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
 
   .station-sheet {
     bottom: 0;
@@ -1638,7 +1708,7 @@ button { cursor: pointer; }
     right: 0;
     width: 100%;
     max-height: calc(100% - 100px);
-    padding: 18px 16px 100px;
+    padding: 18px 16px calc(100px + env(safe-area-inset-bottom, 0px));
   }
 
   .route-bottom-sheet {
@@ -1648,10 +1718,12 @@ button { cursor: pointer; }
     width: 100%;
     min-height: 0;
     max-height: min(48%, 360px);
-    padding: 8px 16px calc(100px + env(safe-area-inset-bottom));
+    padding: 8px 16px calc(100px + env(safe-area-inset-bottom, 0px));
   }
 
-  .route-bottom-sheet .route-time strong { font-size: 28px; }
+  .route-bottom-sheet .route-time strong {
+    font-size: 28px;
+  }
 
   .route-bottom-sheet h3 {
     font-size: 18px;
@@ -1659,7 +1731,9 @@ button { cursor: pointer; }
   }
 
   .route-bottom-sheet .primary-button,
-  .station-sheet .primary-button { min-height: 48px; }
+  .station-sheet .primary-button {
+    min-height: 48px;
+  }
 
   .route-top-card {
     top: 24px;
@@ -1674,9 +1748,15 @@ button { cursor: pointer; }
   }
 
   .route-pill,
-  .route-destination-label { display: none !important; }
+  .route-destination-label {
+    display: none !important;
+  }
 
-  .chooser-sheet { padding-bottom: 96px; }
+  .chooser-sheet {
+    padding-bottom: calc(31px + env(safe-area-inset-bottom, 0px));
+    max-height: 90%;
+    overflow-y: auto;
+  }
 }
 
 /* =========================================================
