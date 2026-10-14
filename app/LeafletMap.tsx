@@ -165,14 +165,11 @@ export default function LeafletMap({
         scrollWheelZoom={true}
         attributionControl={true}
       >
-        
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={20}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
         />
-
         <MapController routeCoords={roadCoordinates} routeMode={routeMode} />
         <CircleMarker
           center={start}
