@@ -415,7 +415,7 @@ const nearbyStations = useMemo(
                     <h3>{selected.name}</h3>
                     <div className="route-availability"><span>● {selected.available} of {selected.plugs} available</span><small>{selected.power} kW · ${selected.price.toFixed(2)}/kWh</small></div>
                    <button className="primary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Confirm Arrival</button> 
-                   <button className="secondary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Choose other service</button>
+                   <button className="primary-button" onClick={() => {setSheetDragY(0); setPanel("chooser"); setRouteMode(false);}}><Navigation size={18}/> Choose other service</button>
                    
                   </div>
                 ) : panel === "chooser" ? (
