@@ -1106,6 +1106,7 @@ button { cursor: pointer; }
 }
 
 .chooser-sheet {
+  position: relative;
   width: 100%;
   background: #fff;
   border-radius: 27px 27px 0 0;
