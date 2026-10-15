@@ -667,25 +667,6 @@ button { cursor: pointer; }
   font-weight: 600;
 }
 
-.home-indicator {
-  height: 17px;
-  position: absolute;
-  z-index: 13;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  display: grid;
-  place-items: center;
-}
-
-.home-indicator span {
-  width: 104px;
-  height: 4px;
-  border-radius: 5px;
-  background: #171f2e;
-}
-
 .emulator-footer {
   width: 100%;
   max-width: 410px;
