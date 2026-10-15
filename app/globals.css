@@ -1778,6 +1778,7 @@ button { cursor: pointer; }
     padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     max-height: 90%;
     overflow-y: auto;
+    top: 20px;
   }
 }
 
