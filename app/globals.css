@@ -479,14 +479,17 @@ button { cursor: pointer; }
 .station-marker.offline span { color: #aeb2ab; }
 
 
+:root {
+  --route-sheet-height: 300px;
+}
+
 .map-tools {
   position: absolute;
   right: 16px;
-  bottom: calc(240px + var(--sheet-lift, 0px));
-  z-index: 5;
+  z-index: 20;
   display: grid;
   gap: 8px;
-  transition: bottom 0.2s ease;
+  transition: bottom 0.18s ease-out;
 }
 
 /* Keep the Locate Me button stationary on full-screen details */
