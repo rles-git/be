@@ -13,6 +13,7 @@ export type DatabaseStation = {
   status: string;
   power_kw: number | null;
   connector_type: string | null;
+  operator: string | null;
 };
 
 export type MapStation = {
@@ -30,6 +31,7 @@ export type MapStation = {
   distance: string;
   minutes: number;
   status: string;
+  operator: string | null;
 };
 
 export const mapStations = (
