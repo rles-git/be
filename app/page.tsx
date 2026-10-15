@@ -724,10 +724,9 @@ export default function Home() {
                       sheetDragging ? "sheet-dragging" : ""
                     }`}
                     style={{
-                      transform: `translateY(${sheetDragY}px)`,
-                      transition: sheetDragging
-                        ? "none"
-                        : "transform 180ms ease-out",
+                      // Capped at 0px min (cannot pull above rest) and 360px max down
+                      transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
+                      transition: sheetDragging ? "none" : "transform 180ms ease-out",
                     }}
                   >
                     <div
@@ -784,10 +783,9 @@ export default function Home() {
                         sheetDragging ? "sheet-dragging" : ""
                       }`}
                       style={{
-                        transform: `translateY(${sheetDragY}px)`,
-                        transition: sheetDragging
-                          ? "none"
-                          : "transform 180ms ease-out",
+                        // Capped at 0px min (cannot pull above rest) and 360px max down
+                        transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
+                        transition: sheetDragging ? "none" : "transform 180ms ease-out",
                       }}
                     >
                       <div
