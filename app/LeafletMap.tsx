@@ -60,8 +60,20 @@ function MapController({
 
   useEffect(() => {
     const locate = () => map.flyTo(start, 15, { duration: 0.7 });
+    const refreshMapSize = () => {
+      // The map is hidden while another bottom-navigation tab is active.
+      // Recalculate its dimensions when Explore becomes visible again.
+      window.setTimeout(() => {
+        map.invalidateSize({ pan: false, animate: false });
+      }, 100);
+    };
+
     window.addEventListener("be-electric-locate", locate);
-    return () => window.removeEventListener("be-electric-locate", locate);
+    window.addEventListener("be-electric-map-visible", refreshMapSize);
+    return () => {
+      window.removeEventListener("be-electric-locate", locate);
+      window.removeEventListener("be-electric-map-visible", refreshMapSize);
+    };
   }, [map]);
 
   // The map container can resize when the route sheet opens. Tell Leaflet to
