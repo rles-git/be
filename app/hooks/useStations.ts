@@ -3,23 +3,12 @@
 
 import { useEffect, useState } from "react";
 
+
 export type DatabaseStation = {
   id: string;
   name: string;
-  address: string | null;
-  latitude: number;
-  longitude: number;
-  status: string;
-  power_kw: number | null;
-  connector_type: string | null;
-  operator: string | null;
-};
-
-export type MapStation = {
-  id: string;
-  name: string;
   shortName: string;
-  address: string;
+  address: string | null;
   lat: number;
   lng: number;
   plugs: number | null;
@@ -27,11 +16,38 @@ export type MapStation = {
   power: number | null;
   price: number | null;
   kind: "DC fast" | "AC";
-  distance: string;
-  minutes: number;
-  status: string;
-  operator: string | null;
+  distance: string | null;
+  minutes: number | null;
 };
+
+
+
+export const mapStations = (
+  rows: DatabaseStation[]
+): MapStation[] =>
+  rows.map((station) => ({
+    id: String(station.id),
+    name: station.name,
+    shortName: station.shortName || station.name,
+    address: station.address ?? "Address unavailable",
+    lat: Number(station.lat),
+    lng: Number(station.lng),
+    plugs: station.plugs,
+    available: station.available,
+    power: station.power,
+    price: station.price,
+    kind: station.kind,
+    distance: station.distance ?? "",
+    minutes: station.minutes ?? 0,
+    status:
+      station.available === 0
+        ? "offline"
+        : station.available != null && station.available > 0
+          ? "online"
+          : "unknown",
+    operator: null,
+  }));
+
 
 
 export const mapStations = (
