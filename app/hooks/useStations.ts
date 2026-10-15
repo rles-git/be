@@ -7,7 +7,6 @@ export type DatabaseStation = {
   id: string;
   name: string;
   address: string | null;
-  area: string | null;
   latitude: number;
   longitude: number;
   status: string;
