@@ -1,4 +1,4 @@
-```ts
+
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
@@ -75,4 +75,4 @@ export async function GET() {
     );
   }
 }
-```
+
