@@ -644,6 +644,7 @@ button { cursor: pointer; }
   align-items: center;
   border-top: 1px solid #eff0ed;
   padding: 3px 8px 0;
+  bottom: 0px;
 }
 
 .bottom-nav button {
