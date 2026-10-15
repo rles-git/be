@@ -1731,7 +1731,7 @@ button { cursor: pointer; }
     right: 0;
     width: 100%;
     max-height: calc(100% - 100px);
-    padding: 18px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 18px 16px calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
   .route-bottom-sheet {
@@ -1741,7 +1741,7 @@ button { cursor: pointer; }
     width: 100%;
     min-height: 0;
     max-height: min(48%, 360px);
-    padding: 8px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 16px calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
   .route-bottom-sheet .route-time strong {
