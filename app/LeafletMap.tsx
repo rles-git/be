@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -22,6 +23,8 @@ type Station = {
   address: string;
   plugs: number | null;
   available: number | null;
+  availableStalls: number;
+  totalStalls: number;
   power: number | null;
   price: number | null;
   kind: "DC fast" | "AC";
@@ -29,7 +32,6 @@ type Station = {
   minutes: number;
   status: string;
 };
-
 
 type Props = {
   stations: Station[];
@@ -42,12 +44,23 @@ type Props = {
   }) => void;
 };
 
-const start: [number, number] = [25.25443628041169, 51.47908688248179];
+const start: [number, number] = [
+  25.25443628041169,
+  51.47908688248179,
+];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
     className: "leaflet-station-icon-wrap",
-    html: `<div class="leaflet-station-icon ${selected ? "is-selected" : ""} ${station.available === 0 ? "is-offline" : ""}"><span class="bolt">ϟ</span><span class="count">${station.available}</span>${selected ? '<small>SELECTED</small>' : ""}</div>`,
+    html: `<div class="leaflet-station-icon ${
+      selected ? "is-selected" : ""
+    } ${
+      station.available === 0 ? "is-offline" : ""
+    }"><span class="bolt">ϟ</span><span class="count">${
+      station.available ?? "—"
+    }</span>${
+      selected ? "<small>SELECTED</small>" : ""
+    }</div>`,
     iconSize: selected ? [64, 62] : [50, 48],
     iconAnchor: selected ? [32, 31] : [25, 24],
   });
@@ -65,9 +78,8 @@ function MapController({
 
   useEffect(() => {
     const locate = () => map.flyTo(start, 15, { duration: 0.7 });
+
     const refreshMapSize = () => {
-      // The map is hidden while another bottom-navigation tab is active.
-      // Recalculate its dimensions when Explore becomes visible again.
       window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
       }, 100);
@@ -75,18 +87,21 @@ function MapController({
 
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-map-visible", refreshMapSize);
+
     return () => {
       window.removeEventListener("be-electric-locate", locate);
-      window.removeEventListener("be-electric-map-visible", refreshMapSize);
+      window.removeEventListener(
+        "be-electric-map-visible",
+        refreshMapSize
+      );
     };
   }, [map]);
 
-  // The map container can resize when the route sheet opens. Tell Leaflet to
-  // recalculate its dimensions without changing the user's chosen zoom.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       map.invalidateSize({ pan: false, animate: false });
     }, 250);
+
     return () => window.clearTimeout(timer);
   }, [map, routeMode]);
 
@@ -100,8 +115,6 @@ function MapController({
     const last = routeCoords[routeCoords.length - 1];
     const routeKey = `${first[0]},${first[1]}:${last[0]},${last[1]}`;
 
-    // Route fetching may rerun after parent renders. Don't fit the same route
-    // again, because fitBounds would override any manual zoom/pan.
     if (lastFittedRouteKey.current === routeKey) return;
     lastFittedRouteKey.current = routeKey;
 
@@ -121,12 +134,16 @@ export default function LeafletMap({
   onSelect,
   onRouteCalculated,
 }: Props) {
-  const selected = stations.find((station) => station.id === selectedId);
-  const [roadCoordinates, setRoadCoordinates] = useState<[number, number][]>([]);
+  const selected = stations.find(
+    (station) => station.id === selectedId
+  );
+
+  const [roadCoordinates, setRoadCoordinates] = useState<
+    [number, number][]
+  >([]);
+
   const onRouteCalculatedRef = useRef(onRouteCalculated);
 
-  // Keep the latest callback without making route fetching depend on the
-  // callback's identity (which can change on every parent render).
   useEffect(() => {
     onRouteCalculatedRef.current = onRouteCalculated;
   }, [onRouteCalculated]);
@@ -136,7 +153,11 @@ export default function LeafletMap({
   const selectedStationId = selected?.id;
 
   useEffect(() => {
-    if (!routeMode || selectedLat == null || selectedLng == null) {
+    if (
+      !routeMode ||
+      selectedLat == null ||
+      selectedLng == null
+    ) {
       setRoadCoordinates([]);
       return;
     }
@@ -145,36 +166,60 @@ export default function LeafletMap({
 
     async function fetchDrivingRoute() {
       try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${selectedLng},${selectedLat}?overview=full&geometries=geojson`;
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`Route request failed: ${res.status}`);
+        const url =
+          `https://router.project-osrm.org/route/v1/driving/` +
+          `${start[1]},${start[0]};${selectedLng},${selectedLat}` +
+          `?overview=full&geometries=geojson`;
+
+        const res = await fetch(url, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Route request failed: ${res.status}`);
+        }
+
         const data = await res.json();
 
         if (data.code === "Ok" && data.routes?.[0]) {
           const route = data.routes[0];
-          const latLngs: [number, number][] = route.geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng]
-          );
+
+          const latLngs: [number, number][] =
+            route.geometry.coordinates.map(
+              ([lng, lat]: [number, number]) => [lat, lng]
+            );
+
           setRoadCoordinates(latLngs);
 
           onRouteCalculatedRef.current?.({
             distance: `${(route.distance / 1000).toFixed(1)} km`,
-            minutes: Math.max(1, Math.round(route.duration / 60)),
+            minutes: Math.max(
+              1,
+              Math.round(route.duration / 60)
+            ),
           });
         }
       } catch (err: unknown) {
         if ((err as Error)?.name !== "AbortError") {
-          console.error("Failed to fetch road network route:", err);
+          console.error(
+            "Failed to fetch road network route:",
+            err
+          );
         }
       }
     }
 
     fetchDrivingRoute();
+
     return () => controller.abort();
   }, [routeMode, selectedStationId, selectedLat, selectedLng]);
 
   return (
-    <div className={`leaflet-map-root ${routeMode ? "is-routing" : ""}`}>
+    <div
+      className={`leaflet-map-root ${
+        routeMode ? "is-routing" : ""
+      }`}
+    >
       <MapContainer
         center={start}
         zoom={15}
@@ -187,7 +232,13 @@ export default function LeafletMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        <MapController routeCoords={roadCoordinates} routeMode={routeMode} />
+
+        <MapController
+          routeCoords={roadCoordinates}
+          routeMode={routeMode}
+        />
+
+        {/* Starting location marker */}
         <CircleMarker
           center={start}
           radius={8}
@@ -198,31 +249,53 @@ export default function LeafletMap({
             fillOpacity: 1,
           }}
         >
-        <div className="popup-stall-availability">
-          <strong>
-            {s.availableStalls} of {s.totalStalls} stalls available
-          </strong>
-        </div>
+          <Popup>
+            <div className="station-popup">
+              <strong>Your starting location</strong>
+              <span>Doha, Qatar</span>
+            </div>
+          </Popup>
         </CircleMarker>
-        
+
+        {/* Charging station markers */}
         {stations.map((station) => (
           <Marker
             key={station.id}
             position={[station.lat, station.lng]}
-            icon={stationIcon(station, selectedId === station.id)}
-            eventHandlers={{ click: () => onSelect(station.id) }}
+            icon={stationIcon(
+              station,
+              selectedId === station.id
+            )}
+            eventHandlers={{
+              click: () => onSelect(station.id),
+            }}
           >
             <Popup>
               <div className="station-popup">
                 <strong>{station.name}</strong>
+
                 <span>{station.address}</span>
+
                 <span>
                   {station.power != null
                     ? `${station.power} kW`
                     : "Power not specified"}
                 </span>
-                <span>Status: {station.status}</span>
-                <button onClick={() => onSelect(station.id)}>
+
+                <span>
+                  Status: {station.status}
+                </span>
+
+                <div className="popup-stall-availability">
+                  <strong>
+                    {station.availableStalls} of{" "}
+                    {station.totalStalls} stalls available
+                  </strong>
+                </div>
+
+                <button
+                  onClick={() => onSelect(station.id)}
+                >
                   View station
                 </button>
               </div>
@@ -230,6 +303,7 @@ export default function LeafletMap({
           </Marker>
         ))}
 
+        {/* Road-following route */}
         {routeMode && roadCoordinates.length > 0 && (
           <>
             <Polyline
@@ -242,6 +316,7 @@ export default function LeafletMap({
                 lineJoin: "round",
               }}
             />
+
             <Polyline
               positions={roadCoordinates}
               pathOptions={{
@@ -258,3 +333,4 @@ export default function LeafletMap({
     </div>
   );
 }
+```
