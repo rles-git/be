@@ -771,160 +771,178 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
-                ) : panel === "details" ? (
+              ) : panel === "details" ? (
                 <div className="station-details-screen">
-                  <section className="details-section">
-                    <div className="details-section-heading">
-                      <h3>Live status per stall</h3>
-                      <span>
-                        {selected.availableStalls} OF {selected.totalStalls} AVAILABLE
-                      </span>
-                    </div>
-
-                    {selected.chargers.length > 0 ? (
-                      <div className="stall-list">
-                        {selected.chargers.map((charger) => {
-                          const status = charger.status.toLowerCase().trim();
-                          const isAvailable = status === "available";
-
-                          return (
-                            <div className="stall-card" key={charger.id}>
-                              <div className="stall-icon">
-                                <PlugZap size={20} />
-                              </div>
-
-                              <div className="stall-info">
-                                <strong>Stall {charger.stall_number}</strong>
-                                <small>
-                                  {charger.connector_type} ·{" "}
-                                  {Number(charger.power_kw).toFixed(0)} kW
-                                </small>
-                              </div>
-
-                              <span
-                                className={`stall-status ${
-                                  isAvailable ? "available" : "unavailable"
-                                }`}
-                              >
-                                {charger.status}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="details-note">
-                        No individual stalls have been added for this station yet.
-                      </p>
-                    )}
-                  </section>
-
-                  <section className="details-section">
-                    <h3>Connector information</h3>
-                    <div className="connector-card">
-                      <span className="connector-icon">
-                        <PlugZap size={21} />
-                      </span>
-                      <div>
-                        <strong>{selected.kind}</strong>
-                        <small>
-                          {selected.kind === "DC fast"
-                            ? "DC fast charging"
-                            : "AC charging"}
-                        </small>
-                      </div>
-                      <div className="connector-power">
-                        <strong>{getPowerLabel(selected)}</strong>
-                        <small>Reported maximum</small>
-                      </div>
-                    </div>
-                    <p className="details-note">
-                      Connector classification is inferred from the connector
-                      type stored in your database. Verify the actual connector
-                      before travelling.
-                    </p>
-                  </section>
-
-                  <section className="details-section">
-                    <h3>Wayfinding instructions</h3>
-                    <div className="wayfinding-list">
-                      <div>
-                        <span>1</span>
-                        <div>
-                          <strong>Navigate to the location</strong>
-                          <p>Follow the route to {selected.shortName}.</p>
-                        </div>
-                      </div>
-                      <div>
-                        <span>2</span>
-                        <div>
-                          <strong>Find the charging area</strong>
-                          <p>
-                            Follow on-site parking and EV charging signs to
-                            locate the charging bays.
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <span>3</span>
-                        <div>
-                          <strong>Verify the charger</strong>
-                          <p>
-                            Check the charger display and connector before
-                            connecting your vehicle.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <button className="primary-button" onClick={openRoute}>
-                      <Navigation size={18} /> Get Directions
-                    </button>
-                  </section>
-
-                  <section className="details-section">
-                    <h3>Station record</h3>
-                    <div className="operating-card">
-                      <span className="operating-icon">
-                        <History size={20} />
-                      </span>
-                      <div>
-                        <strong>{selected.id}</strong>
-                        <p>{selected.address}</p>
-                        <small>
-                          {selected.operator
-                            ? `Operator: ${selected.operator}`
-                            : "Operator not specified"}
-                        </small>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="details-section">
-                    <div className="details-section-heading">
-                      <h3>User check-ins</h3>
-                      <span>COMMUNITY</span>
-                    </div>
-                    <div className="community-card">
-                      <div className="community-avatar">EV</div>
-                      <div>
-                        <strong>Driver check-in</strong>
-                        <small>Community feature preview</small>
-                        <p>
-                          Check the bay markings and connector before charging.
-                        </p>
-                      </div>
-                    </div>
+                  <header className="details-header">
                     <button
-                      className="secondary-button"
-                      onClick={() =>
-                        notify("Community check-ins are not connected yet.")
-                      }
+                      className="details-back"
+                      onClick={() => setPanel("station")}
+                      aria-label="Back to station"
                     >
-                      <Check size={18} /> Check in at this station
+                      <ChevronRight
+                        size={21}
+                        style={{ transform: "rotate(180deg)" }}
+                      />
                     </button>
-                  </section>
+                    <div>
+                      <small>STATION INFORMATION</small>
+                      <h2>{selected.shortName}</h2>
+                    </div>
+                    <span className="details-live-dot" />
+                  </header>
 
-                  <div className="details-bottom-space" />
+                  <div className="details-scroll">
+                    <div className="details-location-card">
+                      <div className="details-location-icon">
+                        <Zap size={25} />
+                      </div>
+                      <div>
+                        <span className="details-eyebrow">
+                          BE-ELECTRIC NETWORK
+                        </span>
+                        <h3>{selected.name}</h3>
+                        <p>{selected.address}</p>
+                      </div>
+                      <span className="details-open-badge">
+                        {selected.status}
+                      </span>
+                    </div>
+
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>Charging overview</h3>
+                        <span>DATABASE DATA</span>
+                      </div>
+                      <div className="details-stats">
+                        <div>
+                          <Zap size={18} />
+                          <small>Max power</small>
+                          <strong>{getPowerLabel(selected)}</strong>
+                        </div>
+                        <div>
+                          <PlugZap size={18} />
+                          <small>Available</small>
+                          <strong>{getAvailabilityLabel(selected)}</strong>
+                        </div>
+                        <div>
+                          <Activity size={18} />
+                          <small>Energy price</small>
+                          <strong>{getPriceLabel(selected)}</strong>
+                        </div>
+                      </div>
+                      <p className="details-note">
+                        {getStatusLabel(selected.status)}. A database status
+                        is not necessarily a live charger status.
+                      </p>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Connector information</h3>
+                      <div className="connector-card">
+                        <span className="connector-icon">
+                          <PlugZap size={21} />
+                        </span>
+                        <div>
+                          <strong>{selected.kind}</strong>
+                          <small>
+                            {selected.kind === "DC fast"
+                              ? "DC fast charging"
+                              : "AC charging"}
+                          </small>
+                        </div>
+                        <div className="connector-power">
+                          <strong>{getPowerLabel(selected)}</strong>
+                          <small>Reported maximum</small>
+                        </div>
+                      </div>
+                      <p className="details-note">
+                        Connector classification is inferred from the
+                        connector type stored in your database. Verify the
+                        actual connector before travelling.
+                      </p>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Wayfinding instructions</h3>
+                      <div className="wayfinding-list">
+                        <div>
+                          <span>1</span>
+                          <div>
+                            <strong>Navigate to the location</strong>
+                            <p>Follow the route to {selected.shortName}.</p>
+                          </div>
+                        </div>
+                        <div>
+                          <span>2</span>
+                          <div>
+                            <strong>Find the charging area</strong>
+                            <p>
+                              Follow on-site parking and EV charging signs
+                              to locate the charging bays.
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <span>3</span>
+                          <div>
+                            <strong>Verify the charger</strong>
+                            <p>
+                              Check the charger display and connector
+                              before connecting your vehicle.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <button className="primary-button" onClick={openRoute}>
+                        <Navigation size={18} /> Get Directions
+                      </button>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Station record</h3>
+                      <div className="operating-card">
+                        <span className="operating-icon">
+                          <History size={20} />
+                        </span>
+                        <div>
+                          <strong>{selected.id}</strong>
+                          <p>{selected.address}</p>
+                          <small>
+                            {selected.operator
+                              ? `Operator: ${selected.operator}`
+                              : "Operator not specified"}
+                          </small>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>User check-ins</h3>
+                        <span>COMMUNITY</span>
+                      </div>
+                      <div className="community-card">
+                        <div className="community-avatar">EV</div>
+                        <div>
+                          <strong>Driver check-in</strong>
+                          <small>Community feature preview</small>
+                          <p>
+                            Check the bay markings and connector before
+                            charging.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        className="secondary-button"
+                        onClick={() =>
+                          notify("Community check-ins are not connected yet.")
+                        }
+                      >
+                        <Check size={18} /> Check in at this station
+                      </button>
+                    </section>
+                    <div className="details-bottom-space" />
+                  </div>
                 </div>
               ) : panel === "station" ? (
                 <div
