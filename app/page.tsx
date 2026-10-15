@@ -679,7 +679,7 @@ export default function Home() {
                   style={{
                     bottom:
                       panel === "route"
-                        ? "calc(var(--route-sheet-height, 300px) + 16px)"
+                        ? "calc(var(--route-sheet-height, 300px) + 40px)"
                         : panel === "details"
                           ? "240px"
                           : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
