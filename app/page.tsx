@@ -674,7 +674,17 @@ export default function Home() {
                   </>
                 )}
 
-                <div className="map-tools">
+                <div
+                  className="map-tools"
+                  style={{
+                    bottom:
+                      panel === "route"
+                        ? "calc(var(--route-sheet-height, 300px) + 16px)"
+                        : panel === "details"
+                          ? "240px"
+                          : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
+                  }}
+                >
                   <button
                     className="tool-button"
                     onClick={() => setLayersOpen(!layersOpen)}
