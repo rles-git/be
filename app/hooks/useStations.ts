@@ -34,6 +34,7 @@ export type MapStation = {
   operator: string | null;
 };
 
+
 export const mapStations = (
   rows: DatabaseStation[]
 ): MapStation[] =>
@@ -56,7 +57,9 @@ export const mapStations = (
     distance: "",
     minutes: 0,
     status: station.status,
+    operator: station.operator ?? null,
   }));
+
 
 export function useStations() {
   const [stations, setStations] = useState<MapStation[]>([]);
