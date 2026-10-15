@@ -41,7 +41,7 @@ export const mapStations = (
     id: station.id,
     name: station.name,
     shortName: station.name,
-    address: station.address ?? station.area ?? "Address unavailable",
+    address: station.address ?? "Address unavailable",
     lat: Number(station.latitude),
     lng: Number(station.longitude),
     plugs: null,
