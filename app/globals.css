@@ -486,7 +486,7 @@ button { cursor: pointer; }
 .map-tools {
   position: absolute;
   right: 16px;
-  z-index: 20;
+  z-index: 5;
   display: grid;
   gap: 8px;
   transition: bottom 0.18s ease-out;
