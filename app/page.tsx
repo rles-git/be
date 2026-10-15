@@ -925,7 +925,7 @@ export default function Home() {
                     </section>
                     <div className="details-bottom-space" />
                   </div>
-                </div>
+
               ) : panel === "station" ? (
                 <div
                   className={`station-sheet ${
