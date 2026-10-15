@@ -15,6 +15,7 @@
     "react-dom": "^18.3.1",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1"
+    "@neondatabase/serverless": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
