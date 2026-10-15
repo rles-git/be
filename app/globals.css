@@ -636,7 +636,6 @@ button { cursor: pointer; }
   height: 68px;
   position: absolute;
   z-index: 12;
-  bottom: 17px;
   left: 0;
   right: 0;
   background: #fff;
