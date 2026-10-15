@@ -772,7 +772,7 @@ export default function Home() {
                   </div>
                 </div>
                 ) : panel === "details" ? (
-                <div className="details-panel">
+                <div className="station-details-screen">
                   <section className="details-section">
                     <div className="details-section-heading">
                       <h3>Live status per stall</h3>
