@@ -59,31 +59,42 @@ export type MapStation = {
 export const mapStations = (
   rows: DatabaseStation[]
 ): MapStation[] =>
-  rows.map((station) => ({
-    id: String(station.id),
-    name: station.name,
-    shortName: station.shortName || station.name,
-    address: station.address ?? "Address unavailable",
-    lat: Number(station.lat),
-    lng: Number(station.lng),
-    plugs: station.plugs,
-    available: station.available,
-    power: station.power,
-    price: station.price,
-    kind: station.kind,
-    distance: station.distance ?? "",
-    minutes: station.minutes ?? 0,
-    status:
-      station.available === 0
-        ? "offline"
-        : station.available != null && station.available > 0
-          ? "online"
-          : "unknown",
-    operator: null,
-    chargers: station.chargers ?? [],
-    availableStalls: Number(station.availableStalls ?? 0),
-    totalStalls: Number(station.totalStalls ?? 0),
-  }));
+  rows.map((station) => {
+    const available = Number(station.available);
+    const plugs = Number(station.plugs);
+    const power = Number(station.power);
+    const price = Number(station.price);
+
+    return {
+      id: String(station.id),
+      name: station.name,
+      shortName: station.shortName || station.name,
+      address: station.address ?? "Address unavailable",
+      lat: Number(station.lat),
+      lng: Number(station.lng),
+      plugs: Number.isFinite(plugs) ? plugs : null,
+      available: Number.isFinite(available) ? available : null,
+      power: Number.isFinite(power) ? power : null,
+      price: Number.isFinite(price) ? price : null,
+      kind: station.kind === "AC" ? "AC" : "DC fast",
+      distance: station.distance ?? "",
+      minutes: Number(station.minutes) || 0,
+      status:
+        available === 0
+          ? "offline"
+          : available > 0
+            ? "online"
+            : "unknown",
+      operator: null,
+      chargers: (station.chargers ?? []).map((charger) => ({
+        ...charger,
+        id: Number(charger.id),
+        power_kw: Number(charger.power_kw),
+      })),
+      availableStalls: Number(station.availableStalls) || 0,
+      totalStalls: Number(station.totalStalls) || 0,
+    };
+  });
 
 
 export function useStations() {
