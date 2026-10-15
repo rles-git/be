@@ -1775,7 +1775,7 @@ button { cursor: pointer; }
   }
 
   .chooser-sheet {
-    padding-bottom: calc(31px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     max-height: 90%;
     overflow-y: auto;
   }
