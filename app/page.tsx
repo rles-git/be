@@ -1485,11 +1485,7 @@ export default function Home() {
                 </button>
               ))}
             </nav>
-
-            <div className="home-indicator">
-              <span />
-            </div>
-
+            
             {message && <div className="toast">{message}</div>}
           </div>
         </div>
