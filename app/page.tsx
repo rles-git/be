@@ -924,7 +924,7 @@ export default function Home() {
                       <div>
                         <Activity size={18} />
                         <small>Energy price</small>
-                        <strong>${selected.price.toFixed(2)}/kWh</strong>
+                        <strong>QAR{selected.price.toFixed(2)}/kWh</strong>
                       </div>
                     </div>
                   </section>
