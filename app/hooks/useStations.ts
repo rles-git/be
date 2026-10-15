@@ -4,22 +4,32 @@
 import { useEffect, useState } from "react";
 
 
-export type DatabaseStation = {
-  id: string;
-  name: string;
-  shortName: string;
-  address: string | null;
-  lat: number;
-  lng: number;
-  plugs: number | null;
-  available: number | null;
-  power: number | null;
-  price: number | null;
-  kind: "DC fast" | "AC";
-  distance: string | null;
-  minutes: number | null;
+export type ChargerStall = {
+  id: number;
+  stall_number: string;
+  connector_type: string;
+  power_kw: number;
+  status: string;
 };
 
+export type DatabaseStation = {
+  id: number | string;
+  name: string;
+  shortName: string;
+  address: string;
+  lat: number | string;
+  lng: number | string;
+  plugs: number;
+  available: number;
+  power: number | string;
+  price: number | string;
+  kind: string;
+  distance: string;
+  minutes: number;
+  chargers: ChargerStall[];
+  availableStalls: number | string;
+  totalStalls: number | string;
+};
 
 
 export type MapStation = {
