@@ -48,6 +48,9 @@ export type MapStation = {
   minutes: number;
   status: string;
   operator: string | null;
+  chargers: ChargerStall[];
+  availableStalls: number;
+  totalStalls: number;
 };
 
 
@@ -77,6 +80,9 @@ export const mapStations = (
           ? "online"
           : "unknown",
     operator: null,
+    chargers: station.chargers ?? [],
+    availableStalls: Number(station.availableStalls ?? 0),
+    totalStalls: Number(station.totalStalls ?? 0),
   }));
 
 
