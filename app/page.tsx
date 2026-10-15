@@ -757,7 +757,7 @@ export default function Home() {
                         ● {selected.available} of {selected.plugs} available
                       </span>
                       <small>
-                        {selected.power} kW · $
+                        {selected.power} kW · QAR
                         {selected.price.toFixed(2)}/kWh
                       </small>
                     </div>
