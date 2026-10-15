@@ -1,4 +1,4 @@
-
+```tsx
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
@@ -22,7 +22,7 @@ export async function GET() {
       SELECT
         id,
         name,
-        "shortName" AS "shortName",
+        short_name AS "shortName",
         address,
         lat,
         lng,
@@ -34,7 +34,7 @@ export async function GET() {
         distance,
         minutes
       FROM stations
-      ORDER BY name
+      ORDER BY id ASC
     `;
 
     return NextResponse.json(stations);
@@ -47,3 +47,4 @@ export async function GET() {
     );
   }
 }
+```
