@@ -206,7 +206,7 @@ export default function LeafletMap({
               <div className="station-popup">
                 <strong>{station.name}</strong>
                 <span>{station.available} of {station.plugs} plugs available</span>
-                <span>{station.power} kW · ${station.price.toFixed(2)}/kWh</span>
+                <span>{station.power} kW · QAR{station.price.toFixed(2)}/kWh</span>
                 <button onClick={() => onSelect(station.id)}>View station</button>
               </div>
             </Popup>
