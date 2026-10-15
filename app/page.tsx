@@ -942,7 +942,7 @@ export default function Home() {
                       <Navigation size={18} /> Get Directions
                     </button>
                     <button className="secondary-button" onClick={openRoute}>
-                      <book-open-text size={18} /> More Details
+                      <BookOpenText size={18} /> More Details
                     </button>
 
                     <button
