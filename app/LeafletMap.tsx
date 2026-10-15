@@ -200,6 +200,7 @@ export default function LeafletMap({
         >
           <Popup><strong>Your Location</strong></Popup>
         </CircleMarker>
+        
         {stations.map((station) => (
           <Marker
             key={station.id}
@@ -210,13 +211,21 @@ export default function LeafletMap({
             <Popup>
               <div className="station-popup">
                 <strong>{station.name}</strong>
-                <span>{station.available} of {station.plugs} plugs available</span>
-                <span>{station.power} kW · QAR{station.price.toFixed(2)}/kWh</span>
-                <button onClick={() => onSelect(station.id)}>View station</button>
+                <span>{station.address}</span>
+                <span>
+                  {station.power != null
+                    ? `${station.power} kW`
+                    : "Power not specified"}
+                </span>
+                <span>Status: {station.status}</span>
+                <button onClick={() => onSelect(station.id)}>
+                  View station
+                </button>
               </div>
             </Popup>
           </Marker>
         ))}
+
         {routeMode && roadCoordinates.length > 0 && (
           <>
             <Polyline
