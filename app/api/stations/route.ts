@@ -17,7 +17,6 @@ export async function GET() {
         id,
         name,
         address,
-        area,
         latitude,
         longitude,
         status,
