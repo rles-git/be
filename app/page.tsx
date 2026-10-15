@@ -577,8 +577,10 @@ export default function Home() {
       <section className="emulator-column">
         <div className="phone-frame">
           <div className="phone-screen">
-            {activeTab === "Explore" ? (
-              <div className="map-screen">
+            <div
+              className="map-screen"
+              style={{ display: activeTab === "Explore" ? "block" : "none" }}
+            >
                 <LeafletMap
                   stations={filtered}
                   selectedId={selectedId}
@@ -989,8 +991,9 @@ export default function Home() {
                     </button>
                   </div>
                 )}
-              </div>
-            ) : (
+            </div>
+
+            {activeTab !== "Explore" && (
               <div className="other-tab-screen">
                 {activeTab === "Saved" && (
                   <>
@@ -1199,10 +1202,13 @@ export default function Home() {
                   key={item.name}
                   className={activeTab === item.name ? "active" : ""}
                   onClick={() => {
+                    // Keep the map and route state intact when switching tabs.
+                    // The map is hidden, not unmounted, so the route is still there
+                    // when the user returns to Explore.
                     setActiveTab(item.name);
-                    setPanel(null);
-                    setRouteMode(false);
-                    setSheetDragY(0);
+                    if (item.name === "Explore") {
+                      window.dispatchEvent(new Event("be-electric-map-visible"));
+                    }
                   }}
                 >
                   {item.icon}
