@@ -198,11 +198,11 @@ export default function LeafletMap({
             fillOpacity: 1,
           }}
         >
-          <div className="popup-stall-availability">
-            <strong>
-              {station.availableStalls} of {station.totalStalls} stalls available
-            </strong>
-          </div>
+        <div className="popup-stall-availability">
+          <strong>
+            {s.availableStalls} of {s.totalStalls} stalls available
+          </strong>
+        </div>
         </CircleMarker>
         
         {stations.map((station) => (
