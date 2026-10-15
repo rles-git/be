@@ -2218,3 +2218,26 @@ button { cursor: pointer; }
   height: 20px;
   flex-shrink: 0;
 }
+.route-top-card {
+  position: relative;
+}
+
+.cancel-route-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e5e7e5;
+  border-radius: 50%;
+  background: #fff;
+  color: #303630;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.cancel-route-button:hover {
+  background: #f1f3f0;
+}
