@@ -4,6 +4,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
+  BookOpenText,
   Activity,
   Bookmark,
   Check,
