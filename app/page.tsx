@@ -772,69 +772,51 @@ export default function Home() {
                   </div>
                 </div>
               ) : panel === "details" ? (
-                <div className="station-details-screen">
-                  <header className="details-header">
-                    <button
-                      className="details-back"
-                      onClick={() => setPanel("station")}
-                      aria-label="Back to station"
-                    >
-                      <ChevronRight
-                        size={21}
-                        style={{ transform: "rotate(180deg)" }}
-                      />
-                    </button>
-                    <div>
-                      <small>STATION INFORMATION</small>
-                      <h2>{selected.shortName}</h2>
-                    </div>
-                    <span className="details-live-dot" />
-                  </header>
-
-                  <div className="details-scroll">
-                    <div className="details-location-card">
-                      <div className="details-location-icon">
-                        <Zap size={25} />
-                      </div>
-                      <div>
-                        <span className="details-eyebrow">
-                          BE-ELECTRIC NETWORK
-                        </span>
-                        <h3>{selected.name}</h3>
-                        <p>{selected.address}</p>
-                      </div>
-                      <span className="details-open-badge">
-                        {selected.status}
+                <section className="details-section">
+                    <div className="details-section-heading">
+                      <h3>Live status per stall</h3>
+                      <span>
+                        {selected.availableStalls} OF {selected.totalStalls} AVAILABLE
                       </span>
                     </div>
-
-                    <section className="details-section">
-                      <div className="details-section-heading">
-                        <h3>Charging overview</h3>
-                        <span>DATABASE DATA</span>
+                  
+                    {selected.chargers.length > 0 ? (
+                      <div className="stall-list">
+                        {selected.chargers.map((charger) => {
+                          const status = charger.status.toLowerCase().trim();
+                          const isAvailable = status === "available";
+                  
+                          return (
+                            <div className="stall-card" key={charger.id}>
+                              <div className="stall-icon">
+                                <PlugZap size={20} />
+                              </div>
+                  
+                              <div className="stall-info">
+                                <strong>Stall {charger.stall_number}</strong>
+                                <small>
+                                  {charger.connector_type} ·{" "}
+                                  {Number(charger.power_kw).toFixed(0)} kW
+                                </small>
+                              </div>
+                  
+                              <span
+                                className={`stall-status ${
+                                  isAvailable ? "available" : "unavailable"
+                                }`}
+                              >
+                                {charger.status}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="details-stats">
-                        <div>
-                          <Zap size={18} />
-                          <small>Max power</small>
-                          <strong>{getPowerLabel(selected)}</strong>
-                        </div>
-                        <div>
-                          <PlugZap size={18} />
-                          <small>Available</small>
-                          <strong>{getAvailabilityLabel(selected)}</strong>
-                        </div>
-                        <div>
-                          <Activity size={18} />
-                          <small>Energy price</small>
-                          <strong>{getPriceLabel(selected)}</strong>
-                        </div>
-                      </div>
+                    ) : (
                       <p className="details-note">
-                        {getStatusLabel(selected.status)}. A database status
-                        is not necessarily a live charger status.
+                        No individual stalls have been added for this station yet.
                       </p>
-                    </section>
+                    )}
+                  </section>
 
                     <section className="details-section">
                       <h3>Connector information</h3>
