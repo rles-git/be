@@ -1830,3 +1830,380 @@ button { cursor: pointer; }
 .sheet-dragging {
   transition: none !important;
 }
+
+/* Full-screen station details */
+.station-details-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8f9f7;
+  color: #202720;
+}
+
+.details-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 15px;
+  background: #fff;
+  border-bottom: 1px solid #e8ebe6;
+}
+
+.details-back {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid #e5e8e2;
+  border-radius: 12px;
+  background: #fff;
+  color: #26352a;
+}
+
+.details-header > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.details-header small,
+.details-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #788378;
+}
+
+.details-header h2 {
+  margin: 3px 0 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.details-live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #91a795;
+}
+
+.details-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 15px;
+  padding-bottom: 30px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.details-location-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 15px;
+  border: 1px solid #e7ebe5;
+  border-radius: 17px;
+  background: #fff;
+}
+
+.details-location-icon,
+.connector-icon,
+.operating-icon {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: #edf2ec;
+  color: #58715d;
+}
+
+.details-location-card > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.details-location-card h3 {
+  margin: 5px 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.details-location-card p,
+.operating-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #777f76;
+}
+
+.details-open-badge {
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: #e9f4e9;
+  color: #397449;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.details-section {
+  margin-top: 22px;
+}
+
+.details-section > h3,
+.details-section-heading h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.details-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.details-section-heading > span {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .6px;
+  color: #7c887b;
+}
+
+.details-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.details-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 9px;
+  border: 1px solid #e7ebe5;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.details-stats svg {
+  color: #65816a;
+}
+
+.details-stats small,
+.connector-power small {
+  font-size: 10px;
+  color: #778076;
+}
+
+.details-stats strong {
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.connector-card,
+.operating-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #e7ebe5;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.connector-card > div:nth-child(2),
+.operating-card > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.connector-card strong,
+.operating-card strong,
+.community-card strong {
+  font-size: 13px;
+}
+
+.connector-card small,
+.community-card small {
+  font-size: 10px;
+  color: #7b8379;
+}
+
+.connector-power {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.details-note {
+  margin: 9px 2px 0;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #7b8379;
+}
+
+.stall-list {
+  overflow: hidden;
+  border: 1px solid #e7ebe5;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stall-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #edf0eb;
+}
+
+.stall-row:last-child {
+  border-bottom: 0;
+}
+
+.stall-number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.stall-number svg {
+  color: #758674;
+}
+
+.stall-row > small {
+  grid-column: 1 / -1;
+  padding-left: 26px;
+  font-size: 10px;
+  color: #7b8379;
+}
+
+.stall-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.stall-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.stall-available {
+  color: #39814d;
+}
+
+.stall-in-use {
+  color: #a87622;
+}
+
+.stall-offline {
+  color: #b34e48;
+}
+
+.wayfinding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.wayfinding-list > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.wayfinding-list > div > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e8eee7;
+  color: #47634d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wayfinding-list strong {
+  font-size: 12px;
+}
+
+.wayfinding-list p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #737c72;
+}
+
+.community-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 13px;
+  border: 1px solid #e7ebe5;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.community-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eaf0e8;
+  color: #527057;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.community-card > div:last-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.community-card p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #697267;
+}
+
+.station-details-screen .primary-button,
+.station-details-screen .secondary-button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.details-bottom-space {
+  height: 20px;
+  flex-shrink: 0;
+}
