@@ -13,7 +13,6 @@ export type DatabaseStation = {
   status: string;
   power_kw: number | null;
   connector_type: string | null;
-  operator: string | null;
 };
 
 export type MapStation = {
