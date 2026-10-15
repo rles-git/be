@@ -1447,7 +1447,7 @@ button { cursor: pointer; }
 
 .toast {
   position: absolute;
-  z-index: 20;
+  z-index: 1201;
   left: 50%;
   bottom: 95px;
   transform: translateX(-50%);
