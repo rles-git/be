@@ -1717,7 +1717,7 @@ button { cursor: pointer; }
   }
 
   .bottom-nav {
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    bottom:0px
   }
 
   .map-bottom-content {
