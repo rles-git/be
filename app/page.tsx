@@ -868,14 +868,11 @@ export default function Home() {
                   </div>
                 ) : panel === "station" ? (
                   <div
-                    className={`station-sheet ${
-                      sheetDragging ? "sheet-dragging" : ""
-                    }`}
+                    className={`station-sheet ${sheetDragging ? "sheet-dragging" : ""}`}
                     style={{
-                      transform: `translateY(${sheetDragY}px)`,
-                      transition: sheetDragging
-                        ? "none"
-                        : "transform 180ms ease-out",
+                      // Capped between 0px (cannot pull up beyond resting height) and 350px max down
+                      transform: `translateY(${Math.min(Math.max(sheetDragY, 0), 350)}px)`,
+                      transition: sheetDragging ? "none" : "transform 180ms ease-out",
                     }}
                   >
                     <div
