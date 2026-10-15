@@ -97,8 +97,10 @@ function getAvailabilityLabel(station: MapStation) {
 }
 
 function getPriceLabel(station: MapStation) {
-  return station.price != null
-    ? `QAR${station.price.toFixed(2)}/kWh`
+  const price = Number(station.price);
+
+  return station.price != null && Number.isFinite(price)
+    ? `QAR ${price.toFixed(2)}/kWh`
     : "Price unavailable";
 }
 
