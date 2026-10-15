@@ -1198,7 +1198,7 @@ export default function Home() {
 
                       <div>
                         <small>ENERGY PRICE</small>
-                        <b>${selected.price.toFixed(2)} /kWh</b>
+                        <b>QAR{selected.price.toFixed(2)} /kWh</b>
                         <span>Open 24/7</span>
                       </div>
                     </div>
