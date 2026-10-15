@@ -2220,3 +2220,74 @@ button { cursor: pointer; }
 .cancel-route-button:hover {
   background: #f1f3f0;
 }
+
+
+.stall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stall-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #e8eae7;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stall-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #247b50;
+  background: #edf7f0;
+  border-radius: 12px;
+}
+
+.stall-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stall-info strong {
+  font-size: 13px;
+  color: #202521;
+}
+
+.stall-info small {
+  font-size: 11px;
+  color: #777e78;
+}
+
+.stall-status {
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.stall-status.available {
+  color: #207346;
+  background: #e8f6ed;
+}
+
+.stall-status.unavailable {
+  color: #8b5c27;
+  background: #fff1df;
+}
+
+.popup-stall-availability {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #247b50;
+}
