@@ -1897,12 +1897,13 @@ button { cursor: pointer; }
 .station-details-screen {
   position: absolute;
   inset: 0;
-  z-index: 1202;
+  z-index: 1200;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: #f8f9f7;
   color: #202720;
+  pointer-events: auto;
 }
 
 .details-header {
