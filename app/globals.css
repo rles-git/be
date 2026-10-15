@@ -1726,7 +1726,6 @@ button { cursor: pointer; }
   }
 
   .station-sheet {
-    top:20px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -1736,7 +1735,6 @@ button { cursor: pointer; }
   }
 
   .route-bottom-sheet {
-    top:20px;
     bottom: 0;
     left: 0;
     right: 0;
