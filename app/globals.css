@@ -494,7 +494,7 @@ button { cursor: pointer; }
 
 /* Keep the Locate Me button stationary on full-screen details */
 .station-details-screen ~ .map-tools {
-  bottom: 240px;
+  bottom: 280px;
 }
 
 
