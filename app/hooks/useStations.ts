@@ -22,6 +22,27 @@ export type DatabaseStation = {
 
 
 
+export type MapStation = {
+  id: string;
+  name: string;
+  shortName: string;
+  address: string;
+  lat: number;
+  lng: number;
+  plugs: number | null;
+  available: number | null;
+  power: number | null;
+  price: number | null;
+  kind: "DC fast" | "AC";
+  distance: string;
+  minutes: number;
+  status: string;
+  operator: string | null;
+};
+
+
+
+
 export const mapStations = (
   rows: DatabaseStation[]
 ): MapStation[] =>
@@ -46,33 +67,6 @@ export const mapStations = (
           ? "online"
           : "unknown",
     operator: null,
-  }));
-
-
-
-export const mapStations = (
-  rows: DatabaseStation[]
-): MapStation[] =>
-  rows.map((station) => ({
-    id: station.id,
-    name: station.name,
-    shortName: station.name,
-    address: station.address ?? "Address unavailable",
-    lat: Number(station.latitude),
-    lng: Number(station.longitude),
-    plugs: null,
-    available: null,
-    power: station.power_kw,
-    price: null,
-    kind:
-      station.connector_type?.toUpperCase().includes("CCS") ||
-      station.connector_type?.toUpperCase().includes("CHADEMO")
-        ? "DC fast"
-        : "AC",
-    distance: "",
-    minutes: 0,
-    status: station.status,
-    operator: station.operator ?? null,
   }));
 
 
