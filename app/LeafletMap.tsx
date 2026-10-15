@@ -16,25 +16,30 @@ import "leaflet/dist/leaflet.css";
 type Station = {
   lat: number;
   lng: number;
-  id: number;
+  id: string;
   name: string;
   shortName: string;
   address: string;
-  plugs: number;
-  available: number;
-  power: number;
-  price: number;
+  plugs: number | null;
+  available: number | null;
+  power: number | null;
+  price: number | null;
   kind: "DC fast" | "AC";
   distance: string;
   minutes: number;
+  status: string;
 };
+
 
 type Props = {
   stations: Station[];
-  selectedId: number;
+  selectedId: string;
   routeMode: boolean;
-  onSelect: (id: number) => void;
-  onRouteCalculated?: (metrics: { distance: string; minutes: number }) => void;
+  onSelect: (id: string) => void;
+  onRouteCalculated?: (metrics: {
+    distance: string;
+    minutes: number;
+  }) => void;
 };
 
 const start: [number, number] = [25.25443628041169, 51.47908688248179];
