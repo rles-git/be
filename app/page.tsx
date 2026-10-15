@@ -653,11 +653,26 @@ export default function Home() {
 
                 {panel === "route" && (
                   <div className="route-top-card">
+                    <button
+                      className="cancel-route-button"
+                      onClick={() => {
+                        setRouteMode(false);
+                        setCalculatedRoute(null);
+                        setSheetDragY(0);
+                        setPanel("station");
+                        notify("Navigation cancelled.");
+                      }}
+                      aria-label="Cancel navigation"
+                      title="Cancel navigation"
+                    >
+                      <X size={18} />
+                    </button>
+                
                     <div>
                       <span className="route-origin-dot" />
                       <span>Your location · Doha, Qatar</span>
                     </div>
-
+                
                     <div>
                       <Zap size={16} />
                       <b>{selected.name}</b>
