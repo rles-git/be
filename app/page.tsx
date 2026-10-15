@@ -753,7 +753,7 @@ export default function Home() {
                     }`}
                     style={{
                       // Capped at 0px min (cannot pull above rest) and 360px max down
-                      transform: `translateY(clamp(20px, ${sheetDragY}px, 360px))`,
+                      transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
                       transition: sheetDragging ? "none" : "transform 180ms ease-out",
                     }}
                   >
