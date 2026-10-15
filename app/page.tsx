@@ -1,15 +1,19 @@
 
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
-  BookOpenText,
   Activity,
+  BookOpenText,
   Bookmark,
+  BookmarkCheck,
+  BatteryCharging,
+  CarFront,
   Check,
   ChevronRight,
   CircleDot,
+  Compass,
   Crosshair,
   History,
   Layers,
@@ -19,17 +23,14 @@ import {
   MapPin,
   Navigation,
   PlugZap,
+  Route,
   Search,
+  Settings2,
   UserRound,
   X,
   Zap,
-  CarFront,
-  Route,
-  BatteryCharging,
-  Compass,
-  Settings2,
-  BookmarkCheck,
 } from "lucide-react";
+import { useStations, type MapStation } from "./hooks/useStations";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
@@ -38,290 +39,18 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ),
 });
 
-type Station = {
-  lat: number;
-  lng: number;
-  id: number;
-  name: string;
-  shortName: string;
-  address: string;
-  plugs: number;
-  available: number;
-  power: number;
-  price: number;
-  kind: "DC fast" | "AC";
-  distance: string;
-  minutes: number;
-};
+type Tab = "Explore" | "Saved" | "Activity" | "Profile";
+type Panel = "route" | "chooser" | "station" | "details" | null;
 
 type RecentRoute = {
   id: string;
-  stationId: number;
+  stationId: string;
   stationName: string;
   address: string;
   distance: string;
   minutes: number;
   completedAt: string;
 };
-
-const stations: Station[] = [
-  {
-    id: 1,
-    name: "Souq Waqif Charging Hub",
-    shortName: "Souq Waqif",
-    address: "Souq Waqif, Doha, Qatar",
-    plugs: 8,
-    available: 5,
-    power: 150,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.2867,
-    lng: 51.5333,
-    distance: "1.2 km",
-    minutes: 4,
-  },
-  {
-    id: 2,
-    name: "Doha Corniche Charger",
-    shortName: "Doha Corniche",
-    address: "Doha Corniche, Qatar",
-    plugs: 6,
-    available: 3,
-    power: 100,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.295,
-    lng: 51.539,
-    distance: "1.8 km",
-    minutes: 6,
-  },
-  {
-    id: 3,
-    name: "Msheireb Charging Point",
-    shortName: "Msheireb",
-    address: "Msheireb Downtown, Doha, Qatar",
-    plugs: 4,
-    available: 2,
-    power: 50,
-    price: 0,
-    kind: "AC",
-    lat: 25.285,
-    lng: 51.526,
-    distance: "2.0 km",
-    minutes: 7,
-  },
-  {
-    id: 4,
-    name: "West Bay Charging Hub",
-    shortName: "West Bay",
-    address: "West Bay, Doha, Qatar",
-    plugs: 10,
-    available: 7,
-    power: 150,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.3219,
-    lng: 51.531,
-    distance: "4.5 km",
-    minutes: 12,
-  },
-  {
-    id: 5,
-    name: "Katara Charging Point",
-    shortName: "Katara",
-    address: "Katara Cultural Village, Doha, Qatar",
-    plugs: 4,
-    available: 1,
-    power: 22,
-    price: 0,
-    kind: "AC",
-    lat: 25.3615,
-    lng: 51.526,
-    distance: "8.0 km",
-    minutes: 18,
-  },
-  {
-    id: 6,
-    name: "Al Waab Nearby Charging Hub",
-    shortName: "Al Waab",
-    address: "Al Waab, Doha, Qatar",
-    plugs: 4,
-    available: 3,
-    power: 50,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.258,
-    lng: 51.482,
-    distance: "0.5 km",
-    minutes: 2,
-  },
-  {
-    id: 7,
-    name: "Salwa Road Charging Point",
-    shortName: "Salwa Road",
-    address: "Salwa Road, Doha, Qatar",
-    plugs: 6,
-    available: 4,
-    power: 100,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.2505,
-    lng: 51.486,
-    distance: "0.8 km",
-    minutes: 3,
-  },
-  {
-    id: 8,
-    name: "Abu Hamour Charging Hub",
-    shortName: "Abu Hamour",
-    address: "Abu Hamour, Doha, Qatar",
-    plugs: 4,
-    available: 2,
-    power: 22,
-    price: 0,
-    kind: "AC",
-    lat: 25.2445,
-    lng: 51.478,
-    distance: "1.2 km",
-    minutes: 4,
-  },
-  {
-    id: 9,
-    name: "Al Maamoura Charging Point",
-    shortName: "Al Maamoura",
-    address: "Al Maamoura, Doha, Qatar",
-    plugs: 4,
-    available: 3,
-    power: 50,
-    price: 0,
-    kind: "DC fast",
-    lat: 25.2465,
-    lng: 51.49,
-    distance: "1.5 km",
-    minutes: 5,
-  },
-  {
-    id: 10,
-    name: "Starting Point Charging Hub",
-    shortName: "Nearby Hub",
-    address: "Near your starting point, Doha, Qatar",
-    plugs: 2,
-    available: 1,
-    power: 22,
-    price: 0,
-    kind: "AC",
-    lat: 25.2555,
-    lng: 51.4765,
-    distance: "0.3 km",
-    minutes: 1,
-  },
-];
-
-type Tab = "Explore" | "Saved" | "Activity" | "Profile";
-type Panel = "route" | "chooser" | "station" | "details" | null;
-
-function MapArtwork({ routeMode = false }: { routeMode?: boolean }) {
-  return (
-    <svg
-      className="map-art"
-      viewBox="0 0 390 700"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      <rect width="390" height="700" fill="#f5f5f2" />
-
-      <path
-        d="M278 -20 L390 0 L390 700 L315 700 L354 430 L316 318 L274 240 Z"
-        fill="#e6e8e5"
-      />
-
-      <path
-        d="M250 0 L274 235 L305 278 L350 420 L310 700"
-        fill="none"
-        stroke="#c8cbc7"
-        strokeWidth="7"
-      />
-
-      <g stroke="#d6d8d4" strokeWidth="2.7" fill="none">
-        <path d="M-30 80 L360 470" />
-        <path d="M-20 160 L330 510" />
-        <path d="M-30 245 L290 565" />
-        <path d="M15 0 L390 375" />
-        <path d="M75 -10 L390 305" />
-        <path d="M150 -20 L390 220" />
-        <path d="M-30 350 L280 40" />
-        <path d="M-20 445 L330 95" />
-        <path d="M-30 550 L360 160" />
-        <path d="M15 660 L390 285" />
-        <path d="M95 710 L390 415" />
-        <path d="M-10 300 L390 700" />
-        <path d="M-10 410 L290 710" />
-        <path d="M90 0 L0 95" />
-        <path d="M210 0 L0 215" />
-      </g>
-
-      <g stroke="#fff" strokeWidth="5" fill="none" opacity=".9">
-        <path d="M-20 530 L130 380 L270 240 L390 120" />
-        <path d="M20 700 L155 565 L305 415 L390 330" />
-      </g>
-
-      <path
-        d="M98 420 L220 300 L275 350 L210 415 L245 447"
-        fill="none"
-        stroke="#dce2dc"
-        strokeWidth="26"
-      />
-
-      {routeMode && (
-        <path
-          d="M98 420 L170 350 L220 390 L303 305"
-          fill="none"
-          stroke="#8fa795"
-          strokeWidth="9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-
-      <g
-        fill="#7e827d"
-        fontSize="9"
-        fontFamily="Arial, sans-serif"
-        letterSpacing=".6"
-      >
-        <text x="37" y="235">WEST BAY</text>
-        <text x="36" y="555">SOMA</text>
-        <text x="116" y="365" transform="rotate(-43 116 365)">
-          SOUQ WAQIF
-        </text>
-        <text x="242" y="345" transform="rotate(-48 242 345)">
-          MSHEIREB
-        </text>
-        <text x="298" y="390" transform="rotate(70 298 390)">
-          CORNICHE
-        </text>
-        <text x="305" y="620">DOHA, QATAR</text>
-      </g>
-
-      <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
-      <circle
-        cx="98"
-        cy="420"
-        r="9"
-        fill="#91a795"
-        stroke="#fff"
-        strokeWidth="4"
-      />
-
-      <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif">
-        <text x="52" y="449">Souq Waqif</text>
-        <text x="20" y="600">Doha</text>
-      </g>
-
-      <path d="M20 610 H62" stroke="#8f938d" strokeWidth="2" />
-    </svg>
-  );
-}
 
 const START_LOCATION: [number, number] = [
   25.25443628041169,
@@ -353,8 +82,114 @@ function getDistanceKm(
   );
 }
 
+function getPowerLabel(station: MapStation) {
+  return station.power != null
+    ? `${station.power} kW`
+    : "Power unavailable";
+}
+
+function getAvailabilityLabel(station: MapStation) {
+  if (station.available == null || station.plugs == null) {
+    return "Availability unavailable";
+  }
+
+  return `${station.available} of ${station.plugs} available`;
+}
+
+function getPriceLabel(station: MapStation) {
+  return station.price != null
+    ? `QAR${station.price.toFixed(2)}/kWh`
+    : "Price unavailable";
+}
+
+function getStatusLabel(status: string) {
+  switch (status.toLowerCase()) {
+    case "online":
+      return "Available status reported";
+    case "charging":
+      return "Charging status reported";
+    case "fault":
+      return "Fault reported";
+    case "offline":
+      return "Offline status reported";
+    case "maintenance":
+      return "Maintenance reported";
+    default:
+      return "Status unverified";
+  }
+}
+
+function MapArtwork() {
+  return (
+    <svg
+      className="map-art"
+      viewBox="0 0 390 700"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <rect width="390" height="700" fill="#f5f5f2" />
+      <path
+        d="M278 -20 L390 0 L390 700 L315 700 L354 430 L316 318 L274 240 Z"
+        fill="#e6e8e5"
+      />
+      <path
+        d="M250 0 L274 235 L305 278 L350 420 L310 700"
+        fill="none"
+        stroke="#c8cbc7"
+        strokeWidth="7"
+      />
+      <g stroke="#d6d8d4" strokeWidth="2.7" fill="none">
+        <path d="M-30 80 L360 470" />
+        <path d="M-20 160 L330 510" />
+        <path d="M-30 245 L290 565" />
+        <path d="M15 0 L390 375" />
+        <path d="M75 -10 L390 305" />
+        <path d="M150 -20 L390 220" />
+        <path d="M-30 350 L280 40" />
+        <path d="M-20 445 L330 95" />
+        <path d="M-30 550 L360 160" />
+        <path d="M15 660 L390 285" />
+        <path d="M95 710 L390 415" />
+        <path d="M-10 300 L390 700" />
+        <path d="M-10 410 L290 710" />
+        <path d="M90 0 L0 95" />
+        <path d="M210 0 L0 215" />
+      </g>
+      <g stroke="#fff" strokeWidth="5" fill="none" opacity=".9">
+        <path d="M-20 530 L130 380 L270 240 L390 120" />
+        <path d="M20 700 L155 565 L305 415 L390 330" />
+      </g>
+      <g
+        fill="#7e827d"
+        fontSize="9"
+        fontFamily="Arial, sans-serif"
+        letterSpacing=".6"
+      >
+        <text x="37" y="235">WEST BAY</text>
+        <text x="36" y="555">SOMA</text>
+        <text x="305" y="620">DOHA, QATAR</text>
+      </g>
+      <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
+      <circle
+        cx="98"
+        cy="420"
+        r="9"
+        fill="#91a795"
+        stroke="#fff"
+        strokeWidth="4"
+      />
+      <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif">
+        <text x="52" y="449">Your area</text>
+        <text x="20" y="600">Doha</text>
+      </g>
+    </svg>
+  );
+}
+
 export default function Home() {
-  const [selectedId, setSelectedId] = useState(1);
+  const { stations, loading, error } = useStations();
+
+  const [selectedId, setSelectedId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
   const [panel, setPanel] = useState<Panel>(null);
   const [routeMode, setRouteMode] = useState(false);
@@ -362,7 +197,7 @@ export default function Home() {
   const [fastOnly, setFastOnly] = useState(true);
   const [acOnly, setAcOnly] = useState(false);
   const [availableOnly, setAvailableOnly] = useState(false);
-  const [saved, setSaved] = useState<number[]>([]);
+  const [saved, setSaved] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetDragY, setSheetDragY] = useState(0);
@@ -375,6 +210,14 @@ export default function Home() {
   } | null>(null);
 
   const [recentRoutes, setRecentRoutes] = useState<RecentRoute[]>([]);
+
+  useEffect(() => {
+    if (!stations.length) return;
+
+    if (!stations.some((station) => station.id === selectedId)) {
+      setSelectedId(stations[0].id);
+    }
+  }, [stations, selectedId]);
 
   function handleSheetPointerDown(
     event: React.PointerEvent<HTMLDivElement>
@@ -420,44 +263,59 @@ export default function Home() {
     );
   }
 
-  const selected = stations.find((s) => s.id === selectedId) ?? stations[0];
-
-  const activeMinutes = calculatedRoute?.minutes ?? selected.minutes;
-  const activeDistance = calculatedRoute?.distance ?? selected.distance;
-
-  // All stations matching the active filters remain on the map,
-  // including stations farther than 5 km away.
   const filtered = useMemo(
     () =>
-      stations.filter(
-        (s) =>
-          (!fastOnly || s.kind === "DC fast") &&
-          (!acOnly || s.kind === "AC") &&
-          (!availableOnly || s.available >= 2) &&
-          `${s.name} ${s.address} ${s.id}`
+      stations.filter((station) => {
+        const matchesKind =
+          (!fastOnly || station.kind === "DC fast") &&
+          (!acOnly || station.kind === "AC");
+
+        const matchesAvailability =
+          !availableOnly ||
+          (station.available != null && station.available >= 2);
+
+        const matchesSearch =
+          `${station.name} ${station.address} ${station.id} ${
+            station.operator ?? ""
+          }`
             .toLowerCase()
-            .includes(search.toLowerCase())
-      ),
-    [search, fastOnly, acOnly, availableOnly]
+            .includes(search.toLowerCase());
+
+        return matchesKind && matchesAvailability && matchesSearch;
+      }),
+    [stations, search, fastOnly, acOnly, availableOnly]
   );
 
-  // Only stations between 1 km and 5 km count as nearby.
   const nearbyStations = useMemo(
     () =>
-      filtered.filter((s) => {
+      filtered.filter((station) => {
         const distance = getDistanceKm(
           START_LOCATION[0],
           START_LOCATION[1],
-          s.lat,
-          s.lng
+          station.lat,
+          station.lng
         );
 
-        return distance >= 0 && distance <= 5;
+        return distance <= 5;
       }),
     [filtered]
   );
 
-  const savedStations = stations.filter((s) => saved.includes(s.id));
+  const savedStations = stations.filter((station) =>
+    saved.includes(station.id)
+  );
+
+  const selected = stations.find(
+    (station) => station.id === selectedId
+  );
+
+  const activeMinutes =
+    calculatedRoute?.minutes ?? selected?.minutes ?? 0;
+
+  const activeDistance =
+    calculatedRoute?.distance ??
+    selected?.distance ??
+    "Distance not calculated";
 
   function notify(text: string) {
     setMessage(text);
@@ -471,6 +329,8 @@ export default function Home() {
   }
 
   function externalMap(app: string) {
+    if (!selected) return;
+
     const destination = encodeURIComponent(
       `${selected.name}, ${selected.address}`
     );
@@ -489,8 +349,9 @@ export default function Home() {
     }
   }
 
-  // Confirm arrival and add the route to Activity.
   function handleConfirmArrival() {
+    if (!selected) return;
+
     const newRoute: RecentRoute = {
       id: `${Date.now()}-${selected.id}`,
       stationId: selected.id,
@@ -504,13 +365,47 @@ export default function Home() {
       }),
     };
 
-    setRecentRoutes((prev) => [newRoute, ...prev]);
+    setRecentRoutes((previous) => [newRoute, ...previous]);
     setRouteMode(false);
     setPanel(null);
     setSheetDragY(0);
     setCalculatedRoute(null);
 
-    notify(`Arrived at ${selected.shortName}! Saved to Activity.`);
+    notify(`Arrival recorded at ${selected.shortName}.`);
+  }
+
+  if (loading) {
+    return (
+      <main className="desktop-shell">
+        <div className="leaflet-loading">
+          Loading charging stations from Neon…
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="desktop-shell">
+        <div className="leaflet-loading">
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (stations.length === 0 || !selected) {
+    return (
+      <main className="desktop-shell">
+        <div className="leaflet-loading">
+          No charging stations found. Add station records in Neon and check
+          your API endpoint.
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -532,46 +427,39 @@ export default function Home() {
         </h1>
 
         <p>
-          A clickable prototype of your Be-Electric mobile experience.
-          Explore charging stations, preview routes, and try the interface
-          right here.
+          Explore charging stations, preview routes, and find charging
+          locations using data loaded from your station database.
         </p>
 
         <div className="intro-points">
           <div>
-            <span>
-              <MapPin size={17} />
-            </span>
+            <span><MapPin size={17} /></span>
             <div>
-              <b>Explore nearby</b>
-              <small>Search stations around Doha, Qatar.</small>
+              <b>Explore stations</b>
+              <small>Search charging locations around Qatar.</small>
             </div>
           </div>
 
           <div>
-            <span>
-              <Route size={17} />
-            </span>
+            <span><Route size={17} /></span>
             <div>
               <b>Preview your route</b>
-              <small>See a route summary before navigating.</small>
+              <small>See a road route before navigating.</small>
             </div>
           </div>
 
           <div>
-            <span>
-              <BatteryCharging size={17} />
-            </span>
+            <span><BatteryCharging size={17} /></span>
             <div>
-              <b>Check availability</b>
-              <small>Compare plugs, power, and prices.</small>
+              <b>Check station details</b>
+              <small>View stored power and reported status.</small>
             </div>
           </div>
         </div>
 
         <div className="desktop-hint">
-          <span className="hint-dot" /> Interactive demo
-          <span className="hint-divider">·</span> Sample data
+          <span className="hint-dot" /> Neon database
+          <span className="hint-divider">·</span> Station data
         </div>
       </aside>
 
@@ -580,564 +468,234 @@ export default function Home() {
           <div className="phone-screen">
             <div
               className="map-screen"
-              style={{ display: activeTab === "Explore" ? "block" : "none" }}
+              style={{
+                display: activeTab === "Explore" ? "block" : "none",
+              }}
             >
-                <LeafletMap
-                  stations={filtered}
-                  selectedId={selectedId}
-                  routeMode={routeMode}
-                  onSelect={(id: number) => {
-                    setSelectedId(id);
-                    setPanel("station");
-                    setRouteMode(false);
-                    setSheetDragY(0);
-                    setCalculatedRoute(null);
-                  }}
-                  onRouteCalculated={(metrics) =>
-                    setCalculatedRoute(metrics)
-                  }
-                />
+              <LeafletMap
+                stations={filtered}
+                selectedId={selectedId}
+                routeMode={routeMode}
+                onSelect={(id: string) => {
+                  setSelectedId(id);
+                  setPanel("station");
+                  setRouteMode(false);
+                  setSheetDragY(0);
+                  setCalculatedRoute(null);
+                }}
+                onRouteCalculated={(metrics) =>
+                  setCalculatedRoute(metrics)
+                }
+              />
 
-                {panel !== "route" && panel !== "details" && (
-                  <div className="search-wrap">
-                    <Search size={17} />
-
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search city, landmark, or charger ID"
-                      aria-label="Search chargers"
-                    />
-
-                    {search && (
-                      <button onClick={() => setSearch("")}>
-                        <X size={15} />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {panel !== "route" && panel !== "details" && (
-                  <div className="filter-row">
-                    <button
-                      className={`filter-chip ${acOnly ? "active" : ""}`}
-                      onClick={() => {
-                        setAcOnly(!acOnly);
-                        if (!acOnly) setFastOnly(false);
-                      }}
-                    >
-                      AC Charging
+              {panel !== "route" && panel !== "details" && (
+                <div className="search-wrap">
+                  <Search size={17} />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search city, landmark, or charger ID"
+                    aria-label="Search chargers"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")}>
+                      <X size={15} />
                     </button>
-
-                    <button
-                      className={`filter-chip ${fastOnly ? "active" : ""}`}
-                      onClick={() => {
-                        setFastOnly(!fastOnly);
-                        if (!fastOnly) setAcOnly(false);
-                      }}
-                    >
-                      {fastOnly && <Check size={13} />}
-                      DC Fast Charger
-                    </button>
-
-                    <button
-                      className={`filter-chip ${
-                        availableOnly ? "active" : ""
-                      }`}
-                      onClick={() => setAvailableOnly(!availableOnly)}
-                    >
-                      2+ Plugs Available
-                    </button>
-                  </div>
-                )}
-
-                {panel === "route" && (
-                  <div className="route-top-card">
-                    <button
-                      className="cancel-route-button"
-                      onClick={() => {
-                        setRouteMode(false);
-                        setCalculatedRoute(null);
-                        setSheetDragY(0);
-                        setPanel("station");
-                        notify("Navigation cancelled.");
-                      }}
-                      aria-label="Cancel navigation"
-                      title="Cancel navigation"
-                    >
-                      <X size={18} />
-                    </button>
-                
-                    <div>
-                      <span className="route-origin-dot" />
-                      <span>Your location · Doha, Qatar</span>
-                    </div>
-                
-                    <div>
-                      <Zap size={16} />
-                      <b>{selected.name}</b>
-                    </div>
-                  </div>
-                )}
-
-                {panel === "route" && routeMode && (
-                  <>
-                    <div className="route-pill">{activeMinutes} min</div>
-                    <div className="route-destination-label">
-                      {selected.shortName}
-                    </div>
-                  </>
-                )}
-
-                <div
-                  className="map-tools"
-                  style={{
-                    bottom:
-                      panel === "route"
-                        ? "calc(var(--route-sheet-height, 300px) + 64px)"
-                        : panel === "details"
-                          ? "240px"
-                          : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
-                  }}
-                >
-                  <button
-                    className="tool-button"
-                    onClick={() => setLayersOpen(!layersOpen)}
-                    aria-label="Map layers"
-                  >
-                    <Layers size={19} />
-                  </button>
-
-                  <button
-                    className="tool-button"
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new Event("be-electric-locate")
-                      );
-                      notify("Map centered on Doha, Qatar");
-                    }}
-                    aria-label="Locate me"
-                  >
-                    <Crosshair size={19} />
-                  </button>
-
-                  {layersOpen && (
-                    <div className="layers-popover">
-                      <b>Map layers</b>
-
-                      <button
-                        onClick={() => {
-                          setLayersOpen(false);
-                          notify("Standard map selected");
-                        }}
-                      >
-                        Standard <Check size={14} />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setLayersOpen(false);
-                          notify("Charging overlay enabled");
-                        }}
-                      >
-                        Charging overlay
-                      </button>
-                    </div>
                   )}
                 </div>
+              )}
 
-                {panel === "route" ? (
+              {panel !== "route" && panel !== "details" && (
+                <div className="filter-row">
+                  <button
+                    className={`filter-chip ${acOnly ? "active" : ""}`}
+                    onClick={() => {
+                      setAcOnly(!acOnly);
+                      if (!acOnly) setFastOnly(false);
+                    }}
+                  >
+                    AC Charging
+                  </button>
+
+                  <button
+                    className={`filter-chip ${fastOnly ? "active" : ""}`}
+                    onClick={() => {
+                      setFastOnly(!fastOnly);
+                      if (!fastOnly) setAcOnly(false);
+                    }}
+                  >
+                    {fastOnly && <Check size={13} />}
+                    DC Fast Charger
+                  </button>
+
+                  <button
+                    className={`filter-chip ${
+                      availableOnly ? "active" : ""
+                    }`}
+                    onClick={() => setAvailableOnly(!availableOnly)}
+                  >
+                    2+ Plugs Available
+                  </button>
+                </div>
+              )}
+
+              {panel === "route" && (
+                <div className="route-top-card">
+                  <button
+                    className="cancel-route-button"
+                    onClick={() => {
+                      setRouteMode(false);
+                      setCalculatedRoute(null);
+                      setSheetDragY(0);
+                      setPanel("station");
+                      notify("Navigation cancelled.");
+                    }}
+                    aria-label="Cancel navigation"
+                    title="Cancel navigation"
+                  >
+                    <X size={18} />
+                  </button>
+
+                  <div>
+                    <span className="route-origin-dot" />
+                    <span>Your location · Doha, Qatar</span>
+                  </div>
+
+                  <div>
+                    <Zap size={16} />
+                    <b>{selected.name}</b>
+                  </div>
+                </div>
+              )}
+
+              {panel === "route" && routeMode && (
+                <>
+                  <div className="route-pill">{activeMinutes} min</div>
+                  <div className="route-destination-label">
+                    {selected.shortName}
+                  </div>
+                </>
+              )}
+
+              <div
+                className="map-tools"
+                style={{
+                  bottom:
+                    panel === "route"
+                      ? "calc(var(--route-sheet-height, 300px) + 64px)"
+                      : panel === "details"
+                        ? "240px"
+                        : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
+                }}
+              >
+                <button
+                  className="tool-button"
+                  onClick={() => setLayersOpen(!layersOpen)}
+                  aria-label="Map layers"
+                >
+                  <Layers size={19} />
+                </button>
+
+                <button
+                  className="tool-button"
+                  onClick={() => {
+                    window.dispatchEvent(new Event("be-electric-locate"));
+                    notify("Map centered on the starting location.");
+                  }}
+                  aria-label="Locate starting point"
+                >
+                  <Crosshair size={19} />
+                </button>
+
+                {layersOpen && (
+                  <div className="layers-popover">
+                    <b>Map layers</b>
+                    <button
+                      onClick={() => {
+                        setLayersOpen(false);
+                        notify("Standard map selected.");
+                      }}
+                    >
+                      Standard <Check size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLayersOpen(false);
+                        notify("Charging overlay selected.");
+                      }}
+                    >
+                      Charging overlay
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {panel === "route" ? (
+                <div
+                  className={`route-bottom-sheet ${
+                    sheetDragging ? "sheet-dragging" : ""
+                  }`}
+                  style={{
+                    transform: `translateY(clamp(0px, ${sheetDragY}px, 105px))`,
+                    transition: sheetDragging
+                      ? "none"
+                      : "transform 180ms ease-out",
+                  }}
+                >
                   <div
-                    className={`route-bottom-sheet ${
+                    className="sheet-grabber sheet-drag-handle"
+                    onPointerDown={handleSheetPointerDown}
+                    onPointerMove={handleRouteSheetPointerMove}
+                    onPointerUp={handleRouteSheetPointerUp}
+                    onPointerCancel={handleRouteSheetPointerUp}
+                    role="separator"
+                    aria-label="Drag route details panel"
+                  />
+
+                  <div className="route-time">
+                    <strong>{activeMinutes} min</strong>
+                    <span>{activeDistance}</span>
+                    <small><CarFront size={13} /> Drive</small>
+                  </div>
+
+                  <h3>{selected.name}</h3>
+
+                  <div className="route-availability">
+                    <span>{getAvailabilityLabel(selected)}</span>
+                    <small>
+                      {getPowerLabel(selected)} · {getPriceLabel(selected)}
+                    </small>
+                  </div>
+
+                  <button
+                    className="primary-button"
+                    onClick={handleConfirmArrival}
+                  >
+                    <Check size={18} /> Confirm Arrival
+                  </button>
+
+                  <button
+                    className="sheet-back-link"
+                    onClick={() => {
+                      setSheetDragY(0);
+                      setPanel("chooser");
+                      setRouteMode(false);
+                    }}
+                  >
+                    Choose Another Service
+                  </button>
+                </div>
+              ) : panel === "chooser" ? (
+                <div className="sheet-overlay">
+                  <div
+                    className={`bottom-sheet chooser-sheet ${
                       sheetDragging ? "sheet-dragging" : ""
                     }`}
                     style={{
-                      // Capped at 0px min (cannot pull above rest) and 360px max down
                       transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
-                      transition: sheetDragging ? "none" : "transform 180ms ease-out",
-                    }}
-                  >
-                    <div
-                      className="sheet-grabber sheet-drag-handle"
-                      onPointerDown={handleSheetPointerDown}
-                      onPointerMove={handleRouteSheetPointerMove}
-                      onPointerUp={handleRouteSheetPointerUp}
-                      onPointerCancel={handleRouteSheetPointerUp}
-                      role="separator"
-                      aria-label="Drag route details panel"
-                    />
-
-                    <div className="route-time">
-                      <strong>{activeMinutes} min</strong>
-                      <span>{activeDistance}</span>
-                      <small>
-                        <CarFront size={13} /> Drive
-                      </small>
-                    </div>
-
-                    <h3>{selected.name}</h3>
-
-                    <div className="route-availability">
-                      <span>
-                        ● {selected.available} of {selected.plugs} available
-                      </span>
-                      <small>
-                        {selected.power} kW · QAR
-                        {selected.price.toFixed(2)}/kWh
-                      </small>
-                    </div>
-
-                    <button
-                      className="primary-button"
-                      onClick={handleConfirmArrival}
-                    >
-                      <Check size={18} /> Confirm Arrival
-                    </button>
-                    <button
-                      className="sheet-back-link"
-                      onClick={() => {
-                        setSheetDragY(0);
-                        setPanel("chooser");
-                        setRouteMode(false);
-                      }}
-                    >
-                      Choose Another Service
-                    </button>
-                  </div>
-                ) : panel === "chooser" ? (
-                  <div className="sheet-overlay">
-                    <div
-                      className={`bottom-sheet chooser-sheet ${
-                        sheetDragging ? "sheet-dragging" : ""
-                      }`}
-                      style={{
-                        // Capped at 0px min (cannot pull above rest) and 360px max down
-                        transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
-                        transition: sheetDragging ? "none" : "transform 180ms ease-out",
-                      }}
-                    >
-                      <div
-                        className="sheet-grabber sheet-drag-handle"
-                        onPointerDown={handleSheetPointerDown}
-                        onPointerMove={handleSheetPointerMove}
-                        onPointerUp={handleSheetPointerUp}
-                        onPointerCancel={handleSheetPointerUp}
-                        role="separator"
-                        aria-label="Drag route chooser panel"
-                      />
-
-                      <div className="sheet-title-row">
-                        <div>
-                          <h2>Choose your route</h2>
-                          <p>
-                            {selected.shortName} · {activeDistance} ·{" "}
-                            {activeMinutes} min
-                          </p>
-                        </div>
-
-                        <button
-                          className="sheet-close"
-                          onClick={() => setPanel("station")}
-                        >
-                          <X size={17} />
-                        </button>
-                      </div>
-
-                      {[
-                        {
-                          name: "Google Maps",
-                          desc: "Traffic-aware directions",
-                          icon: <MapPin size={19} />,
-                        },
-                        {
-                          name: "Apple Maps",
-                          desc: "Navigate with your iPhone",
-                          icon: <Map size={19} />,
-                        },
-                        {
-                          name: "Waze",
-                          desc: "Community-powered traffic",
-                          icon: <CarFront size={19} />,
-                        },
-                        {
-                          name: "In-App Route Preview",
-                          desc: "See the route without leaving Be-Electric",
-                          icon: <Route size={19} />,
-                        },
-                      ].map((item) => (
-                        <button
-                          key={item.name}
-                          className={`route-option ${
-                            item.name === "In-App Route Preview"
-                              ? "chosen"
-                              : ""
-                          }`}
-                          onClick={() => externalMap(item.name)}
-                        >
-                          <span className="route-option-icon">
-                            {item.icon}
-                          </span>
-
-                          <span className="route-option-copy">
-                            <b>{item.name}</b>
-                            <small>{item.desc}</small>
-                          </span>
-
-                          <ChevronRight size={18} />
-                        </button>
-                      ))}
-
-                      <p className="chooser-footnote">
-                        Your charger stays selected when you return.
-                      </p>
-                    </div>
-                  </div>
-              ) : panel === "details" ? (
-              <div className="station-details-screen">
-                <header className="details-header">
-                  <button
-                    className="details-back"
-                    onClick={() => setPanel("station")}
-                    aria-label="Back to station"
-                  >
-                    <ChevronRight
-                      size={21}
-                      style={{ transform: "rotate(180deg)" }}
-                    />
-                  </button>
-            
-                  <div>
-                    <small>STATION INFORMATION</small>
-                    <h2>{selected.shortName}</h2>
-                  </div>
-            
-                  <span className="details-live-dot" />
-                </header>
-            
-                <div className="details-scroll">
-                  <div className="details-location-card">
-                    <div className="details-location-icon">
-                      <Zap size={25} />
-                    </div>
-                    <div>
-                      <span className="details-eyebrow">BE-ELECTRIC NETWORK</span>
-                      <h3>{selected.name}</h3>
-                      <p>{selected.address}</p>
-                    </div>
-                    <span className="details-open-badge">Open</span>
-                  </div>
-            
-                  <section className="details-section">
-                    <div className="details-section-heading">
-                      <h3>Charging overview</h3>
-                      <span>DEMO DATA</span>
-                    </div>
-            
-                    <div className="details-stats">
-                      <div>
-                        <Zap size={18} />
-                        <small>Max power</small>
-                        <strong>{selected.power} kW</strong>
-                      </div>
-                      <div>
-                        <PlugZap size={18} />
-                        <small>Available</small>
-                        <strong>
-                          {selected.available}/{selected.plugs} stalls
-                        </strong>
-                      </div>
-                      <div>
-                        <Activity size={18} />
-                        <small>Energy price</small>
-                        <strong>QAR{selected.price.toFixed(2)}/kWh</strong>
-                      </div>
-                    </div>
-                  </section>
-            
-                  <section className="details-section">
-                    <h3>Connector types</h3>
-            
-                    <div className="connector-card">
-                      <span className="connector-icon">
-                        <PlugZap size={21} />
-                      </span>
-                      <div>
-                        <strong>
-                          {selected.kind === "DC fast" ? "CCS2" : "Type 2"}
-                        </strong>
-                        <small>
-                          {selected.kind === "DC fast"
-                            ? "DC fast charging"
-                            : "AC charging"}
-                        </small>
-                      </div>
-                      <div className="connector-power">
-                        <strong>{selected.power} kW</strong>
-                        <small>Maximum</small>
-                      </div>
-                    </div>
-            
-                    <p className="details-note">
-                      Connector specifications and power ratings are illustrative
-                      demo data and should be verified against the actual station.
-                    </p>
-                  </section>
-            
-                  <section className="details-section">
-                    <div className="details-section-heading">
-                      <h3>Live status per stall</h3>
-                      <span className="status-sample">SAMPLE STATUS</span>
-                    </div>
-            
-                    <div className="stall-list">
-                      {Array.from({ length: selected.plugs }, (_, index) => {
-                        const status =
-                          index < selected.available
-                            ? "Available"
-                            : index === selected.available
-                              ? "In Use"
-                              : "Out of Service";
-            
-                        return (
-                          <div className="stall-row" key={index}>
-                            <div className="stall-number">
-                              <PlugZap size={18} />
-                              <strong>Stall {String(index + 1).padStart(2, "0")}</strong>
-                            </div>
-            
-                            <span
-                              className={`stall-status ${
-                                status === "Available"
-                                  ? "stall-available"
-                                  : status === "In Use"
-                                    ? "stall-in-use"
-                                    : "stall-offline"
-                              }`}
-                            >
-                              <i />
-                              {status}
-                            </span>
-            
-                            <small>
-                              {selected.kind === "DC fast" ? "CCS2" : "Type 2"}
-                            </small>
-                          </div>
-                        );
-                      })}
-                    </div>
-            
-                    <p className="details-note">
-                      Stall statuses are simulated and are not connected to live charger
-                      telemetry.
-                    </p>
-                  </section>
-            
-                  <section className="details-section">
-                    <h3>Wayfinding instructions</h3>
-            
-                    <div className="wayfinding-list">
-                      <div>
-                        <span>1</span>
-                        <div>
-                          <strong>Navigate to the location</strong>
-                          <p>Follow the route to {selected.shortName}.</p>
-                        </div>
-                      </div>
-                      <div>
-                        <span>2</span>
-                        <div>
-                          <strong>Find the charging area</strong>
-                          <p>
-                            Follow on-site parking and EV charging signs to locate
-                            the charging bays.
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <span>3</span>
-                        <div>
-                          <strong>Choose an available stall</strong>
-                          <p>
-                            Check the charger display before connecting your vehicle.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-            
-                    <button className="primary-button" onClick={openRoute}>
-                      <Navigation size={18} />
-                      Get Directions
-                    </button>
-                  </section>
-            
-                  <section className="details-section">
-                    <h3>Operating hours</h3>
-            
-                    <div className="operating-card">
-                      <span className="operating-icon">
-                        <History size={20} />
-                      </span>
-                      <div>
-                        <strong>Daily access</strong>
-                        <p>24 hours · 7 days a week</p>
-                        <small>Demo information — verify on arrival.</small>
-                      </div>
-                    </div>
-                  </section>
-            
-                  <section className="details-section">
-                    <div className="details-section-heading">
-                      <h3>User check-ins</h3>
-                      <span>COMMUNITY</span>
-                    </div>
-            
-                    <div className="community-card">
-                      <div className="community-avatar">EV</div>
-                      <div>
-                        <strong>Driver check-in</strong>
-                        <small>Example community contribution</small>
-                        <p>
-                          Check the bay markings and confirm the connector matches
-                          your vehicle before plugging in.
-                        </p>
-                      </div>
-                    </div>
-            
-                    <div className="community-card">
-                      <div className="community-avatar">
-                        <MapPin size={18} />
-                      </div>
-                      <div>
-                        <strong>Community tip</strong>
-                        <small>Helpful arrival advice</small>
-                        <p>
-                          Keep the charging cable clear of walkways and return the
-                          connector securely after charging.
-                        </p>
-                      </div>
-                    </div>
-            
-                    <button
-                      className="secondary-button"
-                      onClick={() =>
-                        notify("Community check-ins are a prototype feature.")
-                      }
-                    >
-                      <Check size={18} />
-                      Check in at this station
-                    </button>
-                  </section>
-            
-                  <div className="details-bottom-space" />
-                </div>
-              </div>
-                ) : panel === "station" ? (
-                  <div
-                    className={`station-sheet ${sheetDragging ? "sheet-dragging" : ""}`}
-                    style={{
-                      // Capped between 0px (cannot pull up beyond resting height) and 350px max down
-                      transform: `translateY(${Math.min(Math.max(sheetDragY, 0), 350)}px)`,
-                      transition: sheetDragging ? "none" : "transform 180ms ease-out",
+                      transition: sheetDragging
+                        ? "none"
+                        : "transform 180ms ease-out",
                     }}
                   >
                     <div
@@ -1147,119 +705,367 @@ export default function Home() {
                       onPointerUp={handleSheetPointerUp}
                       onPointerCancel={handleSheetPointerUp}
                       role="separator"
-                      aria-label="Drag station details panel"
+                      aria-label="Drag route chooser panel"
                     />
 
-                    <div className="sheet-overline">
-                      BE-ELECTRIC NETWORK
-                    </div>
-
-                    <div className="station-title-row">
-                      <h2>{selected.name}</h2>
-
+                    <div className="sheet-title-row">
+                      <div>
+                        <h2>Choose your route</h2>
+                        <p>
+                          {selected.shortName} · {activeDistance} ·{" "}
+                          {activeMinutes} min
+                        </p>
+                      </div>
                       <button
-                        className={`save-button ${
-                          saved.includes(selected.id) ? "saved" : ""
-                        }`}
-                        onClick={() =>
-                          setSaved((prev) =>
-                            prev.includes(selected.id)
-                              ? prev.filter((id) => id !== selected.id)
-                              : [...prev, selected.id]
-                          )
-                        }
-                        aria-label="Save station"
+                        className="sheet-close"
+                        onClick={() => setPanel("station")}
                       >
-                        {saved.includes(selected.id) ? (
-                          <BookmarkCheck size={19} />
-                        ) : (
-                          <Bookmark size={19} />
-                        )}
+                        <X size={17} />
                       </button>
                     </div>
 
-                    <p className="station-address">{selected.address}</p>
+                    {[
+                      {
+                        name: "Google Maps",
+                        desc: "Traffic-aware directions",
+                        icon: <MapPin size={19} />,
+                      },
+                      {
+                        name: "Apple Maps",
+                        desc: "Navigate with your iPhone",
+                        icon: <Map size={19} />,
+                      },
+                      {
+                        name: "Waze",
+                        desc: "Community-powered traffic",
+                        icon: <CarFront size={19} />,
+                      },
+                      {
+                        name: "In-App Route Preview",
+                        desc: "Preview the route in Be-Electric",
+                        icon: <Route size={19} />,
+                      },
+                    ].map((item) => (
+                      <button
+                        key={item.name}
+                        className={`route-option ${
+                          item.name === "In-App Route Preview"
+                            ? "chosen"
+                            : ""
+                        }`}
+                        onClick={() => externalMap(item.name)}
+                      >
+                        <span className="route-option-icon">{item.icon}</span>
+                        <span className="route-option-copy">
+                          <b>{item.name}</b>
+                          <small>{item.desc}</small>
+                        </span>
+                        <ChevronRight size={18} />
+                      </button>
+                    ))}
 
-                    <div className="station-summary">
-                      <span>
-                        ● {selected.available} of {selected.plugs} available
-                      </span>
-                      <small>
-                        {selected.distance} · {selected.minutes} min drive
-                      </small>
-                    </div>
-
-                    <div className="spec-grid">
-                      <div>
-                        <small>MAX SPEED</small>
-                        <b>{selected.power} kW</b>
-                        <span>{selected.kind} · CCS</span>
-                      </div>
-
-                      <div>
-                        <small>ENERGY PRICE</small>
-                        <b>QAR{selected.price.toFixed(2)} /kWh</b>
-                        <span>Open 24/7</span>
-                      </div>
-                    </div>
-
-                    <button className="primary-button" onClick={openRoute}>
-                      <Navigation size={18} /> Get Directions
-                    </button>
-                    <button className="secondary-button" onClick={() => { 
-                    setSheetDragY(0);
-                    setPanel("details");
-                      }}
-                    >
-                      <BookOpenText size={18} /> More Details
-                    </button>
-
-                    <button
-                      className="sheet-back-link"
-                      onClick={() => {
-                        setPanel(null);
-                        setRouteMode(false);
-                        setSheetDragY(0);
-                      }}
-                    >
-                      Back to map
-                    </button>
+                    <p className="chooser-footnote">
+                      Your selected station stays selected when you return.
+                    </p>
                   </div>
-                ) : (
-                  <div className="map-bottom-content">
-                    <div className="legend">
-                      <span>
-                        <i className="green-dot" /> Available
-                      </span>
-                      <span>
-                        <i className="gray-dot" /> Busy
-                      </span>
-                      <span>
-                        <i className="gray-dot" /> Offline
+                </div>
+              ) : panel === "details" ? (
+                <div className="station-details-screen">
+                  <header className="details-header">
+                    <button
+                      className="details-back"
+                      onClick={() => setPanel("station")}
+                      aria-label="Back to station"
+                    >
+                      <ChevronRight
+                        size={21}
+                        style={{ transform: "rotate(180deg)" }}
+                      />
+                    </button>
+                    <div>
+                      <small>STATION INFORMATION</small>
+                      <h2>{selected.shortName}</h2>
+                    </div>
+                    <span className="details-live-dot" />
+                  </header>
+
+                  <div className="details-scroll">
+                    <div className="details-location-card">
+                      <div className="details-location-icon">
+                        <Zap size={25} />
+                      </div>
+                      <div>
+                        <span className="details-eyebrow">
+                          BE-ELECTRIC NETWORK
+                        </span>
+                        <h3>{selected.name}</h3>
+                        <p>{selected.address}</p>
+                      </div>
+                      <span className="details-open-badge">
+                        {selected.status}
                       </span>
                     </div>
 
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>Charging overview</h3>
+                        <span>DATABASE DATA</span>
+                      </div>
+                      <div className="details-stats">
+                        <div>
+                          <Zap size={18} />
+                          <small>Max power</small>
+                          <strong>{getPowerLabel(selected)}</strong>
+                        </div>
+                        <div>
+                          <PlugZap size={18} />
+                          <small>Available</small>
+                          <strong>{getAvailabilityLabel(selected)}</strong>
+                        </div>
+                        <div>
+                          <Activity size={18} />
+                          <small>Energy price</small>
+                          <strong>{getPriceLabel(selected)}</strong>
+                        </div>
+                      </div>
+                      <p className="details-note">
+                        {getStatusLabel(selected.status)}. A database status
+                        is not necessarily a live charger status.
+                      </p>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Connector information</h3>
+                      <div className="connector-card">
+                        <span className="connector-icon">
+                          <PlugZap size={21} />
+                        </span>
+                        <div>
+                          <strong>{selected.kind}</strong>
+                          <small>
+                            {selected.kind === "DC fast"
+                              ? "DC fast charging"
+                              : "AC charging"}
+                          </small>
+                        </div>
+                        <div className="connector-power">
+                          <strong>{getPowerLabel(selected)}</strong>
+                          <small>Reported maximum</small>
+                        </div>
+                      </div>
+                      <p className="details-note">
+                        Connector classification is inferred from the
+                        connector type stored in your database. Verify the
+                        actual connector before travelling.
+                      </p>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Wayfinding instructions</h3>
+                      <div className="wayfinding-list">
+                        <div>
+                          <span>1</span>
+                          <div>
+                            <strong>Navigate to the location</strong>
+                            <p>Follow the route to {selected.shortName}.</p>
+                          </div>
+                        </div>
+                        <div>
+                          <span>2</span>
+                          <div>
+                            <strong>Find the charging area</strong>
+                            <p>
+                              Follow on-site parking and EV charging signs
+                              to locate the charging bays.
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <span>3</span>
+                          <div>
+                            <strong>Verify the charger</strong>
+                            <p>
+                              Check the charger display and connector
+                              before connecting your vehicle.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <button className="primary-button" onClick={openRoute}>
+                        <Navigation size={18} /> Get Directions
+                      </button>
+                    </section>
+
+                    <section className="details-section">
+                      <h3>Station record</h3>
+                      <div className="operating-card">
+                        <span className="operating-icon">
+                          <History size={20} />
+                        </span>
+                        <div>
+                          <strong>{selected.id}</strong>
+                          <p>{selected.address}</p>
+                          <small>
+                            {selected.operator
+                              ? `Operator: ${selected.operator}`
+                              : "Operator not specified"}
+                          </small>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>User check-ins</h3>
+                        <span>COMMUNITY</span>
+                      </div>
+                      <div className="community-card">
+                        <div className="community-avatar">EV</div>
+                        <div>
+                          <strong>Driver check-in</strong>
+                          <small>Community feature preview</small>
+                          <p>
+                            Check the bay markings and connector before
+                            charging.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        className="secondary-button"
+                        onClick={() =>
+                          notify("Community check-ins are not connected yet.")
+                        }
+                      >
+                        <Check size={18} /> Check in at this station
+                      </button>
+                    </section>
+                    <div className="details-bottom-space" />
+                  </div>
+                </div>
+              ) : panel === "station" ? (
+                <div
+                  className={`station-sheet ${
+                    sheetDragging ? "sheet-dragging" : ""
+                  }`}
+                  style={{
+                    transform: `translateY(${Math.min(
+                      Math.max(sheetDragY, 0),
+                      350
+                    )}px)`,
+                    transition: sheetDragging
+                      ? "none"
+                      : "transform 180ms ease-out",
+                  }}
+                >
+                  <div
+                    className="sheet-grabber sheet-drag-handle"
+                    onPointerDown={handleSheetPointerDown}
+                    onPointerMove={handleSheetPointerMove}
+                    onPointerUp={handleSheetPointerUp}
+                    onPointerCancel={handleSheetPointerUp}
+                    role="separator"
+                    aria-label="Drag station details panel"
+                  />
+
+                  <div className="sheet-overline">BE-ELECTRIC NETWORK</div>
+
+                  <div className="station-title-row">
+                    <h2>{selected.name}</h2>
                     <button
-                      className="nearby-card"
+                      className={`save-button ${
+                        saved.includes(selected.id) ? "saved" : ""
+                      }`}
                       onClick={() =>
-                        notify(
-                          `${nearbyStations.length} stations nearby within 1–5 km`
+                        setSaved((previous) =>
+                          previous.includes(selected.id)
+                            ? previous.filter((id) => id !== selected.id)
+                            : [...previous, selected.id]
                         )
                       }
+                      aria-label="Save station"
                     >
-                      <span className="nearby-icon">
-                        <LocateFixed size={19} />
-                      </span>
-
-                      <span>
-                        <b>{nearbyStations.length} stations nearby</b>
-                        <small>Charging stations within 1–5 km</small>
-                      </span>
-
-                      <List size={19} />
+                      {saved.includes(selected.id) ? (
+                        <BookmarkCheck size={19} />
+                      ) : (
+                        <Bookmark size={19} />
+                      )}
                     </button>
                   </div>
-                )}
+
+                  <p className="station-address">{selected.address}</p>
+
+                  <div className="station-summary">
+                    <span>{getAvailabilityLabel(selected)}</span>
+                    <small>
+                      {selected.distance || "Distance not calculated"}
+                    </small>
+                  </div>
+
+                  <div className="spec-grid">
+                    <div>
+                      <small>MAX POWER</small>
+                      <b>{getPowerLabel(selected)}</b>
+                      <span>{selected.kind}</span>
+                    </div>
+                    <div>
+                      <small>ENERGY PRICE</small>
+                      <b>{getPriceLabel(selected)}</b>
+                      <span>{getStatusLabel(selected.status)}</span>
+                    </div>
+                  </div>
+
+                  <button className="primary-button" onClick={openRoute}>
+                    <Navigation size={18} /> Get Directions
+                  </button>
+
+                  <button
+                    className="secondary-button"
+                    onClick={() => {
+                      setSheetDragY(0);
+                      setPanel("details");
+                    }}
+                  >
+                    <BookOpenText size={18} /> More Details
+                  </button>
+
+                  <button
+                    className="sheet-back-link"
+                    onClick={() => {
+                      setPanel(null);
+                      setRouteMode(false);
+                      setSheetDragY(0);
+                    }}
+                  >
+                    Back to map
+                  </button>
+                </div>
+              ) : (
+                <div className="map-bottom-content">
+                  <div className="legend">
+                    <span><i className="green-dot" /> Online</span>
+                    <span><i className="gray-dot" /> Unknown</span>
+                    <span><i className="gray-dot" /> Offline</span>
+                  </div>
+
+                  <button
+                    className="nearby-card"
+                    onClick={() =>
+                      notify(
+                        `${nearbyStations.length} stations within 5 km of the starting point`
+                      )
+                    }
+                  >
+                    <span className="nearby-icon">
+                      <LocateFixed size={19} />
+                    </span>
+                    <span>
+                      <b>{nearbyStations.length} stations nearby</b>
+                      <small>Based on stored station coordinates</small>
+                    </span>
+                    <List size={19} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {activeTab !== "Explore" && (
@@ -1272,12 +1078,12 @@ export default function Home() {
                     </p>
 
                     {savedStations.length ? (
-                      savedStations.map((s) => (
+                      savedStations.map((station) => (
                         <button
                           className="saved-card"
-                          key={s.id}
+                          key={station.id}
                           onClick={() => {
-                            setSelectedId(s.id);
+                            setSelectedId(station.id);
                             setActiveTab("Explore");
                             setPanel("station");
                           }}
@@ -1285,23 +1091,18 @@ export default function Home() {
                           <span className="saved-zap">
                             <Zap size={19} />
                           </span>
-
                           <span>
-                            <b>{s.name}</b>
+                            <b>{station.name}</b>
                             <small>
-                              {s.available} of {s.plugs} plugs available ·{" "}
-                              {s.distance}
+                              {getAvailabilityLabel(station)}
                             </small>
                           </span>
-
                           <ChevronRight size={18} />
                         </button>
                       ))
                     ) : (
                       <div className="empty-state">
-                        <span>
-                          <Bookmark size={26} />
-                        </span>
+                        <span><Bookmark size={26} /></span>
                         <b>No saved stations yet</b>
                         <p>
                           Open a station and tap the bookmark to keep it here.
@@ -1323,68 +1124,49 @@ export default function Home() {
 
                     <div className="recent-routes-section">
                       <div className="activity-card header-card">
-                        <span>
-                          <History size={20} />
-                        </span>
+                        <span><History size={20} /></span>
                         <div>
                           <b>Recent routes ({recentRoutes.length})</b>
                           <small>
                             {recentRoutes.length
                               ? "Recently completed trips"
-                              : "No recent routes in this demo."}
+                              : "No recent routes in this session."}
                           </small>
                         </div>
                       </div>
 
-                      {recentRoutes.length > 0 && (
-                        <div
-                          className="recent-routes-list"
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "8px",
-                            marginTop: "10px",
+                      {recentRoutes.slice(0, 3).map((route) => (
+                        <button
+                          key={route.id}
+                          className="saved-card"
+                          onClick={() => {
+                            setSelectedId(route.stationId);
+                            setActiveTab("Explore");
+                            setPanel("station");
                           }}
                         >
-                          {recentRoutes.slice(0, 3).map((route) => (
-                            <button
-                              key={route.id}
-                              className="saved-card"
-                              onClick={() => {
-                                setSelectedId(route.stationId);
-                                setActiveTab("Explore");
-                                setPanel("station");
-                              }}
-                            >
-                              <span className="saved-zap">
-                                <Route size={18} />
-                              </span>
-
-                              <span>
-                                <b>{route.stationName}</b>
-                                <small>
-                                  {route.distance} · {route.minutes} min ·
-                                  Completed {route.completedAt}
-                                </small>
-                              </span>
-
-                              <ChevronRight size={18} />
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                          <span className="saved-zap">
+                            <Route size={18} />
+                          </span>
+                          <span>
+                            <b>{route.stationName}</b>
+                            <small>
+                              {route.distance} · {route.minutes} min ·{" "}
+                              {route.completedAt}
+                            </small>
+                          </span>
+                          <ChevronRight size={18} />
+                        </button>
+                      ))}
                     </div>
 
-                    <div
-                      className="activity-card"
-                      style={{ marginTop: "12px" }}
-                    >
-                      <span>
-                        <PlugZap size={20} />
-                      </span>
+                    <div className="activity-card" style={{ marginTop: 12 }}>
+                      <span><PlugZap size={20} /></span>
                       <div>
                         <b>Charging sessions</b>
-                        <small>Your sessions will appear here.</small>
+                        <small>
+                          Charging sessions are not connected to Neon yet.
+                        </small>
                       </div>
                     </div>
 
@@ -1428,11 +1210,11 @@ export default function Home() {
                       "Notifications",
                       "Charging preferences",
                       "Privacy & security",
-                    ].map((x, i) => (
+                    ].map((item, index) => (
                       <button
-                        key={x}
+                        key={item}
                         className="settings-row"
-                        onClick={() => notify(`${x} is a demo setting`)}
+                        onClick={() => notify(`${item} is a demo setting.`)}
                       >
                         <span>
                           {[
@@ -1440,9 +1222,9 @@ export default function Home() {
                             <Activity key="notifications" size={18} />,
                             <Settings2 key="preferences" size={18} />,
                             <CircleDot key="privacy" size={18} />,
-                          ][i]}
+                          ][index]}
                         </span>
-                        {x}
+                        {item}
                         <ChevronRight size={18} />
                       </button>
                     ))}
@@ -1471,12 +1253,12 @@ export default function Home() {
                   key={item.name}
                   className={activeTab === item.name ? "active" : ""}
                   onClick={() => {
-                    // Keep the map and route state intact when switching tabs.
-                    // The map is hidden, not unmounted, so the route is still there
-                    // when the user returns to Explore.
                     setActiveTab(item.name);
+
                     if (item.name === "Explore") {
-                      window.dispatchEvent(new Event("be-electric-map-visible"));
+                      window.dispatchEvent(
+                        new Event("be-electric-map-visible")
+                      );
                     }
                   }}
                 >
@@ -1485,14 +1267,14 @@ export default function Home() {
                 </button>
               ))}
             </nav>
-            
+
             {message && <div className="toast">{message}</div>}
           </div>
         </div>
 
         <div className="emulator-footer">
           <span>
-            <span className="footer-dot" /> Click around to test the prototype
+            <span className="footer-dot" /> Connected to station database
           </span>
 
           <button
@@ -1505,6 +1287,9 @@ export default function Home() {
               setAcOnly(false);
               setAvailableOnly(false);
               setRecentRoutes([]);
+              setCalculatedRoute(null);
+              setSheetDragY(0);
+              setSaved([]);
             }}
           >
             Reset demo <History size={13} />
