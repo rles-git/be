@@ -265,6 +265,31 @@ export default function Home() {
     );
   }
 
+  function handleNearbySheetPointerDown(
+    event: React.PointerEvent<HTMLDivElement>
+  ) {
+    sheetPointerStart.current = event.clientY;
+    setSheetDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleNearbySheetPointerMove(
+    event: React.PointerEvent<HTMLDivElement>
+  ) {
+    if (!sheetDragging || sheetPointerStart.current === null) return;
+    const delta = event.clientY - sheetPointerStart.current;
+    // Nearby sheet only moves down; keeping it from moving upward avoids rubber-banding.
+    setSheetDragY(Math.max(0, Math.min(360, delta)));
+  }
+
+  function handleNearbySheetPointerUp() {
+    const shouldClose = sheetDragY > 100;
+    setSheetDragging(false);
+    sheetPointerStart.current = null;
+    setSheetDragY(0);
+    if (shouldClose) setPanel(null);
+  }
+
   const filtered = useMemo(
     () =>
       stations.filter((station) => {
@@ -701,7 +726,9 @@ export default function Home() {
                   onClick={() => setPanel(null)}
                 >
                   <section
-                    className="bottom-sheet nearby-stations-sheet"
+                    className={`bottom-sheet nearby-stations-sheet ${
+                      sheetDragging ? "sheet-dragging" : ""
+                    }`}
                     aria-label="Nearby charging stations"
                     onClick={(event) => event.stopPropagation()}
                     style={{
@@ -714,16 +741,27 @@ export default function Home() {
                       background: "#fff",
                       color: "#202620",
                       boxShadow: "0 -8px 32px rgba(0,0,0,.12)",
+                      transform: `translateY(${Math.max(0, Math.min(sheetDragY, 360))}px)`,
+                      transition: sheetDragging ? "none" : "transform 180ms ease-out",
+                      touchAction: "pan-y",
                     }}
                   >
                     <div
-                      className="sheet-grabber"
+                      className="sheet-grabber sheet-drag-handle"
+                      onPointerDown={handleNearbySheetPointerDown}
+                      onPointerMove={handleNearbySheetPointerMove}
+                      onPointerUp={handleNearbySheetPointerUp}
+                      onPointerCancel={handleNearbySheetPointerUp}
+                      role="separator"
+                      aria-label="Drag nearby stations panel down to close"
                       style={{
                         width: 42,
                         height: 5,
                         borderRadius: 99,
                         background: "#d8dcd7",
                         margin: "0 auto 16px",
+                        cursor: "grab",
+                        touchAction: "none",
                       }}
                     />
                     <div className="sheet-title-row">
