@@ -950,78 +950,76 @@ export default function Home() {
                       </p>
                     </section>
           
-                  <div className="details-section-heading">
-                    <h3>Available stalls</h3>
-                    <span>LIVE DEMO</span>
-                  </div>
                   
-                  <div className="connector-availability-summary">
-                    <div>
-                      <strong>3 of 4 available</strong>
-                      <p>CCS2 · DC fast charging</p>
-                    </div>
-                    <span className="connector-availability-badge">
-                      <span className="connector-status-dot" />
-                      Available
-                    </span>
-                  </div>
-                  
-                  <div className="connector-grid">
-                    {[
-                      { id: 1, status: "Available", power: 0 },
-                      { id: 2, status: "Available", power: 0 },
-                      { id: 3, status: "Occupied", power: 30 },
-                      { id: 4, status: "Available", power: 0 },
-                    ].map((stall) => (
-                      <button
-                        key={stall.id}
-                        type="button"
-                        className={`connector-option ${
-                          stall.status === "Available"
-                            ? "connector-available"
-                            : "connector-occupied"
-                        }`}
-                        onClick={() =>
-                          notify(
-                            `Stall ${stall.id}: ${stall.status} · ${stall.power} kW`
-                          )
-                        }
-                        aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
-                      >
-                        <span className="connector-number">
-                          Stall {stall.id}
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>Available connectors</h3>
+                        <span>LIVE DEMO</span>
+                      </div>
+                    
+                      <div className="connector-availability-summary">
+                        <div>
+                          <strong>3 of 4 available</strong>
+                          <p>CCS2 · DC fast charging</p>
+                        </div>
+                        <span className="connector-availability-badge">
+                          <span className="connector-status-dot" />
+                          Available
                         </span>
-                  
-                        <span className="connector-plug-icon">
-                          <EvCharger size={29} strokeWidth={1.8} />
+                      </div>
+                    
+                      <div className="connector-grid">
+                        {[
+                          { id: 1, status: "Available" },
+                          { id: 2, status: "Available" },
+                          { id: 3, status: "Occupied" },
+                          { id: 4, status: "Available" },
+                        ].map((connector) => (
+                          <button
+                            key={connector.id}
+                            type="button"
+                            className={`connector-option ${
+                              connector.status === "Available"
+                                ? "connector-available"
+                                : "connector-occupied"
+                            }`}
+                            onClick={() =>
+                              notify(
+                                `CCS2 Connector ${connector.id}: ${connector.status}`
+                              )
+                            }
+                            aria-label={`CCS2 Connector ${connector.id}: ${connector.status}`}
+                          >
+                            <span className="connector-number">
+                              Connector {connector.id}
+                            </span>
+                    
+                            <span className="connector-plug-icon">
+                              <PlugZap size={29} strokeWidth={1.8} />
+                            </span>
+                    
+                            <strong>{connector.status}</strong>
+                            <small>CCS2</small>
+                          </button>
+                        ))}
+                      </div>
+                    
+                      <div className="connector-legend">
+                        <span>
+                          <i className="connector-legend-available" />
+                          Available
                         </span>
-                  
-                        <strong>{stall.status}</strong>
-                  
-                        <span className="connector-power-output">
-                          {stall.power} <small>kW</small>
+                        <span>
+                          <i className="connector-legend-occupied" />
+                          Occupied
                         </span>
-                  
-                        <small>CCS2</small>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="connector-legend">
-                    <span>
-                      <i className="connector-legend-available" />
-                      Available
-                    </span>
-                    <span>
-                      <i className="connector-legend-occupied" />
-                      Occupied
-                    </span>
-                  </div>
-                  
-                  <p className="details-note">
-                    Demonstration data only. Stall availability and power output
-                    are simulated and are not connected to live charger telemetry.
-                  </p>
+                      </div>
+                    
+                      <p className="details-note">
+                        Demonstration data only. Connector availability is simulated
+                        and is not connected to live charger telemetry.
+                      </p>
+                    </section>
 
 
                     <section className="details-section">
