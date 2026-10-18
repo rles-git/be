@@ -694,7 +694,6 @@ export default function Home() {
                   style={{
                     position: "absolute",
                     inset: 0,
-                    zIndex: 1200,
                     display: "flex",
                     alignItems: "flex-end",
                     background: "rgba(20, 25, 21, 0.18)",
