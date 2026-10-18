@@ -1046,7 +1046,7 @@ export default function Home() {
                           </span>
                     
                           <span className="connector-plug-icon">
-                            <StallChargerIcon size={29} strokeWidth={1.8} />
+                            <StallChargerIcon size={29}/>
                           </span>
                     
                           <strong>{stall.status}</strong>
