@@ -18,6 +18,13 @@ export const useElectricSocket = (url: string) => {
   const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_CHARGER_WS_URL;
+
+    if (!url) {
+      console.error("WebSocket URL is not configured");
+      return;
+    }
+    
     const ws = new WebSocket(url);
     socketRef.current = ws;
 
