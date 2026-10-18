@@ -15,7 +15,6 @@ import {
   CircleDot,
   Compass,
   Crosshair,
-  EvCharger,
   History,
   Layers,
   List,
@@ -32,6 +31,57 @@ import {
   Zap,
 } from "lucide-react";
 import { useStations, type MapStation } from "./hooks/useStations";
+
+
+function StallChargerIcon({ size = 29 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect
+        x="5"
+        y="3"
+        width="16"
+        height="26"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <rect
+        x="8"
+        y="6"
+        width="10"
+        height="7"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M15 15L11 20H14L12 24L17 18H14.5L15 15Z"
+        fill="currentColor"
+      />
+      <path
+        d="M21 9H24C26 9 27 10.5 27 12.5V19C27 21 25.5 22 24 22"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M23 22L21 20M23 22L21 24"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
@@ -952,73 +1002,80 @@ export default function Home() {
           
                   
                     <section className="details-section">
-                      <div className="details-section-heading">
-                        <h3>Available connectors</h3>
-                        <span>LIVE DEMO</span>
+                      
+                    <div className="details-section-heading">
+                      <h3>Available stalls</h3>
+                      <span>LIVE DEMO</span>
+                    </div>
+                    
+                    <div className="connector-availability-summary">
+                      <div>
+                        <strong>3 of 4 available</strong>
+                        <p>CCS2 · DC fast charging</p>
                       </div>
+                      <span className="connector-availability-badge">
+                        <span className="connector-status-dot" />
+                        Available
+                      </span>
+                    </div>
                     
-                      <div className="connector-availability-summary">
-                        <div>
-                          <strong>3 of 4 available</strong>
-                          <p>CCS2 · DC fast charging</p>
-                        </div>
-                        <span className="connector-availability-badge">
-                          <span className="connector-status-dot" />
-                          Available
-                        </span>
-                      </div>
+                    <div className="connector-grid">
+                      {[
+                        { id: 1, status: "Available", power: 0 },
+                        { id: 2, status: "Available", power: 0 },
+                        { id: 3, status: "Occupied", power: 30 },
+                        { id: 4, status: "Available", power: 0 },
+                      ].map((stall) => (
+                        <button
+                          key={stall.id}
+                          type="button"
+                          className={`connector-option ${
+                            stall.status === "Available"
+                              ? "connector-available"
+                              : "connector-occupied"
+                          }`}
+                          onClick={() =>
+                            notify(
+                              `Stall ${stall.id}: ${stall.status} · ${stall.power} kW`
+                            )
+                          }
+                          aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
+                        >
+                          <span className="connector-number">
+                            Stall {stall.id}
+                          </span>
                     
-                      <div className="connector-grid">
-                        {[
-                          { id: 1, status: "Available" },
-                          { id: 2, status: "Available" },
-                          { id: 3, status: "Occupied" },
-                          { id: 4, status: "Available" },
-                        ].map((connector) => (
-                          <button
-                            key={connector.id}
-                            type="button"
-                            className={`connector-option ${
-                              connector.status === "Available"
-                                ? "connector-available"
-                                : "connector-occupied"
-                            }`}
-                            onClick={() =>
-                              notify(
-                                `CCS2 Connector ${connector.id}: ${connector.status}`
-                              )
-                            }
-                            aria-label={`CCS2 Connector ${connector.id}: ${connector.status}`}
-                          >
-                            <span className="connector-number">
-                              Connector {connector.id}
-                            </span>
+                          <span className="connector-plug-icon">
+                            <StallChargerIcon size={29} strokeWidth={1.8} />
+                          </span>
                     
-                            <span className="connector-plug-icon">
-                              <PlugZap size={29} strokeWidth={1.8} />
-                            </span>
+                          <strong>{stall.status}</strong>
                     
-                            <strong>{connector.status}</strong>
-                            <small>CCS2</small>
-                          </button>
-                        ))}
-                      </div>
+                          <span className="connector-power-output">
+                            {stall.power} <small>kW</small>
+                          </span>
                     
-                      <div className="connector-legend">
-                        <span>
-                          <i className="connector-legend-available" />
-                          Available
-                        </span>
-                        <span>
-                          <i className="connector-legend-occupied" />
-                          Occupied
-                        </span>
-                      </div>
+                          <small>CCS2</small>
+                        </button>
+                      ))}
+                    </div>
                     
-                      <p className="details-note">
-                        Demonstration data only. Connector availability is simulated
-                        and is not connected to live charger telemetry.
-                      </p>
+                    <div className="connector-legend">
+                      <span>
+                        <i className="connector-legend-available" />
+                        Available
+                      </span>
+                      <span>
+                        <i className="connector-legend-occupied" />
+                        Occupied
+                      </span>
+                    </div>
+                    
+                    <p className="details-note">
+                      Demonstration data only. Stall availability and power output
+                      are simulated and are not connected to live charger telemetry.
+                    </p>
+
                     </section>
 
 
