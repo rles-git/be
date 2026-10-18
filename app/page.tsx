@@ -53,7 +53,7 @@ type RecentRoute = {
 };
 
 const START_LOCATION: [number, number] = [
-25.411131921851222, 51.50689897362642
+25.254483277668196, 51.47912950286491
 ];
 
 function getDistanceKm(
