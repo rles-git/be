@@ -10,9 +10,6 @@ A responsive EV charging finder built with Next.js, React, Leaflet, and OpenStre
 4. Run `npm run dev`.
 5. Open http://localhost:3000.
 
-## Deploy to Vercel
-
-Push this folder to a GitHub repository, import it in Vercel, and deploy with the default Next.js settings. No environment variables are needed for this demo.
 
 ## Map notes
 
