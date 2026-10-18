@@ -15,8 +15,7 @@ A responsive EV charging finder built with Next.js, React, Leaflet, and OpenStre
 
 - The map uses Leaflet and OpenStreetMap standard raster tiles.
 - Pan by dragging, zoom with the mouse wheel or pinch gesture, and tap a station marker to view it.
-- Station details and coordinates are demo data around San Francisco, not verified live charging locations.
-- The displayed route is a visual preview line, not turn-by-turn road routing. For real road routes, integrate a routing service such as OSRM or openrouteservice.
+- Station details and coordinates are demo data around Doha Qatar, not verified live charging locations.
 - OpenStreetMap attribution is included in the map. Follow the OpenStreetMap tile usage policy for production traffic.
 
 
