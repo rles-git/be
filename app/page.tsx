@@ -31,7 +31,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useStations, type MapStation } from "./hooks/useStations";
-import { useElectricSocket } from "./hooks/useElectricSocket";
 
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
@@ -191,20 +190,7 @@ function MapArtwork() {
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-  const {
-    data: liveTelemetry,
-    isConnected: simulatorConnected,
-    sendCommand,
-  } = useElectricSocket(
-    process.env.NEXT_PUBLIC_CHARGER_WS_URL ?? ""
-  );
-  
-  const [simConnection, setSimConnection] =
-    useState<"Connected" | "Disconnected">("Connected");
 
-const [simStatus, setSimStatus] = useState("charging");
-const [simPower, setSimPower] = useState("117");
-const [simOverheating, setSimOverheating] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
   const [panel, setPanel] = useState<Panel>(null);
@@ -1220,132 +1206,6 @@ const [simOverheating, setSimOverheating] = useState(false);
                       </div>
                       <span className="demo-tag">DEMO</span>
                     </div>
-                    
-<div
-  style={{
-    marginTop: 16,
-    padding: 16,
-    border: "1px solid #e2e6e0",
-    borderRadius: 16,
-    background: "#ffffff",
-    color: "#202522",
-  }}
->
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-    <strong>Simulator Controls</strong>
-    <span style={{ fontSize: 12, color: simulatorConnected ? "#58715d" : "#b54747" }}>
-      {simulatorConnected ? "WebSocket connected" : "WebSocket disconnected"}
-    </span>
-  </div>
-
-  <p style={{ fontSize: 12, color: "#777d76", marginTop: 6 }}>
-    Test telemetry for BEQ-DOH-021.
-  </p>
-
-  <label style={{ display: "block", fontSize: 13, marginTop: 14 }}>
-    Charger ID
-    <input
-      value="BEQ-DOH-021"
-      readOnly
-      style={{ display: "block", boxSizing: "border-box", width: "100%", marginTop: 6, padding: 10, border: "1px solid #dfe3dc", borderRadius: 8, background: "#f5f6f3", color: "#202522" }}
-    />
-  </label>
-
-  <label style={{ display: "block", fontSize: 13, marginTop: 12 }}>
-    Connection
-    <select
-      value={simConnection}
-      onChange={(event) => setSimConnection(event.target.value as "Connected" | "Disconnected")}
-      style={{ display: "block", boxSizing: "border-box", width: "100%", marginTop: 6, padding: 10, border: "1px solid #dfe3dc", borderRadius: 8, background: "#fff", color: "#202522" }}
-    >
-      <option value="Connected">Connected</option>
-      <option value="Disconnected">Disconnected</option>
-    </select>
-  </label>
-
-  <label style={{ display: "block", fontSize: 13, marginTop: 12 }}>
-    Charging status
-    <select
-      value={simStatus}
-      onChange={(event) => setSimStatus(event.target.value)}
-      style={{ display: "block", boxSizing: "border-box", width: "100%", marginTop: 6, padding: 10, border: "1px solid #dfe3dc", borderRadius: 8, background: "#fff", color: "#202522" }}
-    >
-      <option value="charging">Charging</option>
-      <option value="idle">Idle</option>
-      <option value="preparing">Preparing</option>
-      <option value="suspended">Suspended</option>
-      <option value="finishing">Finishing</option>
-      <option value="fault">Fault</option>
-    </select>
-  </label>
-
-  <label style={{ display: "block", fontSize: 13, marginTop: 12 }}>
-    Power output (kW)
-    <input
-      type="number"
-      min="0"
-      max="150"
-      step="1"
-      value={simPower}
-      onChange={(event) => setSimPower(event.target.value)}
-      style={{ display: "block", boxSizing: "border-box", width: "100%", marginTop: 6, padding: 10, border: "1px solid #dfe3dc", borderRadius: 8, background: "#fff", color: "#202522" }}
-    />
-  </label>
-
-  <label style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 14, fontSize: 13 }}>
-    <input
-      type="checkbox"
-      checked={simOverheating}
-      onChange={(event) => setSimOverheating(event.target.checked)}
-    />
-    Simulate overheating fault
-  </label>
-
-  <div style={{ marginTop: 14, padding: 10, borderRadius: 8, background: "#f5f6f3", fontSize: 12 }}>
-    {(() => {
-      const telemetry = liveTelemetry["BEQ-DOH-021"];
-      return telemetry
-        ? `Latest telemetry: ${telemetry.powerkW} kW · ${telemetry.voltage} V · ${telemetry.current} A`
-        : "Waiting for telemetry from BEQ-DOH-021…";
-    })()}
-  </div>
-
-  <button
-    className="primary-button"
-    style={{ width: "100%", marginTop: 14 }}
-    onClick={() => {
-      const power = Number(simPower);
-
-      if (simPower.trim() === "" || !Number.isFinite(power) || power < 0 || power > 150) {
-        notify("Power must be between 0 and 150 kW.");
-        return;
-      }
-
-      if (simOverheating && simStatus !== "fault") {
-        notify("Choose Fault status to simulate overheating.");
-        return;
-      }
-
-      const sent = sendCommand({
-        type: "SIMULATOR_CONTROL",
-        chargerId: "BEQ-DOH-021",
-        connection: simConnection,
-        status: simStatus,
-        powerKW: power,
-        overheatingFault: simOverheating,
-      });
-
-      notify(
-        sent
-          ? "Simulator command sent. Waiting for telemetry update."
-          : "WebSocket is disconnected. Check your server URL."
-      );
-    }}
-  >
-    <Zap size={17} /> Apply simulator settings
-  </button>
-</div>
-
 
                     {[
                       "Account details",
