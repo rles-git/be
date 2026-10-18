@@ -1002,81 +1002,85 @@ export default function Home() {
           
                   
                     <section className="details-section">
-                      
-                    <div className="details-section-heading">
-                      <h3>Available stalls</h3>
-                      <span>LIVE DEMO</span>
-                    </div>
-                    
-                    <div className="connector-availability-summary">
-                      <div>
-                        <strong>3 of 4 available</strong>
-                        <p>CCS2 · DC fast charging</p>
+                                         
+                    <div className="details-section">
+                      <div className="details-section-heading">
+                        <h3>Available stalls</h3>
+                        <span>LIVE DEMO</span>
                       </div>
-                      <span className="connector-availability-badge">
-                        <span className="connector-status-dot" />
-                        Available
-                      </span>
+                    
+                      <div className="stall-availability-summary">
+                        <div>
+                          <strong>3 of 4 available</strong>
+                          <p>CCS2 · DC fast charging</p>
+                        </div>
+                    
+                        <span className="stall-availability-badge">
+                          <span className="stall-status-dot" />
+                          Available
+                        </span>
+                      </div>
+                    
+                      <div className="stall-grid">
+                        {[
+                          { id: 1, status: "Available", power: 0 },
+                          { id: 2, status: "Available", power: 0 },
+                          { id: 3, status: "Occupied", power: 30 },
+                          { id: 4, status: "Available", power: 0 },
+                        ].map((stall) => (
+                          <button
+                            key={stall.id}
+                            type="button"
+                            className={`stall-option ${
+                              stall.status === "Available"
+                                ? "stall-available"
+                                : "stall-occupied"
+                            }`}
+                            onClick={() =>
+                              notify(
+                                `Stall ${stall.id}: ${stall.status} · ${stall.power} kW`
+                              )
+                            }
+                            aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
+                          >
+                            <span className="stall-number">
+                              Stall {stall.id}
+                            </span>
+                    
+                            <span className="stall-charger-icon">
+                              <StallChargerIcon size={29} />
+                            </span>
+                    
+                            <strong>{stall.status}</strong>
+                    
+                            <span className="stall-power-output">
+                              {stall.power} <small>kW</small>
+                            </span>
+                    
+                            <small>CCS2</small>
+                          </button>
+                        ))}
+                      </div>
+                    
+                      <div className="stall-legend">
+                        <span className="stall-legend-available">
+                          <i className="stall-status-dot" />
+                          Available
+                        </span>
+                    
+                        <span className="stall-legend-occupied">
+                          <i className="stall-status-dot" />
+                          Occupied
+                        </span>
+                      </div>
+                    
+                      <p className="details-note">
+                        Demonstration data only. Stall availability and power output
+                        are simulated and are not connected to live charger telemetry.
+                      </p>
                     </div>
-                    
-                    <div className="connector-grid">
-                      {[
-                        { id: 1, status: "Available", power: 0 },
-                        { id: 2, status: "Available", power: 0 },
-                        { id: 3, status: "Occupied", power: 30 },
-                        { id: 4, status: "Available", power: 0 },
-                      ].map((stall) => (
-                        <button
-                          key={stall.id}
-                          type="button"
-                          className={`connector-option ${
-                            stall.status === "Available"
-                              ? "connector-available"
-                              : "connector-occupied"
-                          }`}
-                          onClick={() =>
-                            notify(
-                              `Stall ${stall.id}: ${stall.status} · ${stall.power} kW`
-                            )
-                          }
-                          aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
-                        >
-                          <span className="connector-number">
-                            Stall {stall.id}
-                          </span>
-                    
-                          <span className="connector-plug-icon">
-                            <StallChargerIcon size={29}/>
-                          </span>
-                    
-                          <strong>{stall.status}</strong>
-                    
-                          <span className="connector-power-output">
-                            {stall.power} <small>kW</small>
-                          </span>
-                    
-                          <small>CCS2</small>
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <div className="connector-legend">
-                      <span>
-                        <i className="connector-legend-available" />
-                        Available
-                      </span>
-                      <span>
-                        <i className="connector-legend-occupied" />
-                        Occupied
-                      </span>
-                    </div>
-                    
-                    <p className="details-note">
-                      Demonstration data only. Stall availability and power output
-                      are simulated and are not connected to live charger telemetry.
-                    </p>
-
                     </section>
+
 
 
                     <section className="details-section">
