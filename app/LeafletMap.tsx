@@ -67,17 +67,28 @@ function MapController({
     const locate = () => map.flyTo(start, 15, { duration: 0.7 });
     const refreshMapSize = () => {
       // The map is hidden while another bottom-navigation tab is active.
-      // Recalculate its dimensions when Explore becomes visible again.
       window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
       }, 100);
     };
 
+    const panToStation = (event: Event) => {
+      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+      const { lat, lng } = customEvent.detail ?? {};
+      if (typeof lat !== "number" || typeof lng !== "number") return;
+      map.flyTo([lat, lng], Math.max(map.getZoom(), 16), {
+        animate: true,
+        duration: 0.9,
+      });
+    };
+
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-map-visible", refreshMapSize);
+    window.addEventListener("be-electric-pan-to-station", panToStation);
     return () => {
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener("be-electric-map-visible", refreshMapSize);
+      window.removeEventListener("be-electric-pan-to-station", panToStation);
     };
   }, [map]);
 

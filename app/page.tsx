@@ -40,7 +40,7 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 });
 
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
-type Panel = "route" | "chooser" | "station" | "details" | null;
+type Panel = "route" | "chooser" | "station" | "details" | "nearby" | null;
 
 type RecentRoute = {
   id: string;
@@ -687,6 +687,121 @@ export default function Home() {
                     Choose Another Service
                   </button>
                 </div>
+              ) : panel === "nearby" ? (
+                <div
+                  className="sheet-overlay"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 1200,
+                    display: "flex",
+                    alignItems: "flex-end",
+                    background: "rgba(20, 25, 21, 0.18)",
+                  }}
+                  onClick={() => setPanel(null)}
+                >
+                  <section
+                    className="bottom-sheet nearby-stations-sheet"
+                    aria-label="Nearby charging stations"
+                    onClick={(event) => event.stopPropagation()}
+                    style={{
+                      width: "100%",
+                      maxHeight: "72%",
+                      overflowY: "auto",
+                      boxSizing: "border-box",
+                      padding: "12px 18px calc(88px + env(safe-area-inset-bottom))",
+                      borderRadius: "24px 24px 0 0",
+                      background: "#fff",
+                      color: "#202620",
+                      boxShadow: "0 -8px 32px rgba(0,0,0,.12)",
+                    }}
+                  >
+                    <div
+                      className="sheet-grabber"
+                      style={{
+                        width: 42,
+                        height: 5,
+                        borderRadius: 99,
+                        background: "#d8dcd7",
+                        margin: "0 auto 16px",
+                      }}
+                    />
+                    <div className="sheet-title-row">
+                      <div>
+                        <h2>Nearby stations</h2>
+                        <p>{nearbyStations.length} stations within 5 km</p>
+                      </div>
+                      <button
+                        className="sheet-close"
+                        aria-label="Close nearby stations"
+                        onClick={() => setPanel(null)}
+                      >
+                        <X size={17} />
+                      </button>
+                    </div>
+                    {nearbyStations.length === 0 ? (
+                      <div className="empty-state">
+                        <MapPin size={24} />
+                        <b>No nearby stations match these filters</b>
+                        <p>Try changing the charger filters or search.</p>
+                      </div>
+                    ) : nearbyStations.map((station) => (
+                      <button
+                        key={station.id}
+                        className="saved-card nearby-station-row"
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          textAlign: "left",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "14px 0",
+                          border: 0,
+                          borderBottom: "1px solid #edf0ec",
+                          background: "transparent",
+                          color: "inherit",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setSelectedId(station.id);
+                          setRouteMode(false);
+                          setCalculatedRoute(null);
+                          setSheetDragY(0);
+                          setPanel("station");
+                          window.dispatchEvent(new CustomEvent(
+                            "be-electric-pan-to-station",
+                            { detail: { lat: station.lat, lng: station.lng } }
+                          ));
+                        }}
+                      >
+                        <span className="saved-zap">
+                          <Zap size={19} />
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <b style={{ display: "block" }}>{station.name}</b>
+                          <small style={{ display: "block", marginTop: 3 }}>
+                            {station.address}
+                          </small>
+                          <small style={{ display: "block", marginTop: 5 }}>
+                            {getAvailabilityLabel(station)} · {getPowerLabel(station)}
+                          </small>
+                        </span>
+                        <span style={{ textAlign: "right", flexShrink: 0 }}>
+                          <b>{getDistanceKm(
+                            START_LOCATION[0],
+                            START_LOCATION[1],
+                            station.lat,
+                            station.lng
+                          ).toFixed(1)} km</b>
+                          <small style={{ display: "block", marginTop: 4 }}>
+                            {station.status}
+                          </small>
+                        </span>
+                        <ChevronRight size={17} />
+                      </button>
+                    ))}
+                  </section>
+                </div>
               ) : panel === "chooser" ? (
                 <div className="sheet-overlay">
                   <div
@@ -1051,11 +1166,10 @@ export default function Home() {
 
                   <button
                     className="nearby-card"
-                    onClick={() =>
-                      notify(
-                        `${nearbyStations.length} stations within 5 km of the starting point`
-                      )
-                    }
+                    onClick={() => {
+                      setSheetDragY(0);
+                      setPanel("nearby");
+                    }}
                   >
                     <span className="nearby-icon">
                       <LocateFixed size={19} />
