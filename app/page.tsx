@@ -65,6 +65,8 @@ type Panel =
   | "details"
   | "nearby"
   | "connector"
+  | "charging"
+  | "charging-review"
   | null;
 
 type RecentRoute = {
@@ -81,6 +83,8 @@ const START_LOCATION: [number, number] = [
   25.254483277668196,
   51.47912950286491,
 ];
+
+const CHARGING_TARGETS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 
 function getDistanceKm(
   lat1: number,
@@ -110,6 +114,7 @@ function getAvailabilityLabel(station: MapStation) {
   if (station.available == null || station.plugs == null) {
     return "Availability unavailable";
   }
+
   return `${station.available} of ${station.plugs} available`;
 }
 
@@ -203,9 +208,13 @@ export default function Home() {
   const [sheetDragging, setSheetDragging] = useState(false);
   const [selectedStall, setSelectedStall] = useState<number | null>(null);
 
+  // Charging setup state
+  const [chargeTarget, setChargeTarget] = useState("80");
+  const [customTarget, setCustomTarget] = useState("");
+  const [carConnected, setCarConnected] = useState(false);
+
   const sheetPointerStart = useRef<number | null>(null);
 
-  // Demo stall information.
   const stalls = [
     { id: 1, status: "Available", power: 0 },
     { id: 2, status: "Available", power: 0 },
@@ -219,6 +228,15 @@ export default function Home() {
   ];
 
   const columns = Math.ceil(Math.sqrt(stalls.length));
+
+  const effectiveChargeTarget =
+    chargeTarget === "Custom" ? Number(customTarget) : Number(chargeTarget);
+
+  const validChargeTarget =
+    Number.isFinite(effectiveChargeTarget) &&
+    effectiveChargeTarget >= 10 &&
+    effectiveChargeTarget <= 100 &&
+    Number.isInteger(effectiveChargeTarget);
 
   const [calculatedRoute, setCalculatedRoute] = useState<{
     distance: string;
@@ -305,6 +323,7 @@ export default function Home() {
           station.lat,
           station.lng
         );
+
         return distance <= 5;
       }),
     [filtered]
@@ -318,7 +337,9 @@ export default function Home() {
 
   const activeMinutes = calculatedRoute?.minutes ?? selected?.minutes ?? 0;
   const activeDistance =
-    calculatedRoute?.distance ?? selected?.distance ?? "Distance not calculated";
+    calculatedRoute?.distance ??
+    selected?.distance ??
+    "Distance not calculated";
 
   function notify(text: string) {
     setMessage(text);
@@ -391,9 +412,16 @@ export default function Home() {
   function selectConnector(connectorNumber: number) {
     if (selectedStall === null) return;
 
-    notify(
-      `CCS2 Connector ${connectorNumber} selected at Stall ${selectedStall}.`
-    );
+    if (connectorNumber !== 1) {
+      notify("This connector is currently in use.");
+      return;
+    }
+
+    setChargeTarget("80");
+    setCustomTarget("");
+    setCarConnected(false);
+    setPanel("charging");
+    setSheetDragY(0);
   }
 
   if (loading) {
@@ -506,58 +534,66 @@ export default function Home() {
                 onRouteCalculated={(metrics) => setCalculatedRoute(metrics)}
               />
 
-              {panel !== "route" &&
-                panel !== "details" &&
-                panel !== "connector" && (
-                  <div className="search-wrap">
-                    <Search size={17} />
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search city, landmark, or charger ID"
-                      aria-label="Search chargers"
-                    />
-                    {search && (
-                      <button onClick={() => setSearch("")}>
-                        <X size={15} />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-              {panel !== "route" &&
-                panel !== "details" &&
-                panel !== "connector" && (
-                  <div className="filter-row">
-                    <button
-                      className={`filter-chip ${acOnly ? "active" : ""}`}
-                      onClick={() => {
-                        setAcOnly(!acOnly);
-                        if (!acOnly) setFastOnly(false);
-                      }}
-                    >
-                      AC Charging
+              {![
+                "route",
+                "details",
+                "connector",
+                "charging",
+                "charging-review",
+              ].includes(panel ?? "") && (
+                <div className="search-wrap">
+                  <Search size={17} />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search city, landmark, or charger ID"
+                    aria-label="Search chargers"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")}>
+                      <X size={15} />
                     </button>
+                  )}
+                </div>
+              )}
 
-                    <button
-                      className={`filter-chip ${fastOnly ? "active" : ""}`}
-                      onClick={() => {
-                        setFastOnly(!fastOnly);
-                        if (!fastOnly) setAcOnly(false);
-                      }}
-                    >
-                      {fastOnly && <Check size={13} />}
-                      DC Fast Charger
-                    </button>
+              {![
+                "route",
+                "details",
+                "connector",
+                "charging",
+                "charging-review",
+              ].includes(panel ?? "") && (
+                <div className="filter-row">
+                  <button
+                    className={`filter-chip ${acOnly ? "active" : ""}`}
+                    onClick={() => {
+                      setAcOnly(!acOnly);
+                      if (!acOnly) setFastOnly(false);
+                    }}
+                  >
+                    AC Charging
+                  </button>
 
-                    <button
-                      className={`filter-chip ${availableOnly ? "active" : ""}`}
-                      onClick={() => setAvailableOnly(!availableOnly)}
-                    >
-                      2+ Plugs Available
-                    </button>
-                  </div>
-                )}
+                  <button
+                    className={`filter-chip ${fastOnly ? "active" : ""}`}
+                    onClick={() => {
+                      setFastOnly(!fastOnly);
+                      if (!fastOnly) setAcOnly(false);
+                    }}
+                  >
+                    {fastOnly && <Check size={13} />}
+                    DC Fast Charger
+                  </button>
+
+                  <button
+                    className={`filter-chip ${availableOnly ? "active" : ""}`}
+                    onClick={() => setAvailableOnly(!availableOnly)}
+                  >
+                    2+ Plugs Available
+                  </button>
+                </div>
+              )}
 
               {panel === "route" && (
                 <div className="route-top-card">
@@ -603,7 +639,12 @@ export default function Home() {
                   bottom:
                     panel === "route"
                       ? "calc(var(--route-sheet-height, 300px) + 64px)"
-                      : panel === "details" || panel === "connector"
+                      : [
+                            "details",
+                            "connector",
+                            "charging",
+                            "charging-review",
+                          ].includes(panel ?? "")
                         ? "240px"
                         : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
                 }}
@@ -910,6 +951,528 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
+              ) : panel === "charging" ? (
+                <div className="station-details-screen">
+                  <header className="details-header">
+                    <button
+                      className="details-back"
+                      onClick={() => setPanel("connector")}
+                      aria-label="Back to connector selection"
+                    >
+                      <ChevronRight
+                        size={21}
+                        style={{ transform: "rotate(180deg)" }}
+                      />
+                    </button>
+                    <div>
+                      <small>CHARGING SETUP</small>
+                      <h2>Prepare to charge</h2>
+                    </div>
+                    <span className="details-live-dot" />
+                  </header>
+
+                  <div
+                    className="details-scroll"
+                    style={{ padding: 18, paddingBottom: 110 }}
+                  >
+                    <div
+                      style={{
+                        padding: 20,
+                        borderRadius: 20,
+                        background: "#edf2ec",
+                        textAlign: "center",
+                        marginBottom: 22,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 66,
+                          height: 66,
+                          borderRadius: 20,
+                          background: "#dce7dc",
+                          color: "#58715d",
+                          display: "grid",
+                          placeItems: "center",
+                          margin: "0 auto 12px",
+                        }}
+                      >
+                        <BatteryCharging size={34} />
+                      </div>
+                      <h3 style={{ margin: "0 0 6px", color: "#202522" }}>
+                        Ready to connect
+                      </h3>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#687168",
+                          fontSize: 13,
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        Stall {selectedStall} · CCS2 Connector 1
+                        <br />
+                        DC fast charging
+                      </p>
+                    </div>
+
+                    <section style={{ marginBottom: 24 }}>
+                      <div className="details-section-heading">
+                        <h3>1. Connect your car</h3>
+                        <span>REQUIRED</span>
+                      </div>
+
+                      <div
+                        style={{
+                          border: "1px solid #e3e7e1",
+                          borderRadius: 16,
+                          padding: 15,
+                          display: "flex",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <div style={{ color: "#58715d", paddingTop: 2 }}>
+                          <CarFront size={25} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ color: "#202522", fontSize: 14 }}>
+                            Plug the cable into your vehicle
+                          </strong>
+                          <p
+                            style={{
+                              color: "#858983",
+                              fontSize: 12,
+                              lineHeight: 1.6,
+                              margin: "6px 0 14px",
+                            }}
+                          >
+                            Connect the CCS2 charging cable to your car.
+                            Follow the instructions displayed on the physical
+                            charger.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setCarConnected(!carConnected)}
+                            style={{
+                              width: "100%",
+                              padding: "12px 14px",
+                              borderRadius: 12,
+                              border: carConnected
+                                ? "1px solid #58715d"
+                                : "1px solid #d8ddd6",
+                              background: carConnected ? "#e5eee6" : "#fff",
+                              color: "#36543c",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            {carConnected ? (
+                              <>
+                                <Check size={17} />
+                                Cable connected
+                              </>
+                            ) : (
+                              <>
+                                <PlugZap size={17} />
+                                Confirm cable is connected
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section style={{ marginBottom: 24 }}>
+                      <div className="details-section-heading">
+                        <h3>2. Set charging limit</h3>
+                        <span>BATTERY %</span>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "#858983",
+                          lineHeight: 1.6,
+                          margin: "0 0 14px",
+                        }}
+                      >
+                        Choose the battery percentage at which you want
+                        charging to stop.
+                      </p>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                          gap: 9,
+                        }}
+                      >
+                        {CHARGING_TARGETS.map((target) => {
+                          const targetValue = String(target);
+                          const isSelected = chargeTarget === targetValue;
+
+                          return (
+                            <button
+                              key={target}
+                              type="button"
+                              onClick={() => {
+                                setChargeTarget(targetValue);
+                                setCustomTarget("");
+                              }}
+                              aria-pressed={isSelected}
+                              style={{
+                                minHeight: 55,
+                                borderRadius: 13,
+                                border: isSelected
+                                  ? "2px solid #58715d"
+                                  : "1px solid #e2e6df",
+                                background: isSelected ? "#e5eee6" : "#fff",
+                                color: isSelected ? "#36543c" : "#343a34",
+                                fontSize: 16,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {target}%
+                            </button>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          onClick={() => setChargeTarget("Custom")}
+                          aria-pressed={chargeTarget === "Custom"}
+                          style={{
+                            minHeight: 55,
+                            borderRadius: 13,
+                            border:
+                              chargeTarget === "Custom"
+                                ? "2px solid #58715d"
+                                : "1px solid #e2e6df",
+                            background:
+                              chargeTarget === "Custom" ? "#e5eee6" : "#fff",
+                            color:
+                              chargeTarget === "Custom" ? "#36543c" : "#343a34",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Custom
+                        </button>
+                      </div>
+
+                      {chargeTarget === "Custom" && (
+                        <div style={{ marginTop: 15 }}>
+                          <label
+                            htmlFor="custom-charge-target"
+                            style={{
+                              display: "block",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: "#343a34",
+                              marginBottom: 8,
+                            }}
+                          >
+                            Custom battery target
+                          </label>
+                          <div style={{ position: "relative" }}>
+                            <input
+                              id="custom-charge-target"
+                              type="number"
+                              min={10}
+                              max={100}
+                              step={1}
+                              inputMode="numeric"
+                              placeholder="Enter 10–100"
+                              value={customTarget}
+                              onChange={(event) =>
+                                setCustomTarget(event.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                boxSizing: "border-box",
+                                padding: "14px 45px 14px 14px",
+                                border: "1px solid #dfe4dc",
+                                borderRadius: 12,
+                                background: "#fff",
+                                color: "#202522",
+                                fontSize: 16,
+                                outlineColor: "#58715d",
+                              }}
+                            />
+                            <span
+                              style={{
+                                position: "absolute",
+                                right: 15,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: "#858983",
+                                fontWeight: 600,
+                              }}
+                            >
+                              %
+                            </span>
+                          </div>
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: 7,
+                              color: "#858983",
+                              fontSize: 11,
+                            }}
+                          >
+                            Enter a whole number from 10% to 100%.
+                          </small>
+                          {customTarget !== "" && !validChargeTarget && (
+                            <p
+                              style={{
+                                color: "#b54747",
+                                fontSize: 12,
+                                marginTop: 7,
+                              }}
+                            >
+                              Enter a valid whole percentage from 10 to 100.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </section>
+
+                    <div
+                      style={{
+                        padding: 17,
+                        borderRadius: 16,
+                        background: "#f4f5f2",
+                        marginBottom: 18,
+                      }}
+                    >
+                      <small
+                        style={{
+                          display: "block",
+                          color: "#858983",
+                          fontSize: 11,
+                          letterSpacing: 1,
+                          marginBottom: 8,
+                        }}
+                      >
+                        YOUR CHARGING TARGET
+                      </small>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                        }}
+                      >
+                        <strong
+                          style={{
+                            fontSize: 34,
+                            color: "#36543c",
+                            letterSpacing: -1,
+                          }}
+                        >
+                          {chargeTarget === "Custom"
+                            ? validChargeTarget
+                              ? `${effectiveChargeTarget}%`
+                              : "--"
+                            : `${chargeTarget}%`}
+                        </strong>
+                        <BatteryCharging size={31} color="#58715d" />
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "#858983",
+                          lineHeight: 1.6,
+                          margin: "8px 0 0",
+                        }}
+                      >
+                        Your selected target is a requested battery level.
+                        Automatic stopping requires support from the vehicle
+                        and charging system.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={!carConnected || !validChargeTarget}
+                      onClick={() => setPanel("charging-review")}
+                      style={{
+                        opacity:
+                          !carConnected || !validChargeTarget ? 0.5 : 1,
+                        cursor:
+                          !carConnected || !validChargeTarget
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    >
+                      Review charging setup <ChevronRight size={18} />
+                    </button>
+
+                    <p
+                      style={{
+                        color: "#858983",
+                        fontSize: 11,
+                        lineHeight: 1.6,
+                        textAlign: "center",
+                        marginTop: 12,
+                      }}
+                    >
+                      Demo only. This screen cannot verify a physical cable
+                      connection.
+                    </p>
+                  </div>
+                </div>
+              ) : panel === "charging-review" ? (
+                <div className="station-details-screen">
+                  <header className="details-header">
+                    <button
+                      className="details-back"
+                      onClick={() => setPanel("charging")}
+                      aria-label="Back to charging setup"
+                    >
+                      <ChevronRight
+                        size={21}
+                        style={{ transform: "rotate(180deg)" }}
+                      />
+                    </button>
+                    <div>
+                      <small>FINAL STEP</small>
+                      <h2>Review setup</h2>
+                    </div>
+                    <span className="details-live-dot" />
+                  </header>
+
+                  <div
+                    className="details-scroll"
+                    style={{ padding: 20, paddingBottom: 100 }}
+                  >
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "28px 15px",
+                        background: "#edf2ec",
+                        borderRadius: 20,
+                        marginBottom: 22,
+                      }}
+                    >
+                      <BatteryCharging
+                        size={46}
+                        color="#58715d"
+                        style={{ margin: "0 auto 14px" }}
+                      />
+                      <h3 style={{ color: "#202522", margin: "0 0 8px" }}>
+                        Review your charging setup
+                      </h3>
+                      <p
+                        style={{
+                          color: "#687168",
+                          fontSize: 13,
+                          lineHeight: 1.6,
+                          margin: 0,
+                        }}
+                      >
+                        Check your connector and charging target before
+                        proceeding.
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e3e7e1",
+                        borderRadius: 16,
+                        padding: 16,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <small style={{ color: "#858983" }}>
+                        CHARGING LOCATION
+                      </small>
+                      <h3 style={{ margin: "6px 0", color: "#202522" }}>
+                        {selected.name}
+                      </h3>
+                      <p
+                        style={{
+                          color: "#858983",
+                          fontSize: 12,
+                          margin: 0,
+                        }}
+                      >
+                        Stall {selectedStall} · CCS2 Connector 1
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        border: "1px solid #e3e7e1",
+                        borderRadius: 16,
+                        padding: 16,
+                        marginBottom: 22,
+                      }}
+                    >
+                      <small style={{ color: "#858983" }}>
+                        STOP AT BATTERY LEVEL
+                      </small>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginTop: 8,
+                        }}
+                      >
+                        <strong style={{ fontSize: 38, color: "#36543c" }}>
+                          {effectiveChargeTarget}%
+                        </strong>
+                        <Check size={24} color="#58715d" />
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        background: "#fff5e6",
+                        color: "#805b23",
+                        borderRadius: 13,
+                        padding: 13,
+                        fontSize: 12,
+                        lineHeight: 1.6,
+                        marginBottom: 20,
+                      }}
+                    >
+                      <strong>Demo mode:</strong> Confirming these settings
+                      does not activate a physical charger or guarantee
+                      automatic stopping.
+                    </div>
+
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => {
+                        notify(
+                          `Demo setup saved: Stall ${selectedStall}, target ${effectiveChargeTarget}%. No charger was activated.`
+                        );
+                        setPanel("details");
+                      }}
+                    >
+                      <Check size={18} /> Confirm demo setup
+                    </button>
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => setPanel("charging")}
+                      style={{ marginTop: 10 }}
+                    >
+                      Edit charging settings
+                    </button>
+                  </div>
+                </div>
               ) : panel === "connector" ? (
                 <div className="station-details-screen connector-selection-screen">
                   <header className="details-header">
@@ -926,12 +1489,10 @@ export default function Home() {
                         style={{ transform: "rotate(180deg)" }}
                       />
                     </button>
-
                     <div>
                       <small>CONNECTOR SELECTION</small>
                       <h2>Stall {selectedStall}</h2>
                     </div>
-
                     <span className="details-live-dot" />
                   </header>
 
@@ -958,7 +1519,6 @@ export default function Home() {
                         <span className="connector-card-icon">
                           <StallChargerIcon size={34} />
                         </span>
-
                         <span className="connector-card-info">
                           <strong>CCS2 Connector 1</strong>
                           <small>DC fast charging</small>
@@ -967,7 +1527,6 @@ export default function Home() {
                             Available
                           </span>
                         </span>
-
                         <span className="connector-select-icon">
                           <ChevronRight size={19} />
                         </span>
@@ -982,7 +1541,6 @@ export default function Home() {
                         <span className="connector-card-icon">
                           <StallChargerIcon size={34} />
                         </span>
-
                         <span className="connector-card-info">
                           <strong>CCS2 Connector 2</strong>
                           <small>DC fast charging</small>
@@ -991,7 +1549,6 @@ export default function Home() {
                             In use
                           </span>
                         </span>
-
                         <span className="connector-select-icon">
                           <X size={18} />
                         </span>
@@ -1552,6 +2109,9 @@ export default function Home() {
               setSheetDragY(0);
               setSaved([]);
               setSelectedStall(null);
+              setChargeTarget("80");
+              setCustomTarget("");
+              setCarConnected(false);
             }}
           >
             Reset demo <History size={13} />
