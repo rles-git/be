@@ -2221,3 +2221,7 @@ button { cursor: pointer; }
 .cancel-route-button:hover {
   background: #f1f3f0;
 }
+
+nearby-stations-sheet{
+   z-index: 12;
+}
