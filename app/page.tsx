@@ -240,7 +240,7 @@ function MapArtwork() {
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-
+  
   const [selectedId, setSelectedId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
   const [panel, setPanel] = useState<Panel>(null);
@@ -255,7 +255,18 @@ export default function Home() {
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const sheetPointerStart = useRef<number | null>(null);
+  const stalls = [
+    { id: 1, status: "Available", power: 0 },
+    { id: 2, status: "Available", power: 0 },
+    { id: 3, status: "Occupied", power: 30 },
+    { id: 4, status: "Available", power: 0 },
+    { id: 5, status: "Available", power: 0 },
+    { id: 6, status: "Available", power: 0 },
+  ];
 
+  // 2. Calculate the number of columns
+  const columns = Math.ceil(Math.sqrt(stalls.length));
+  
   const [calculatedRoute, setCalculatedRoute] = useState<{
     distance: string;
     minutes: number;
@@ -1021,13 +1032,14 @@ export default function Home() {
                         </span>
                       </div>
                     
-                      <div className="stall-grid">
-                        {[
-                          { id: 1, status: "Available", power: 0 },
-                          { id: 2, status: "Available", power: 0 },
-                          { id: 3, status: "Occupied", power: 30 },
-                          { id: 4, status: "Available", power: 0 },
-                        ].map((stall) => (
+                      
+                      <div
+                        className="stall-grid"
+                        style={{
+                          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                        }}
+                      >
+                        {stalls.map((stall) => (
                           <button
                             key={stall.id}
                             type="button"
@@ -1043,24 +1055,23 @@ export default function Home() {
                             }
                             aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
                           >
-                            <span className="stall-number">
-                              Stall {stall.id}
-                            </span>
-                    
+                            <span className="stall-number">Stall {stall.id}</span>
+                      
                             <span className="stall-charger-icon">
                               <StallChargerIcon size={29} />
                             </span>
-                    
+                      
                             <strong>{stall.status}</strong>
-                    
+                      
                             <span className="stall-power-output">
                               {stall.power} <small>kW</small>
                             </span>
-                    
+                      
                             <small>CCS2</small>
                           </button>
                         ))}
                       </div>
+
                     
                       <p className="details-note">
                         Demonstration data only. Stall availability and power output
