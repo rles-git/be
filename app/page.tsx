@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 import { useStations, type MapStation } from "./hooks/useStations";
 
-
 function StallChargerIcon({ size = 29 }: { size?: number }) {
   return (
     <svg
@@ -43,55 +42,30 @@ function StallChargerIcon({ size = 29 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect
-        x="5"
-        y="3"
-        width="16"
-        height="26"
-        rx="3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <rect
-        x="8"
-        y="6"
-        width="10"
-        height="7"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M15 15L11 20H14L12 24L17 18H14.5L15 15Z"
-        fill="currentColor"
-      />
-      <path
-        d="M21 9H24C26 9 27 10.5 27 12.5V19C27 21 25.5 22 24 22"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M23 22L21 20M23 22L21 24"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <rect x="5" y="3" width="16" height="26" rx="3" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="8" y="6" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M15 15L11 20H14L12 24L17 18H14.5L15 15Z" fill="currentColor" />
+      <path d="M21 9H24C26 9 27 10.5 27 12.5V19C27 21 25.5 22 24 22" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M23 22L21 20M23 22L21 24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-
 const LeafletMap = dynamic(() => import("./LeafletMap"), {
   ssr: false,
-  loading: () => (
-    <div className="leaflet-loading">Loading OpenStreetMap…</div>
-  ),
+  loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div>,
 });
 
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
-type Panel = "route" | "chooser" | "station" | "details" | "nearby" | null;
+
+type Panel =
+  | "route"
+  | "chooser"
+  | "station"
+  | "details"
+  | "nearby"
+  | "connector"
+  | null;
 
 type RecentRoute = {
   id: string;
@@ -104,7 +78,8 @@ type RecentRoute = {
 };
 
 const START_LOCATION: [number, number] = [
-25.254483277668196, 51.47912950286491
+  25.254483277668196,
+  51.47912950286491,
 ];
 
 function getDistanceKm(
@@ -115,7 +90,6 @@ function getDistanceKm(
 ): number {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
   const earthRadiusKm = 6371;
-
   const dLat = toRadians(lat2 - lat1);
   const dLng = toRadians(lng2 - lng1);
 
@@ -125,24 +99,17 @@ function getDistanceKm(
       Math.cos(toRadians(lat2)) *
       Math.sin(dLng / 2) ** 2;
 
-  return (
-    earthRadiusKm *
-    2 *
-    Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  );
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function getPowerLabel(station: MapStation) {
-  return station.power != null
-    ? `${station.power} kW`
-    : "Power unavailable";
+  return station.power != null ? `${station.power} kW` : "Power unavailable";
 }
 
 function getAvailabilityLabel(station: MapStation) {
   if (station.available == null || station.plugs == null) {
     return "Availability unavailable";
   }
-
   return `${station.available} of ${station.plugs} available`;
 }
 
@@ -180,16 +147,8 @@ function MapArtwork() {
       aria-hidden="true"
     >
       <rect width="390" height="700" fill="#f5f5f2" />
-      <path
-        d="M278 -20 L390 0 L390 700 L315 700 L354 430 L316 318 L274 240 Z"
-        fill="#e6e8e5"
-      />
-      <path
-        d="M250 0 L274 235 L305 278 L350 420 L310 700"
-        fill="none"
-        stroke="#c8cbc7"
-        strokeWidth="7"
-      />
+      <path d="M278 -20 L390 0 L390 700 L315 700 L354 430 L316 318 L274 240 Z" fill="#e6e8e5" />
+      <path d="M250 0 L274 235 L305 278 L350 420 L310 700" fill="none" stroke="#c8cbc7" strokeWidth="7" />
       <g stroke="#d6d8d4" strokeWidth="2.7" fill="none">
         <path d="M-30 80 L360 470" />
         <path d="M-20 160 L330 510" />
@@ -211,25 +170,13 @@ function MapArtwork() {
         <path d="M-20 530 L130 380 L270 240 L390 120" />
         <path d="M20 700 L155 565 L305 415 L390 330" />
       </g>
-      <g
-        fill="#7e827d"
-        fontSize="9"
-        fontFamily="Arial, sans-serif"
-        letterSpacing=".6"
-      >
+      <g fill="#7e827d" fontSize="9" fontFamily="Arial, sans-serif" letterSpacing=".6">
         <text x="37" y="235">WEST BAY</text>
         <text x="36" y="555">SOMA</text>
         <text x="305" y="620">DOHA, QATAR</text>
       </g>
       <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
-      <circle
-        cx="98"
-        cy="420"
-        r="9"
-        fill="#91a795"
-        stroke="#fff"
-        strokeWidth="4"
-      />
+      <circle cx="98" cy="420" r="9" fill="#91a795" stroke="#fff" strokeWidth="4" />
       <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif">
         <text x="52" y="449">Your area</text>
         <text x="20" y="600">Doha</text>
@@ -240,8 +187,8 @@ function MapArtwork() {
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-  
-  const [selectedId, setSelectedId] = useState<string>("");
+
+  const [selectedId, setSelectedId] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
   const [panel, setPanel] = useState<Panel>(null);
   const [routeMode, setRouteMode] = useState(false);
@@ -254,7 +201,11 @@ export default function Home() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
+  const [selectedStall, setSelectedStall] = useState<number | null>(null);
+
   const sheetPointerStart = useRef<number | null>(null);
+
+  // Demo stall information.
   const stalls = [
     { id: 1, status: "Available", power: 0 },
     { id: 2, status: "Available", power: 0 },
@@ -265,12 +216,10 @@ export default function Home() {
     { id: 7, status: "Available", power: 0 },
     { id: 8, status: "Available", power: 0 },
     { id: 9, status: "Available", power: 0 },
-    
   ];
 
-  // 2. Calculate the number of columns
   const columns = Math.ceil(Math.sqrt(stalls.length));
-  
+
   const [calculatedRoute, setCalculatedRoute] = useState<{
     distance: string;
     minutes: number;
@@ -286,17 +235,13 @@ export default function Home() {
     }
   }, [stations, selectedId]);
 
-  function handleSheetPointerDown(
-    event: React.PointerEvent<HTMLDivElement>
-  ) {
+  function handleSheetPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     sheetPointerStart.current = event.clientY;
     setSheetDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
-  function handleSheetPointerMove(
-    event: React.PointerEvent<HTMLDivElement>
-  ) {
+  function handleSheetPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!sheetDragging || sheetPointerStart.current === null) return;
 
     const delta = event.clientY - sheetPointerStart.current;
@@ -306,7 +251,6 @@ export default function Home() {
   function handleSheetPointerUp() {
     setSheetDragging(false);
     sheetPointerStart.current = null;
-
     setSheetDragY((current) =>
       current < -45 ? -70 : current > 80 ? 320 : 0
     );
@@ -324,12 +268,10 @@ export default function Home() {
   function handleRouteSheetPointerUp() {
     setSheetDragging(false);
     sheetPointerStart.current = null;
-
     setSheetDragY((current) =>
       current < -45 ? -70 : current > 55 ? 65 : 0
     );
   }
-
 
   const filtered = useMemo(
     () =>
@@ -363,7 +305,6 @@ export default function Home() {
           station.lat,
           station.lng
         );
-
         return distance <= 5;
       }),
     [filtered]
@@ -373,17 +314,11 @@ export default function Home() {
     saved.includes(station.id)
   );
 
-  const selected = stations.find(
-    (station) => station.id === selectedId
-  );
+  const selected = stations.find((station) => station.id === selectedId);
 
-  const activeMinutes =
-    calculatedRoute?.minutes ?? selected?.minutes ?? 0;
-
+  const activeMinutes = calculatedRoute?.minutes ?? selected?.minutes ?? 0;
   const activeDistance =
-    calculatedRoute?.distance ??
-    selected?.distance ??
-    "Distance not calculated";
+    calculatedRoute?.distance ?? selected?.distance ?? "Distance not calculated";
 
   function notify(text: string) {
     setMessage(text);
@@ -442,6 +377,25 @@ export default function Home() {
     notify(`Arrival recorded at ${selected.shortName}.`);
   }
 
+  function openStall(stallId: number, status: string) {
+    if (status !== "Available") {
+      notify(`Stall ${stallId} is currently occupied.`);
+      return;
+    }
+
+    setSelectedStall(stallId);
+    setPanel("connector");
+    setSheetDragY(0);
+  }
+
+  function selectConnector(connectorNumber: number) {
+    if (selectedStall === null) return;
+
+    notify(
+      `CCS2 Connector ${connectorNumber} selected at Stall ${selectedStall}.`
+    );
+  }
+
   if (loading) {
     return (
       <main className="desktop-shell">
@@ -457,9 +411,7 @@ export default function Home() {
       <main className="desktop-shell">
         <div className="leaflet-loading">
           <p>{error}</p>
-          <button onClick={() => window.location.reload()}>
-            Try again
-          </button>
+          <button onClick={() => window.location.reload()}>Try again</button>
         </div>
       </main>
     );
@@ -551,61 +503,61 @@ export default function Home() {
                   setSheetDragY(0);
                   setCalculatedRoute(null);
                 }}
-                onRouteCalculated={(metrics) =>
-                  setCalculatedRoute(metrics)
-                }
+                onRouteCalculated={(metrics) => setCalculatedRoute(metrics)}
               />
 
-              {panel !== "route" && panel !== "details" && (
-                <div className="search-wrap">
-                  <Search size={17} />
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search city, landmark, or charger ID"
-                    aria-label="Search chargers"
-                  />
-                  {search && (
-                    <button onClick={() => setSearch("")}>
-                      <X size={15} />
+              {panel !== "route" &&
+                panel !== "details" &&
+                panel !== "connector" && (
+                  <div className="search-wrap">
+                    <Search size={17} />
+                    <input
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                      placeholder="Search city, landmark, or charger ID"
+                      aria-label="Search chargers"
+                    />
+                    {search && (
+                      <button onClick={() => setSearch("")}>
+                        <X size={15} />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+              {panel !== "route" &&
+                panel !== "details" &&
+                panel !== "connector" && (
+                  <div className="filter-row">
+                    <button
+                      className={`filter-chip ${acOnly ? "active" : ""}`}
+                      onClick={() => {
+                        setAcOnly(!acOnly);
+                        if (!acOnly) setFastOnly(false);
+                      }}
+                    >
+                      AC Charging
                     </button>
-                  )}
-                </div>
-              )}
 
-              {panel !== "route" && panel !== "details" && (
-                <div className="filter-row">
-                  <button
-                    className={`filter-chip ${acOnly ? "active" : ""}`}
-                    onClick={() => {
-                      setAcOnly(!acOnly);
-                      if (!acOnly) setFastOnly(false);
-                    }}
-                  >
-                    AC Charging
-                  </button>
+                    <button
+                      className={`filter-chip ${fastOnly ? "active" : ""}`}
+                      onClick={() => {
+                        setFastOnly(!fastOnly);
+                        if (!fastOnly) setAcOnly(false);
+                      }}
+                    >
+                      {fastOnly && <Check size={13} />}
+                      DC Fast Charger
+                    </button>
 
-                  <button
-                    className={`filter-chip ${fastOnly ? "active" : ""}`}
-                    onClick={() => {
-                      setFastOnly(!fastOnly);
-                      if (!fastOnly) setAcOnly(false);
-                    }}
-                  >
-                    {fastOnly && <Check size={13} />}
-                    DC Fast Charger
-                  </button>
-
-                  <button
-                    className={`filter-chip ${
-                      availableOnly ? "active" : ""
-                    }`}
-                    onClick={() => setAvailableOnly(!availableOnly)}
-                  >
-                    2+ Plugs Available
-                  </button>
-                </div>
-              )}
+                    <button
+                      className={`filter-chip ${availableOnly ? "active" : ""}`}
+                      onClick={() => setAvailableOnly(!availableOnly)}
+                    >
+                      2+ Plugs Available
+                    </button>
+                  </div>
+                )}
 
               {panel === "route" && (
                 <div className="route-top-card">
@@ -651,7 +603,7 @@ export default function Home() {
                   bottom:
                     panel === "route"
                       ? "calc(var(--route-sheet-height, 300px) + 64px)"
-                      : panel === "details"
+                      : panel === "details" || panel === "connector"
                         ? "240px"
                         : `calc(240px + ${Math.max(0, -sheetDragY)}px)`,
                 }}
@@ -790,6 +742,7 @@ export default function Home() {
                       role="separator"
                       aria-label="Drag nearby stations panel"
                     />
+
                     <div className="sheet-title-row">
                       <div>
                         <h2>Nearby stations</h2>
@@ -803,67 +756,77 @@ export default function Home() {
                         <X size={17} />
                       </button>
                     </div>
+
                     {nearbyStations.length === 0 ? (
                       <div className="empty-state">
                         <MapPin size={24} />
                         <b>No nearby stations match these filters</b>
                         <p>Try changing the charger filters or search.</p>
                       </div>
-                    ) : nearbyStations.map((station) => (
-                      <button
-                        key={station.id}
-                        className="saved-card nearby-station-row"
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          textAlign: "left",
-                          alignItems: "center",
-                          gap: 12,
-                          padding: "14px 0",
-                          border: 0,
-                          borderBottom: "1px solid #edf0ec",
-                          background: "transparent",
-                          color: "inherit",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => {
-                          setSelectedId(station.id);
-                          setRouteMode(false);
-                          setCalculatedRoute(null);
-                          setSheetDragY(0);
-                          setPanel("station");
-                          window.dispatchEvent(new CustomEvent(
-                            "be-electric-pan-to-station",
-                            { detail: { lat: station.lat, lng: station.lng } }
-                          ));
-                        }}
-                      >
-                        <span className="saved-zap">
-                          <Zap size={19} />
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0 }}>
-                          <b style={{ display: "block" }}>{station.name}</b>
-                          <small style={{ display: "block", marginTop: 3 }}>
-                            {station.address}
-                          </small>
-                          <small style={{ display: "block", marginTop: 5 }}>
-                            {getAvailabilityLabel(station)} · {getPowerLabel(station)}
-                          </small>
-                        </span>
-                        <span style={{ textAlign: "right", flexShrink: 0 }}>
-                          <b>{getDistanceKm(
-                            START_LOCATION[0],
-                            START_LOCATION[1],
-                            station.lat,
-                            station.lng
-                          ).toFixed(1)} km</b>
-                          <small style={{ display: "block", marginTop: 4 }}>
-                            {station.status}
-                          </small>
-                        </span>
-                        <ChevronRight size={17} />
-                      </button>
-                    ))}
+                    ) : (
+                      nearbyStations.map((station) => (
+                        <button
+                          key={station.id}
+                          className="saved-card nearby-station-row"
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            textAlign: "left",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "14px 0",
+                            border: 0,
+                            borderBottom: "1px solid #edf0ec",
+                            background: "transparent",
+                            color: "inherit",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => {
+                            setSelectedId(station.id);
+                            setRouteMode(false);
+                            setCalculatedRoute(null);
+                            setSheetDragY(0);
+                            setPanel("station");
+                            window.dispatchEvent(
+                              new CustomEvent("be-electric-pan-to-station", {
+                                detail: {
+                                  lat: station.lat,
+                                  lng: station.lng,
+                                },
+                              })
+                            );
+                          }}
+                        >
+                          <span className="saved-zap">
+                            <Zap size={19} />
+                          </span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <b style={{ display: "block" }}>{station.name}</b>
+                            <small style={{ display: "block", marginTop: 3 }}>
+                              {station.address}
+                            </small>
+                            <small style={{ display: "block", marginTop: 5 }}>
+                              {getAvailabilityLabel(station)} · {getPowerLabel(station)}
+                            </small>
+                          </span>
+                          <span style={{ textAlign: "right", flexShrink: 0 }}>
+                            <b>
+                              {getDistanceKm(
+                                START_LOCATION[0],
+                                START_LOCATION[1],
+                                station.lat,
+                                station.lng
+                              ).toFixed(1)}{" "}
+                              km
+                            </b>
+                            <small style={{ display: "block", marginTop: 4 }}>
+                              {station.status}
+                            </small>
+                          </span>
+                          <ChevronRight size={17} />
+                        </button>
+                      ))
+                    )}
                   </section>
                 </div>
               ) : panel === "chooser" ? (
@@ -893,8 +856,7 @@ export default function Home() {
                       <div>
                         <h2>Choose your route</h2>
                         <p>
-                          {selected.shortName} · {activeDistance} ·{" "}
-                          {activeMinutes} min
+                          {selected.shortName} · {activeDistance} · {activeMinutes} min
                         </p>
                       </div>
                       <button
@@ -930,9 +892,7 @@ export default function Home() {
                       <button
                         key={item.name}
                         className={`route-option ${
-                          item.name === "In-App Route Preview"
-                            ? "chosen"
-                            : ""
+                          item.name === "In-App Route Preview" ? "chosen" : ""
                         }`}
                         onClick={() => externalMap(item.name)}
                       >
@@ -948,6 +908,103 @@ export default function Home() {
                     <p className="chooser-footnote">
                       Your selected station stays selected when you return.
                     </p>
+                  </div>
+                </div>
+              ) : panel === "connector" ? (
+                <div className="station-details-screen connector-selection-screen">
+                  <header className="details-header">
+                    <button
+                      className="details-back"
+                      onClick={() => {
+                        setPanel("details");
+                        setSheetDragY(0);
+                      }}
+                      aria-label="Back to station details"
+                    >
+                      <ChevronRight
+                        size={21}
+                        style={{ transform: "rotate(180deg)" }}
+                      />
+                    </button>
+
+                    <div>
+                      <small>CONNECTOR SELECTION</small>
+                      <h2>Stall {selectedStall}</h2>
+                    </div>
+
+                    <span className="details-live-dot" />
+                  </header>
+
+                  <div className="details-scroll connector-scroll">
+                    <div className="connector-intro">
+                      <div className="details-location-icon">
+                        <PlugZap size={27} />
+                      </div>
+                      <h3>Choose your connector</h3>
+                      <p>Select an available CCS2 connector to continue.</p>
+                    </div>
+
+                    <div className="connector-summary">
+                      <span>Stall {selectedStall}</span>
+                      <span>CCS2 · DC Fast Charging</span>
+                    </div>
+
+                    <div className="connector-list">
+                      <button
+                        type="button"
+                        className="connector-card connector-available"
+                        onClick={() => selectConnector(1)}
+                      >
+                        <span className="connector-card-icon">
+                          <StallChargerIcon size={34} />
+                        </span>
+
+                        <span className="connector-card-info">
+                          <strong>CCS2 Connector 1</strong>
+                          <small>DC fast charging</small>
+                          <span className="connector-status available-status">
+                            <span className="stall-status-dot" />
+                            Available
+                          </span>
+                        </span>
+
+                        <span className="connector-select-icon">
+                          <ChevronRight size={19} />
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="connector-card connector-occupied"
+                        disabled
+                        aria-disabled="true"
+                      >
+                        <span className="connector-card-icon">
+                          <StallChargerIcon size={34} />
+                        </span>
+
+                        <span className="connector-card-info">
+                          <strong>CCS2 Connector 2</strong>
+                          <small>DC fast charging</small>
+                          <span className="connector-status occupied-status">
+                            <span className="occupied-status-dot" />
+                            In use
+                          </span>
+                        </span>
+
+                        <span className="connector-select-icon">
+                          <X size={18} />
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="connector-note">
+                      <CircleDot size={17} />
+                      <p>
+                        Connector availability is simulated for this demo.
+                        Check the charger's actual status before use.
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : panel === "details" ? (
@@ -976,15 +1033,11 @@ export default function Home() {
                         <Zap size={25} />
                       </div>
                       <div>
-                        <span className="details-eyebrow">
-                          BE-ELECTRIC NETWORK
-                        </span>
+                        <span className="details-eyebrow">BE-ELECTRIC NETWORK</span>
                         <h3>{selected.name}</h3>
                         <p>{selected.address}</p>
                       </div>
-                      <span className="details-open-badge">
-                        {selected.status}
-                      </span>
+                      <span className="details-open-badge">{selected.status}</span>
                     </div>
 
                     <section className="details-section">
@@ -992,6 +1045,7 @@ export default function Home() {
                         <h3>Charging overview</h3>
                         <span>DATABASE DATA</span>
                       </div>
+
                       <div className="details-stats">
                         <div>
                           <Zap size={18} />
@@ -1009,34 +1063,30 @@ export default function Home() {
                           <strong>{getPriceLabel(selected)}</strong>
                         </div>
                       </div>
+
                       <p className="details-note">
                         {getStatusLabel(selected.status)}. A database status
                         is not necessarily a live charger status.
                       </p>
                     </section>
-          
-                  
+
                     <section className="details-section">
-                                         
-                    <div className="details-section">
                       <div className="details-section-heading">
                         <h3>Available stalls</h3>
                         <span>LIVE DEMO</span>
                       </div>
-                    
+
                       <div className="stall-availability-summary">
                         <div>
                           <strong>3 of 4 available</strong>
                           <p>CCS2 · DC fast charging</p>
                         </div>
-                    
                         <span className="stall-availability-badge">
                           <span className="stall-status-dot" />
                           Available
                         </span>
                       </div>
-                    
-                      
+
                       <div
                         className="stall-grid"
                         style={{
@@ -1052,39 +1102,28 @@ export default function Home() {
                                 ? "stall-available"
                                 : "stall-occupied"
                             }`}
-                            onClick={() =>
-                              notify(
-                                `Stall ${stall.id}: ${stall.status} · ${stall.power} kW`
-                              )
-                            }
+                            onClick={() => openStall(stall.id, stall.status)}
                             aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
                           >
                             <span className="stall-number">Stall {stall.id}</span>
-                      
                             <span className="stall-charger-icon">
                               <StallChargerIcon size={29} />
                             </span>
-                      
                             <strong>{stall.status}</strong>
-                      
                             <span className="stall-power-output">
                               {stall.power} <small>kW</small>
                             </span>
-                      
                             <small>CCS2</small>
                           </button>
                         ))}
                       </div>
 
-                    
                       <p className="details-note">
-                        Demonstration data only. Stall availability and power output
-                        are simulated and are not connected to live charger telemetry.
+                        Demonstration data only. Stall availability and power
+                        output are simulated and are not connected to live
+                        charger telemetry.
                       </p>
-                    </div>
                     </section>
-
-
 
                     <section className="details-section">
                       <h3>Wayfinding instructions</h3>
@@ -1111,12 +1150,13 @@ export default function Home() {
                           <div>
                             <strong>Verify the charger</strong>
                             <p>
-                              Check the charger display and connector
-                              before connecting your vehicle.
+                              Check the charger display and connector before
+                              connecting your vehicle.
                             </p>
                           </div>
                         </div>
                       </div>
+
                       <button className="primary-button" onClick={openRoute}>
                         <Navigation size={18} /> Get Directions
                       </button>
@@ -1145,6 +1185,7 @@ export default function Home() {
                         <h3>User check-ins</h3>
                         <span>COMMUNITY</span>
                       </div>
+
                       <div className="community-card">
                         <div className="community-avatar">EV</div>
                         <div>
@@ -1156,6 +1197,7 @@ export default function Home() {
                           </p>
                         </div>
                       </div>
+
                       <button
                         className="secondary-button"
                         onClick={() =>
@@ -1165,6 +1207,7 @@ export default function Home() {
                         <Check size={18} /> Check in at this station
                       </button>
                     </section>
+
                     <div className="details-bottom-space" />
                   </div>
                 </div>
@@ -1222,9 +1265,7 @@ export default function Home() {
 
                   <div className="station-summary">
                     <span>{getAvailabilityLabel(selected)}</span>
-                    <small>
-                      {selected.distance || "Distance not calculated"}
-                    </small>
+                    <small>{selected.distance || "Distance not calculated"}</small>
                   </div>
 
                   <div className="spec-grid">
@@ -1318,9 +1359,7 @@ export default function Home() {
                           </span>
                           <span>
                             <b>{station.name}</b>
-                            <small>
-                              {getAvailabilityLabel(station)}
-                            </small>
+                            <small>{getAvailabilityLabel(station)}</small>
                           </span>
                           <ChevronRight size={18} />
                         </button>
@@ -1376,8 +1415,7 @@ export default function Home() {
                           <span>
                             <b>{route.stationName}</b>
                             <small>
-                              {route.distance} · {route.minutes} min ·{" "}
-                              {route.completedAt}
+                              {route.distance} · {route.minutes} min · {route.completedAt}
                             </small>
                           </span>
                           <ChevronRight size={18} />
@@ -1481,9 +1519,7 @@ export default function Home() {
                     setActiveTab(item.name);
 
                     if (item.name === "Explore") {
-                      window.dispatchEvent(
-                        new Event("be-electric-map-visible")
-                      );
+                      window.dispatchEvent(new Event("be-electric-map-visible"));
                     }
                   }}
                 >
@@ -1515,6 +1551,7 @@ export default function Home() {
               setCalculatedRoute(null);
               setSheetDragY(0);
               setSaved([]);
+              setSelectedStall(null);
             }}
           >
             Reset demo <History size={13} />
