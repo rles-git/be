@@ -949,31 +949,77 @@ export default function Home() {
                       </p>
                     </section>
 
+                                        
                     <section className="details-section">
-                      <h3>Connector information</h3>
-                      <div className="connector-card">
-                        <span className="connector-icon">
-                          <PlugZap size={21} />
-                        </span>
-                        <div>
-                          <strong>{selected.kind}</strong>
-                          <small>
-                            {selected.kind === "DC fast"
-                              ? "DC fast charging"
-                              : "AC charging"}
-                          </small>
-                        </div>
-                        <div className="connector-power">
-                          <strong>{getPowerLabel(selected)}</strong>
-                          <small>Reported maximum</small>
-                        </div>
+                      <div className="details-section-heading">
+                        <h3>Available connectors</h3>
+                        <span>LIVE DEMO</span>
                       </div>
+                    
+                      <div className="connector-availability-summary">
+                        <div>
+                          <strong>3 of 4 available</strong>
+                          <p>CCS2 · DC fast charging</p>
+                        </div>
+                        <span className="connector-availability-badge">
+                          <span className="connector-status-dot" />
+                          Available
+                        </span>
+                      </div>
+                    
+                      <div className="connector-grid">
+                        {[
+                          { id: 1, status: "Available" },
+                          { id: 2, status: "Available" },
+                          { id: 3, status: "Occupied" },
+                          { id: 4, status: "Available" },
+                        ].map((connector) => (
+                          <button
+                            key={connector.id}
+                            type="button"
+                            className={`connector-option ${
+                              connector.status === "Available"
+                                ? "connector-available"
+                                : "connector-occupied"
+                            }`}
+                            onClick={() =>
+                              notify(
+                                `CCS2 Connector ${connector.id}: ${connector.status}`
+                              )
+                            }
+                            aria-label={`CCS2 Connector ${connector.id}: ${connector.status}`}
+                          >
+                            <span className="connector-number">
+                              Connector {connector.id}
+                            </span>
+                    
+                            <span className="connector-plug-icon">
+                              <PlugZap size={29} strokeWidth={1.8} />
+                            </span>
+                    
+                            <strong>{connector.status}</strong>
+                            <small>CCS2</small>
+                          </button>
+                        ))}
+                      </div>
+                    
+                      <div className="connector-legend">
+                        <span>
+                          <i className="connector-legend-available" />
+                          Available
+                        </span>
+                        <span>
+                          <i className="connector-legend-occupied" />
+                          Occupied
+                        </span>
+                      </div>
+                    
                       <p className="details-note">
-                        Connector classification is inferred from the
-                        connector type stored in your database. Verify the
-                        actual connector before travelling.
+                        Demonstration data only. Connector availability is simulated
+                        and is not connected to live charger telemetry.
                       </p>
                     </section>
+
 
                     <section className="details-section">
                       <h3>Wayfinding instructions</h3>
