@@ -41,8 +41,8 @@ type Props = {
     minutes: number;
   }) => void;
 };
-
-const start: [number, number] = [25.25443628041169, 51.47908688248179];
+///25.25443628041169, 51.47908688248179
+const start: [number, number] = [25.39843662939004, 51.51449314830205];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
