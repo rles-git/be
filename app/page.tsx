@@ -265,15 +265,6 @@ export default function Home() {
     { id: 7, status: "Available", power: 0 },
     { id: 8, status: "Available", power: 0 },
     { id: 9, status: "Available", power: 0 },
-    { id: 10, status: "Available", power: 0 },
-    { id: 11, status: "Available", power: 0 },
-    { id: 12, status: "Available", power: 0 },
-    { id: 13, status: "Available", power: 0 },
-    { id: 14, status: "Available", power: 0 },
-    { id: 15, status: "Available", power: 0 },
-    { id: 16, status: "Available", power: 0 },
-    { id: 17, status: "Available", power: 0 },
-    { id: 18, status: "Available", power: 0 },
     
   ];
 
