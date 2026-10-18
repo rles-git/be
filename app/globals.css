@@ -2328,7 +2328,7 @@ nearby-stations-sheet{
   white-space: nowrap;
 }
 
-.connector-plug-icon {
+.stall-charger-icon {
   display: flex;
   align-items: center;
   justify-content: center;
