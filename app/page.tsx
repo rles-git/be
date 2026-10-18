@@ -40,7 +40,7 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 });
 
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
-type Panel = "route" | "chooser" | "station" | "details" | null;
+type Panel = "route" | "chooser" | "station" | "details" | "nearby" | null;
 
 type RecentRoute = {
   id: string;
@@ -190,7 +190,7 @@ function MapArtwork() {
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-
+  const [focusStationId, setFocusStationId] = useState("");
   const [selectedId, setSelectedId] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
   const [panel, setPanel] = useState<Panel>(null);
@@ -288,20 +288,24 @@ export default function Home() {
     [stations, search, fastOnly, acOnly, availableOnly]
   );
 
-  const nearbyStations = useMemo(
-    () =>
-      filtered.filter((station) => {
-        const distance = getDistanceKm(
-          START_LOCATION[0],
-          START_LOCATION[1],
-          station.lat,
-          station.lng
-        );
-
-        return distance <= 5;
-      }),
-    [filtered]
-  );
+    const nearbyStations = useMemo(
+      () =>
+        filtered
+          .map((station) => ({
+            ...station,
+            distanceFromStart: getDistanceKm(
+              START_LOCATION[0],
+              START_LOCATION[1],
+              station.lat,
+              station.lng
+            ),
+          }))
+          .filter((station) => station.distanceFromStart <= 5)
+          .sort(
+            (a, b) => a.distanceFromStart - b.distanceFromStart
+          ),
+      [filtered]
+    );
 
   const savedStations = stations.filter((station) =>
     saved.includes(station.id)
@@ -478,6 +482,7 @@ export default function Home() {
                 stations={filtered}
                 selectedId={selectedId}
                 routeMode={routeMode}
+                focusStationId={focusStationId}
                 onSelect={(id: string) => {
                   setSelectedId(id);
                   setPanel("station");
@@ -1042,33 +1047,108 @@ export default function Home() {
                   </button>
                 </div>
               ) : (
-                <div className="map-bottom-content">
-                  <div className="legend">
-                    <span><i className="green-dot" /> Online</span>
-                    <span><i className="gray-dot" /> Unknown</span>
-                    <span><i className="gray-dot" /> Offline</span>
-                  </div>
+                
+) : panel === "nearby" ? (
+  <div className="nearby-sheet">
+    <div className="nearby-sheet-header">
+      <div
+        className="sheet-grabber"
+        aria-hidden="true"
+      />
+      <div className="nearby-title-row">
+        <div>
+          <h2>Nearby charging stations</h2>
+          <p>
+            {nearbyStations.length} stations within 5 km
+          </p>
+        </div>
 
-                  <button
-                    className="nearby-card"
-                    onClick={() =>
-                      notify(
-                        `${nearbyStations.length} stations within 5 km of the starting point`
-                      )
-                    }
-                  >
-                    <span className="nearby-icon">
-                      <LocateFixed size={19} />
-                    </span>
-                    <span>
-                      <b>{nearbyStations.length} stations nearby</b>
-                      <small>Based on stored station coordinates</small>
-                    </span>
-                    <List size={19} />
-                  </button>
-                </div>
-              )}
-            </div>
+        <button
+          className="sheet-close"
+          onClick={() => setPanel(null)}
+          aria-label="Close nearby stations"
+        >
+          <X size={18} />
+        </button>
+      </div>
+    </div>
+
+    <div className="nearby-stations-list">
+      {nearbyStations.length > 0 ? (
+        nearbyStations.map((station) => (
+          <button
+            key={station.id}
+            className={`nearby-station-row ${
+              selectedId === station.id ? "selected" : ""
+            }`}
+            onClick={() => {
+              setSelectedId(station.id);
+              setFocusStationId(station.id);
+              setPanel("station");
+              setRouteMode(false);
+              setSheetDragY(0);
+              setCalculatedRoute(null);
+            }}
+          >
+            <span className="nearby-station-icon">
+              <Zap size={20} />
+            </span>
+
+            <span className="nearby-station-copy">
+              <strong>{station.name}</strong>
+              <small>
+                {station.distanceFromStart.toFixed(1)} km away
+                {" · "}
+                {station.kind}
+              </small>
+              <small>
+                {getAvailabilityLabel(station)}
+              </small>
+            </span>
+
+            <span className="nearby-station-arrow">
+              <ChevronRight size={19} />
+            </span>
+          </button>
+        ))
+      ) : (
+        <div className="nearby-empty">
+          <MapPin size={24} />
+          <strong>No nearby stations found</strong>
+          <p>
+            Try clearing your search or adjusting the charger filters.
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
+    ) : (
+      <div className="map-bottom-content">
+        <div className="legend">
+          <span><i className="green-dot" /> Online</span>
+          <span><i className="gray-dot" /> Unknown</span>
+          <span><i className="gray-dot" /> Offline</span>
+        </div>
+    
+        <button
+          className="nearby-card"
+          onClick={() => {
+            setSheetDragY(0);
+            setPanel("nearby");
+          }}
+        >
+          <span className="nearby-icon">
+            <LocateFixed size={19} />
+          </span>
+          <span>
+            <b>{nearbyStations.length} stations nearby</b>
+            <small>Tap to browse and select a charger</small>
+          </span>
+          <ChevronRight size={19} />
+        </button>
+      </div>
+    )
+
 
             {activeTab !== "Explore" && (
               <div className="other-tab-screen">
