@@ -1062,18 +1062,6 @@ export default function Home() {
                         ))}
                       </div>
                     
-                      <div className="stall-legend">
-                        <span className="stall-legend-available">
-                          <i className="stall-status-dot" />
-                          Available
-                        </span>
-                    
-                        <span className="stall-legend-occupied">
-                          <i className="stall-status-dot" />
-                          Occupied
-                        </span>
-                      </div>
-                    
                       <p className="details-note">
                         Demonstration data only. Stall availability and power output
                         are simulated and are not connected to live charger telemetry.
