@@ -17,7 +17,8 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
-          const diagnostic = await sql`
+    
+    const diagnostic = await sql`
         SELECT
           current_database() AS database_name,
           current_schema() AS schema_name,
@@ -26,7 +27,8 @@ export async function GET() {
       `;
       
       console.log("Database diagnostic:", diagnostic);
-
+      console.log("Stations returned:", stations.length);
+    
     const stations = await sql`
       SELECT
         id,
