@@ -46,7 +46,7 @@ export async function GET() {
       FROM stations
       ORDER BY id ASC
     `;
-
+console.log("Stations returned:", stations.length);
     return NextResponse.json(stations);
   } catch (error) {
     console.error("Failed to fetch stations:", error);
