@@ -18,6 +18,15 @@ export async function GET() {
 
     const sql = neon(databaseUrl);
 
+    // Check which database and schema the API is connected to.
+    const diagnostic = await sql`
+      SELECT
+        current_database() AS database_name,
+        current_schema() AS schema_name,
+        current_setting('search_path') AS search_path
+    `;
+
+    // Explicitly read from the public stations table.
     const stations = await sql`
       SELECT
         id,
@@ -33,32 +42,56 @@ export async function GET() {
         kind,
         distance,
         minutes
-      FROM stations
+      FROM public.stations
       ORDER BY id ASC
     `;
 
-    const q009 = stations.find(
-      (station) => station.id === "Q009"
+    // Find all Q009 matches, allowing for accidental spaces.
+    const q009 = stations.filter(
+      (station) =>
+        String(station.id).trim() === "Q009"
+    );
+
+    // Log diagnostics in Vercel's function logs.
+    console.log(
+      "DATABASE DIAGNOSTIC:",
+      JSON.stringify(diagnostic)
     );
 
     console.log(
-      "STATIONS API VERSION 2:",
-      JSON.stringify({
-        count: stations.length,
-        Q009: q009 ?? null,
-      })
+      "Q009 MATCHES:",
+      JSON.stringify(q009)
     );
 
-    return NextResponse.json(stations, {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
+    console.log(
+      "TOTAL STATIONS:",
+      stations.length
+    );
+
+    // Temporary diagnostic response.
+    return NextResponse.json(
+      {
+        diagnostic,
+        totalStations: stations.length,
+        q009,
+        stations,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
   } catch (error) {
-    console.error("Failed to fetch stations:", error);
+    console.error(
+      "Failed to fetch stations:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Failed to fetch charging stations." },
+      {
+        error: "Failed to fetch charging stations.",
+      },
       { status: 500 }
     );
   }
