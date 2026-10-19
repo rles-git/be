@@ -37,7 +37,7 @@ export async function GET() {
       ORDER BY id ASC
     `;
 
-    console.log("Stations returned:", stations.length);
+    console.log("Stations returnedd:", stations.length);
 
     return NextResponse.json(stations, {
       headers: {
