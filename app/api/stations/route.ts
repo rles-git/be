@@ -18,30 +18,41 @@ export async function GET() {
 
     const sql = neon(databaseUrl);
 
-    // Temporarily fetch only Q009
-    const comparison = await sql`
+    const stations = await sql`
       SELECT
         id,
         name,
+        short_name AS "shortName",
+        address,
         lat,
         lng,
+        plugs,
         available,
-        power
+        power,
+        price,
+        kind,
+        distance,
+        minutes
       FROM stations
-      WHERE id = 'Q009'
+      ORDER BY id ASC
     `;
 
     console.log(
-      "SINGLE QUERY CHECK:",
-      JSON.stringify(comparison)
+      "STATIONS API CHECK:",
+      JSON.stringify({
+        count: stations.length,
+        Q009: stations.find(
+          (station) => station.id === "Q009"
+        ) ?? null,
+      })
     );
 
-    return NextResponse.json(comparison);
+    return NextResponse.json(stations);
   } catch (error) {
-    console.error("Failed to fetch Q009:", error);
+    console.error("Failed to fetch stations:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch Q009." },
+      { error: "Failed to fetch charging stations." },
       { status: 500 }
     );
   }
