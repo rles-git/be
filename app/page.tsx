@@ -23,7 +23,6 @@ import {
   MapPin,
   Navigation,
   PlugZap,
-  QrCode,
   Route,
   Search,
   Settings2,
@@ -2082,39 +2081,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-
-            <button
-              type="button"
-              className="qr-scanner-button"
-              onClick={() => notify("QR Scanner is ready to be connected to your charger QR codes.")}
-              aria-label="QR Scanner"
-              title="QR Scanner"
-              style={{
-                position: "absolute",
-                left: "50%",
-                bottom: 69,
-                transform: "translateX(-50%)",
-                zIndex: 60,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                padding: "12px 18px",
-                minHeight: 46,
-                border: "1px solid #58715d",
-                borderRadius: 999,
-                background: "#58715d",
-                color: "#fff",
-                boxShadow: "0 5px 16px rgba(32, 37, 34, 0.22)",
-                fontSize: 13,
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                cursor: "pointer",
-              }}
-            >
-              <QrCode size={19} />
-              QR Scanner
-            </button>
 
             <nav className="bottom-nav">
               {(
