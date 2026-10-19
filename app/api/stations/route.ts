@@ -28,24 +28,37 @@ export async function GET() {
       
       console.log("Database diagnostic:", diagnostic);
     
-    const stations = await sql`
-      SELECT
-        id,
-        name,
-        short_name AS "shortName",
-        address,
-        lat,
-        lng,
-        plugs,
-        available,
-        power,
-        price,
-        kind,
-        distance,
-        minutes
-      FROM stations
-      ORDER BY id ASC
-    `;
+      const result = await sql`
+        SELECT
+          id,
+          name,
+          short_name AS "shortName",
+          address,
+          lat,
+          lng,
+          plugs,
+          available,
+          power,
+          price,
+          kind,
+          distance,
+          minutes,
+          COUNT(*) OVER()::int AS total_count
+        FROM stations
+        ORDER BY id ASC
+      `;
+      
+      console.log("Rows returned:", result.length);
+      console.log("Total stations:", result[0]?.total_count);
+      console.log(
+        "Station IDs:",
+        result.map((station) => station.id)
+      );
+      
+      const stations = result.map(({ total_count, ...station }) => station);
+      
+      return NextResponse.json(stations);
+    
 console.log("Stations returned:", stations.length);
     return NextResponse.json(stations);
   } catch (error) {
