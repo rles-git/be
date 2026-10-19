@@ -26,24 +26,25 @@ export async function GET() {
     `;
 
     // 2. Fetch all stations
+    
     const stations = await sql`
       SELECT
+        current_database() AS database_name,
+        current_schema() AS schema_name,
         id,
         name,
-        short_name AS "shortName",
-        address,
         lat,
         lng,
-        plugs,
         available,
-        power,
-        price,
-        kind,
-        distance,
-        minutes
+        power
       FROM stations
-      ORDER BY id ASC
+      WHERE id = 'Q009'
     `;
+
+console.log("Q009 DIAGNOSTIC:", JSON.stringify(stations));
+
+return NextResponse.json(stations);
+
 
     // 3. Find Q009 in the full results
     const fullQ009 = stations.find(
