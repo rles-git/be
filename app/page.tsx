@@ -218,8 +218,6 @@ export default function Home() {
   const [stalls, setStalls] = useState<
   { id: number; status: string; power: number }[]
 >([]);
-
-  const columns = Math.ceil(Math.sqrt(stalls.length));
   
   const availableStalls = stalls.filter(
     (stall) => stall.status.toLowerCase() === "available"
