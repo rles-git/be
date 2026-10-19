@@ -17,6 +17,20 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
+
+    const connectionInfo = await sql`
+  SELECT
+    current_database() AS database_name,
+    current_schema() AS schema_name,
+    inet_server_addr()::text AS server_address,
+    inet_server_port() AS server_port
+`;
+
+console.log(
+  "CONNECTION INFO:",
+  JSON.stringify(connectionInfo)
+);
+    
     const fingerprint = await sql`
   SELECT
     current_database() AS database_name,
