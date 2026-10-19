@@ -62,12 +62,7 @@ console.log("TARGET STATION:", target);
         ORDER BY id ASC
       `;
 
-    console.log(
-  "Q010 FROM FULL QUERY:",
-  JSON.stringify(
-    stations.filter((station) => station.id === "Q010")
-  )
-);
+    
       console.log("Rows returned:", result.length);
       console.log("Total stations:", result[0]?.total_count);
       console.log(
@@ -76,7 +71,12 @@ console.log("TARGET STATION:", target);
       );
       
       const stations = result.map(({ total_count, ...station }) => station);
-      
+      console.log(
+  "Q010 FROM FULL QUERY:",
+  JSON.stringify(
+    stations.filter((station) => station.id === "Q010")
+  )
+);
       return NextResponse.json(stations);
     
 console.log("Stations returned:", stations.length);
