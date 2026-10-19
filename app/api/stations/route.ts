@@ -17,7 +17,21 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
-    
+    const fingerprint = await sql`
+  SELECT
+    current_database() AS database_name,
+    current_schema() AS schema_name,
+    current_setting('server_version') AS server_version
+`;
+
+const target = await sql`
+  SELECT id, name, lat, lng
+  FROM stations
+  WHERE name = 'Bahay ni Jampol'
+`;
+
+console.log("DATABASE FINGERPRINT:", fingerprint);
+console.log("TARGET STATION:", target);
     const diagnostic = await sql`
         SELECT
           current_database() AS database_name,
