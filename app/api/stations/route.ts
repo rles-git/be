@@ -18,7 +18,7 @@ export async function GET() {
 
     const sql = neon(databaseUrl);
 
-    // Check the Q009 record directly
+    // Diagnostic: check the Q009 record directly
     const diagnostic = await sql`
       SELECT
         current_database() AS database_name,
@@ -34,7 +34,7 @@ export async function GET() {
     `;
 
     console.log(
-      "Q009 DIAGNOSTIC:",
+      "DATABASE CHECK:",
       JSON.stringify(diagnostic)
     );
 
@@ -58,13 +58,16 @@ export async function GET() {
       ORDER BY id ASC
     `;
 
+    // Diagnostic: inspect Q009 in the full results
+    const q009 = stations.find(
+      (station) => station.id === "Q009"
+    );
+
     console.log(
-      "STATIONS API CHECK:",
+      "FULL STATIONS CHECK:",
       JSON.stringify({
         count: stations.length,
-        Q009: stations.find(
-          (station) => station.id === "Q009"
-        ) ?? null,
+        Q009: q009 ?? null,
       })
     );
 
