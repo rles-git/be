@@ -17,6 +17,15 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
+          const diagnostic = await sql`
+        SELECT
+          current_database() AS database_name,
+          current_schema() AS schema_name,
+          COUNT(*)::int AS station_count
+        FROM stations
+      `;
+      
+      console.log("Database diagnostic:", diagnostic);
 
     const stations = await sql`
       SELECT
