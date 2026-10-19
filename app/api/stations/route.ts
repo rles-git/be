@@ -38,7 +38,7 @@ export async function GET() {
     `;
 
     const target = stations.find(
-      (station) => station.id === "Q010"
+      (station) => station.id === "Q009"
     );
 
     console.log(
