@@ -1888,7 +1888,7 @@ button { cursor: pointer; }
 .details-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: visible;
+  overflow-y: auto;
   overscroll-behavior: contain;
   padding: 15px;
   padding-bottom: 30px;
