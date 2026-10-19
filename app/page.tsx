@@ -1638,10 +1638,6 @@ export default function Home() {
                           <strong>3 of 4 available</strong>
                           <p>CCS2 · DC fast charging</p>
                         </div>
-                        <span className="stall-availability-badge">
-                          <span className="stall-status-dot" />
-                          Available
-                        </span>
                       </div>
 
                       <div
