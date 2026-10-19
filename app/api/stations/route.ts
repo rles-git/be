@@ -17,7 +17,35 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
+const comparison = await sql`
+  SELECT
+    id,
+    name,
+    lat,
+    lng,
+    'direct' AS query_type
+  FROM stations
+  WHERE id = 'Q010'
 
+  UNION ALL
+
+  SELECT
+    id,
+    name,
+    lat,
+    lng,
+    'full_query' AS query_type
+  FROM stations
+  WHERE id IN (
+    SELECT id
+    FROM stations
+    ORDER BY id ASC
+  )
+  AND id = 'Q010'
+`;
+
+console.log("Q010 COMPARISON:", JSON.stringify(comparison));
+    
     const connectionInfo = await sql`
   SELECT
     current_database() AS database_name,
