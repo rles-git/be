@@ -56,6 +56,10 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
   loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div>,
 });
 
+const availableStalls = stalls.filter(
+  (stall) => stall.status.toLowerCase() === "available"
+);
+
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
 
 type Panel =
@@ -215,17 +219,21 @@ export default function Home() {
 
   const sheetPointerStart = useRef<number | null>(null);
 
-  const stalls = [
-    { id: 1, status: "Available", power: 0 },
-    { id: 2, status: "Available", power: 0 },
-    { id: 3, status: "Occupied", power: 30 },
-    { id: 4, status: "Available", power: 0 },
-    { id: 5, status: "Available", power: 0 },
-    { id: 6, status: "Available", power: 0 },
-    { id: 7, status: "Available", power: 0 },
-    { id: 8, status: "Available", power: 0 },
-    { id: 9, status: "Available", power: 0 },
-  ];
+  const [stalls, setStalls] = useState<
+  { id: number; status: string; power: number }[]
+>([]);
+
+useEffect(() => {
+  if (!selected?.id) return;
+
+  fetch(`/api/stations/${selected.id}/stalls`)
+    .then((res) => {
+      if (!res.ok) throw new Error("Failed to load stalls");
+      return res.json();
+    })
+    .then((data) => setStalls(data))
+    .catch((err) => console.error("Error loading stalls:", err));
+}, [selected?.id]);
 
   const columns = Math.ceil(Math.sqrt(stalls.length));
 
@@ -1635,7 +1643,7 @@ export default function Home() {
 
                       <div className="stall-availability-summary">
                         <div>
-                          <strong>3 of 4 available</strong>
+                          <strong> {availableStalls.length} of {stalls.length} available </strong>
                           <p>CCS2 · DC fast charging</p>
                         </div>
                       </div>
