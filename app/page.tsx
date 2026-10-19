@@ -56,10 +56,6 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
   loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div>,
 });
 
-const availableStalls = stalls.filter(
-  (stall) => stall.status.toLowerCase() === "available"
-);
-
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
 
 type Panel =
