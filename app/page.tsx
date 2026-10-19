@@ -242,7 +242,7 @@ export default function Home() {
     const nextStalls = Array.from({ length: total }, (_, index) => ({
       id: index + 1,
       status: index < available ? "Available" : "Occupied",
-      power: index < available ? 0 : Number(station.power) || 0,
+      power: Number(station.power) || 0,
     }));
 
     setStalls(nextStalls);
