@@ -17,7 +17,38 @@ export async function GET() {
     }
 
     const sql = neon(databaseUrl);
+const directQ009 = await sql`
+  SELECT id, name, lat, lng, available, power
+  FROM stations
+  WHERE id = 'Q009'
+`;
 
+const stations = await sql`
+  SELECT
+    id,
+    name,
+    short_name AS "shortName",
+    address,
+    lat,
+    lng,
+    plugs,
+    available,
+    power,
+    price,
+    kind,
+    distance,
+    minutes
+  FROM stations
+  ORDER BY id ASC
+`;
+
+const fullQ009 = stations.find(
+  (station) => station.id === "Q009"
+);
+
+console.log(
+  "Q009 DIRECT QUERY:",
+  JSON.stringify(d
     const stations = await sql`
       SELECT
         id,
