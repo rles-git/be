@@ -1524,7 +1524,7 @@ export default function Home() {
                           <small>DC fast charging</small>
                           <span className="connector-status available-status">
                             <span className="stall-status-dot" />
-                            Available
+                              Available
                           </span>
                         </span>
                         <span className="connector-select-icon">
