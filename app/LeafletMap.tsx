@@ -42,7 +42,7 @@ type Props = {
   }) => void;
 };
 ///25.25443628041169, 51.47908688248179
-const start: [number, number] = [25.25443628041169, 51.47908688248179];
+const start: [number, number] = [14.606613540036925, 121.10741154291473];
 
 function stationIcon(station: Station, selected: boolean) {
   return L.divIcon({
