@@ -215,25 +215,46 @@ export default function Home() {
 
   const sheetPointerStart = useRef<number | null>(null);
 
-  const [stalls, setStalls] = useState<
-  { id: number; status: string; power: number }[]
->([]);
-  
+    const [stalls, setStalls] = useState<
+    { id: number; status: string; power: number }[]
+  >([]);
+
   const availableStalls = stalls.filter(
     (stall) => stall.status.toLowerCase() === "available"
   );
 
-useEffect(() => {
-  if (!selected?.id) return;
+  useEffect(() => {
+    if (!selectedId) {
+      setStalls([]);
+      return;
+    }
 
-  fetch(`/api/stations/${selected.id}/stalls`)
-    .then((res) => {
-      if (!res.ok) throw new Error("Failed to load stalls");
-      return res.json();
-    })
-    .then((data) => setStalls(data))
-    .catch((err) => console.error("Error loading stalls:", err));
-}, [selected?.id]);
+    let cancelled = false;
+
+    fetch(`/api/stations/${encodeURIComponent(selectedId)}/stalls`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to load stalls");
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setStalls(data);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error("Error loading stalls:", err);
+          setStalls([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
 
   const columns = Math.ceil(Math.sqrt(stalls.length));
 
