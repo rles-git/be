@@ -18,11 +18,9 @@ export async function GET() {
 
     const sql = neon(databaseUrl);
 
-    // Diagnostic: check the Q009 record directly
-    const diagnostic = await sql`
+    // Temporarily fetch only Q009
+    const comparison = await sql`
       SELECT
-        current_database() AS database_name,
-        current_schema() AS schema_name,
         id,
         name,
         lat,
@@ -34,49 +32,16 @@ export async function GET() {
     `;
 
     console.log(
-      "DATABASE CHECK:",
-      JSON.stringify(diagnostic)
+      "SINGLE QUERY CHECK:",
+      JSON.stringify(comparison)
     );
 
-    // Fetch all stations for the app
-    const stations = await sql`
-      SELECT
-        id,
-        name,
-        short_name AS "shortName",
-        address,
-        lat,
-        lng,
-        plugs,
-        available,
-        power,
-        price,
-        kind,
-        distance,
-        minutes
-      FROM stations
-      ORDER BY id ASC
-    `;
-
-    // Diagnostic: inspect Q009 in the full results
-    const q009 = stations.find(
-      (station) => station.id === "Q009"
-    );
-
-    console.log(
-      "FULL STATIONS CHECK:",
-      JSON.stringify({
-        count: stations.length,
-        Q009: q009 ?? null,
-      })
-    );
-
-    return NextResponse.json(stations);
+    return NextResponse.json(comparison);
   } catch (error) {
-    console.error("Failed to fetch stations:", error);
+    console.error("Failed to fetch Q009:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch charging stations." },
+      { error: "Failed to fetch Q009." },
       { status: 500 }
     );
   }
