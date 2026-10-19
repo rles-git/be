@@ -215,13 +215,9 @@ export default function Home() {
 
   const sheetPointerStart = useRef<number | null>(null);
 
-    const [stalls, setStalls] = useState<
+      const [stalls, setStalls] = useState<
     { id: number; status: string; power: number }[]
   >([]);
-
-  const availableStalls = stalls.filter(
-    (stall) => stall.status.toLowerCase() === "available"
-  );
 
   useEffect(() => {
     if (!selectedId) {
@@ -229,32 +225,33 @@ export default function Home() {
       return;
     }
 
-    let cancelled = false;
+    const station = stations.find(
+      (item) => String(item.id) === String(selectedId)
+    );
 
-    fetch(`/api/stations/${encodeURIComponent(selectedId)}/stalls`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to load stalls");
-        }
+    if (!station) {
+      setStalls([]);
+      return;
+    }
 
-        return res.json();
-      })
-      .then((data) => {
-        if (!cancelled) {
-          setStalls(data);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error("Error loading stalls:", err);
-          setStalls([]);
-        }
-      });
+    const total = Math.max(0, Number(station.plugs) || 0);
+    const available = Math.min(
+      total,
+      Math.max(0, Number(station.available) || 0)
+    );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId]);
+    const nextStalls = Array.from({ length: total }, (_, index) => ({
+      id: index + 1,
+      status: index < available ? "Available" : "Occupied",
+      power: index < available ? 0 : Number(station.power) || 0,
+    }));
+
+    setStalls(nextStalls);
+  }, [selectedId, stations]);
+
+  const availableStalls = stalls.filter(
+    (stall) => stall.status === "Available"
+  );
 
   const columns = Math.ceil(Math.sqrt(stalls.length));
 
