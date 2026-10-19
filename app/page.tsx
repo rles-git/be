@@ -56,9 +56,6 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
   loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div>,
 });
 
-
-const columns = Math.ceil(Math.sqrt(stalls.length));
-
 type Tab = "Explore" | "Saved" | "Activity" | "Profile";
 
 type Panel =
@@ -222,10 +219,11 @@ export default function Home() {
   { id: number; status: string; power: number }[]
 >([]);
 
+  const columns = Math.ceil(Math.sqrt(stalls.length));
   
-const availableStalls = stalls.filter(
-  (stall) => stall.status.toLowerCase() === "available"
-);
+  const availableStalls = stalls.filter(
+    (stall) => stall.status.toLowerCase() === "available"
+  );
 
 useEffect(() => {
   if (!selected?.id) return;
