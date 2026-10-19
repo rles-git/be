@@ -18,34 +18,47 @@ export async function GET() {
 
     const sql = neon(databaseUrl);
 
-    const result = await sql`
+    const stations = await sql`
       SELECT
-        (SELECT name FROM stations WHERE id = 'Q009' LIMIT 1)
-          AS direct_name,
-        (SELECT lat FROM stations WHERE id = 'Q009' LIMIT 1)
-          AS direct_lat,
-        (SELECT lng FROM stations WHERE id = 'Q009' LIMIT 1)
-          AS direct_lng,
-        (
-          SELECT name
-          FROM stations
-          ORDER BY id ASC
-          LIMIT 1 OFFSET (
-            SELECT COUNT(*)
-            FROM stations
-            WHERE id < 'Q009'
-          )
-        ) AS ordered_name
+        id,
+        name,
+        short_name AS "shortName",
+        address,
+        lat,
+        lng,
+        plugs,
+        available,
+        power,
+        price,
+        kind,
+        distance,
+        minutes
+      FROM stations
+      ORDER BY id ASC
     `;
 
-    console.log("Q009 SUBQUERY TEST:", JSON.stringify(result));
+    const q009 = stations.find(
+      (station) => station.id === "Q009"
+    );
 
-    return NextResponse.json(result);
+    console.log(
+      "STATIONS API VERSION 2:",
+      JSON.stringify({
+        count: stations.length,
+        Q009: q009 ?? null,
+      })
+    );
+
+    return NextResponse.json(stations, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
   } catch (error) {
-    console.error("Failed to test station queries:", error);
+    console.error("Failed to fetch stations:", error);
 
     return NextResponse.json(
-      { error: "Failed to test station queries." },
+      { error: "Failed to fetch charging stations." },
       { status: 500 }
     );
   }
