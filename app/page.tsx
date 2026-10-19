@@ -1651,7 +1651,7 @@ useEffect(() => {
                       <div
                         className="stall-grid"
                         style={{
-                          gridTemplateColumns: `repeat(${stallColumns}, minmax(0, 1fr))`,
+                          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
                         }}
                       >
                         {stalls.map((stall) => (
