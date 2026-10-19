@@ -27,7 +27,6 @@ export async function GET() {
       `;
       
       console.log("Database diagnostic:", diagnostic);
-      console.log("Stations returned:", stations.length);
     
     const stations = await sql`
       SELECT
