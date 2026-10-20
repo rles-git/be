@@ -2462,3 +2462,74 @@ nearby-stations-sheet{
   font-size: 11px;
   line-height: 1.6;
 }
+
+.search-suggestions {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e7e8e4;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px #20282018;
+  padding: 5px 10px;
+}
+
+.search-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 3px;
+  border: 0;
+  border-bottom: 1px solid #edf0ec;
+  background: #fff;
+  color: #202522;
+  text-align: left;
+}
+
+.search-suggestion:last-child {
+  border-bottom: 0;
+}
+
+.search-suggestion:hover {
+  background: #f5f7f4;
+}
+
+.search-suggestion-icon {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #e9eeea;
+  color: #58715d;
+}
+
+.search-suggestion-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-suggestion-text strong,
+.search-suggestion-text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-suggestion-text strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.search-suggestion-text small {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #858983;
+}
