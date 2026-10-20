@@ -632,6 +632,7 @@ export default function Home() {
                     </button>
                   )}
                 </div>
+              )}
                               
                   {search.trim() !== "" && searchSuggestions.length > 0 && (
                     <div className="search-suggestions">
