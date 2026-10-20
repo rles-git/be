@@ -83,7 +83,7 @@ const START_LOCATION: [number, number] = [
 25.254483277668196,51.47912950286491,
 ];
 
-const CHARGING_TARGETS = [10, 20, 30, 40, 50, 60, 70, 80, 90];
+const CHARGING_TARGETS = [20, 30, 40, 50, 60, 70, 80, 90];
 
 function getDistanceKm(
   lat1: number,
