@@ -1624,36 +1624,6 @@ export default function Home() {
 
                     <section className="details-section">
                       <div className="details-section-heading">
-                        <h3>Charging overview</h3>
-                        <span>DATABASE DATA</span>
-                      </div>
-
-                      <div className="details-stats">
-                        <div>
-                          <Zap size={18} />
-                          <small>Max power</small>
-                          <strong>{getPowerLabel(selected)}</strong>
-                        </div>
-                        <div>
-                          <PlugZap size={18} />
-                          <small>Available</small>
-                          <strong>{getAvailabilityLabel(selected)}</strong>
-                        </div>
-                        <div>
-                          <Activity size={18} />
-                          <small>Energy price</small>
-                          <strong>{getPriceLabel(selected)}</strong>
-                        </div>
-                      </div>
-
-                      <p className="details-note">
-                        {getStatusLabel(selected.status)}. A database status
-                        is not necessarily a live charger status.
-                      </p>
-                    </section>
-
-                    <section className="details-section">
-                      <div className="details-section-heading">
                         <h3>Available stalls</h3>
                         <span>LIVE DEMO</span>
                       </div>
