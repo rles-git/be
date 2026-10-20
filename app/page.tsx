@@ -676,8 +676,6 @@ export default function Home() {
                     </div>
                   )}
 
-              )}
-
               {![
                 "route",
                 "details",
