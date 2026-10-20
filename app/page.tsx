@@ -339,6 +339,58 @@ export default function Home() {
     [stations, search, fastOnly, acOnly, availableOnly]
   );
 
+
+  const searchSuggestions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) return [];
+
+    return stations
+      .map((station) => {
+        const name = String(station.name ?? "");
+        const address = String(station.address ?? "");
+        const id = String(station.id ?? "");
+        const operator = String(station.operator ?? "");
+
+        const nameLower = name.toLowerCase();
+        const addressLower = address.toLowerCase();
+        const idLower = id.toLowerCase();
+        const operatorLower = operator.toLowerCase();
+
+        let score = 99;
+
+        if (idLower === query || nameLower === query) {
+          score = 0;
+        } else if (
+          idLower.startsWith(query) ||
+          nameLower.startsWith(query)
+        ) {
+          score = 1;
+        } else if (nameLower.includes(query)) {
+          score = 2;
+        } else if (addressLower.includes(query)) {
+          score = 3;
+        } else if (operatorLower.includes(query)) {
+          score = 4;
+        } else if (idLower.includes(query)) {
+          score = 5;
+        }
+
+        return { station, score };
+      })
+      .filter((item) => item.score < 99)
+      .sort(
+        (a, b) =>
+          a.score - b.score ||
+          String(a.station.name).localeCompare(
+            String(b.station.name)
+          )
+      )
+      .slice(0, 5)
+      .map((item) => item.station);
+  }, [stations, search]);
+
+  
   const nearbyStations = useMemo(
     () =>
       filtered.filter((station) => {
@@ -580,6 +632,50 @@ export default function Home() {
                     </button>
                   )}
                 </div>
+                              
+                  {search.trim() !== "" && searchSuggestions.length > 0 && (
+                    <div className="search-suggestions">
+                      {searchSuggestions.map((station) => (
+                        <button
+                          key={station.id}
+                          type="button"
+                          className="search-suggestion"
+                          onClick={() => {
+                            setSelectedId(String(station.id));
+                            setActiveTab("Explore");
+                            setPanel("station");
+                            setRouteMode(false);
+                            setCalculatedRoute(null);
+                            setSheetDragY(0);
+                            setSearch("");
+                
+                            window.dispatchEvent(
+                              new CustomEvent("be-electric-pan-to-station", {
+                                detail: {
+                                  lat: Number(station.lat),
+                                  lng: Number(station.lng),
+                                },
+                              })
+                            );
+                          }}
+                        >
+                          <span className="search-suggestion-icon">
+                            <MapPin size={17} />
+                          </span>
+                
+                          <span className="search-suggestion-text">
+                            <strong>{station.name}</strong>
+                            <small>
+                              {station.address || station.id}
+                            </small>
+                          </span>
+                
+                          <ChevronRight size={16} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
               )}
 
               {![
