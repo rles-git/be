@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import styles from "./auth.module.css";
+
 type AuthMode = "login" | "signup";
 
 export default function AuthPage() {
@@ -430,3 +431,4 @@ export default function AuthPage() {
       </div>
     </main>
   );
+}
