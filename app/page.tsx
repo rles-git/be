@@ -79,6 +79,46 @@ type RecentRoute = {
   completedAt: string;
 };
 
+type DbConnector = {
+  id: string | number;
+  charger_id: string | number;
+  connector_number: number;
+  connector_type: string;
+  max_power_kw: number | string | null;
+  status: string;
+};
+
+type DbCharger = {
+  id: string | number;
+  station_id: string | number;
+  name: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  serial_number: string | null;
+  max_power_kw: number | string | null;
+  status: string;
+  protocol: string | null;
+  protocol_identity: string | null;
+  connectors: DbConnector[];
+};
+
+type ChargerDisplay = {
+  id: number;
+  chargerId: string;
+  status: string;
+  power: number;
+  connectors: DbConnector[];
+};
+
+type StationWithChargers = MapStation & {
+  chargers?: DbCharger[];
+};
+
+function isAvailableStatus(status: string | null | undefined) {
+  const normalized = String(status ?? "").toLowerCase();
+  return ["available", "online", "idle", "ready"].includes(normalized);
+}
+
 const START_LOCATION: [number, number] = [
 25.254483277668196,51.47912950286491,
 ];
@@ -206,6 +246,7 @@ export default function Home() {
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const [selectedStall, setSelectedStall] = useState<number | null>(null);
+  const [selectedConnector, setSelectedConnector] = useState<DbConnector | null>(null);
 
   // Charging setup state
   const [chargeTarget, setChargeTarget] = useState("80");
@@ -214,9 +255,7 @@ export default function Home() {
 
   const sheetPointerStart = useRef<number | null>(null);
 
-      const [stalls, setStalls] = useState<
-    { id: number; status: string; power: number }[]
-  >([]);
+  const [stalls, setStalls] = useState<ChargerDisplay[]>([]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -226,30 +265,27 @@ export default function Home() {
 
     const station = stations.find(
       (item) => String(item.id) === String(selectedId)
-    );
+    ) as StationWithChargers | undefined;
 
     if (!station) {
       setStalls([]);
       return;
     }
 
-    const total = Math.max(0, Number(station.plugs) || 0);
-    const available = Math.min(
-      total,
-      Math.max(0, Number(station.available) || 0)
-    );
-
-    const nextStalls = Array.from({ length: total }, (_, index) => ({
+    const chargers = Array.isArray(station.chargers) ? station.chargers : [];
+    const nextChargers: ChargerDisplay[] = chargers.map((charger, index) => ({
       id: index + 1,
-      status: index < available ? "Available" : "Occupied",
-      power: Number(station.power) || 0,
+      chargerId: String(charger.id),
+      status: String(charger.status ?? "Unknown"),
+      power: Number(charger.max_power_kw) || 0,
+      connectors: Array.isArray(charger.connectors) ? charger.connectors : [],
     }));
 
-    setStalls(nextStalls);
+    setStalls(nextChargers);
   }, [selectedId, stations]);
 
   const availableStalls = stalls.filter(
-    (stall) => stall.status === "Available"
+    (stall) => isAvailableStatus(stall.status)
   );
 
   const columns = Math.ceil(Math.sqrt(stalls.length));
@@ -476,24 +512,26 @@ export default function Home() {
   }
 
   function openStall(stallId: number, status: string) {
-    if (status !== "Available") {
-      notify(`Stall ${stallId} is currently occupied.`);
+    if (!isAvailableStatus(status)) {
+      notify(`Charger ${stalls.find((item) => item.id === stallId)?.chargerId ?? stallId} is not available.`);
       return;
     }
 
     setSelectedStall(stallId);
+    setSelectedConnector(null);
     setPanel("connector");
     setSheetDragY(0);
   }
 
-  function selectConnector(connectorNumber: number) {
+  function selectConnector(connector: DbConnector) {
     if (selectedStall === null) return;
 
-    if (connectorNumber !== 1) {
-      notify("This connector is currently in use.");
+    if (!isAvailableStatus(connector.status)) {
+      notify(`Connector ${connector.connector_number} is not available.`);
       return;
     }
 
+    setSelectedConnector(connector);
     setChargeTarget("80");
     setCustomTarget("");
     setCarConnected(false);
@@ -1129,7 +1167,7 @@ export default function Home() {
                           lineHeight: 1.6,
                         }}
                       >
-                        Stall {selectedStall} · CCS2 Connector 1
+                        Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                         <br />
                         DC fast charging
                       </p>
@@ -1524,7 +1562,7 @@ export default function Home() {
                           margin: 0,
                         }}
                       >
-                        Stall {selectedStall} · CCS2 Connector 1
+                        Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                       </p>
                     </div>
 
@@ -1604,14 +1642,11 @@ export default function Home() {
                       }}
                       aria-label="Back to station details"
                     >
-                      <ChevronRight
-                        size={21}
-                        style={{ transform: "rotate(180deg)" }}
-                      />
+                      <ChevronRight size={21} style={{ transform: "rotate(180deg)" }} />
                     </button>
                     <div>
                       <small>CONNECTOR SELECTION</small>
-                      <h2>Stall {selectedStall}</h2>
+                      <h2>Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"}</h2>
                     </div>
                     <span className="details-live-dot" />
                   </header>
@@ -1622,65 +1657,60 @@ export default function Home() {
                         <PlugZap size={27} />
                       </div>
                       <h3>Choose your connector</h3>
-                      <p>Select an available CCS2 connector to continue.</p>
+                      <p>Select an available connector from this charger.</p>
                     </div>
 
                     <div className="connector-summary">
-                      <span>Stall {selectedStall}</span>
-                      <span>CCS2 · DC Fast Charging</span>
+                      <span>Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"}</span>
+                      <span>{stalls.find((item) => item.id === selectedStall)?.connectors.length ?? 0} connectors</span>
                     </div>
 
                     <div className="connector-list">
-                      <button
-                        type="button"
-                        className="connector-card connector-available"
-                        onClick={() => selectConnector(1)}
-                      >
-                        <span className="connector-card-icon">
-                          <StallChargerIcon size={34} />
-                        </span>
-                        <span className="connector-card-info">
-                          <strong>CCS2 Connector 1</strong>
-                          <small>DC fast charging</small>
-                          <span className="connector-status available-status">
-                            <span className="stall-status-dot" />
-                              Available
-                          </span>
-                        </span>
-                        <span className="connector-select-icon">
-                          <ChevronRight size={19} />
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="connector-card connector-occupied"
-                        disabled
-                        aria-disabled="true"
-                      >
-                        <span className="connector-card-icon">
-                          <StallChargerIcon size={34} />
-                        </span>
-                        <span className="connector-card-info">
-                          <strong>CCS2 Connector 2</strong>
-                          <small>DC fast charging</small>
-                          <span className="connector-status occupied-status">
-                            <span className="occupied-status-dot" />
-                            In use
-                          </span>
-                        </span>
-                        <span className="connector-select-icon">
-                          <X size={18} />
-                        </span>
-                      </button>
+                      {(stalls.find((item) => item.id === selectedStall)?.connectors ?? []).map((connector) => {
+                        const available = isAvailableStatus(connector.status);
+                        return (
+                          <button
+                            key={String(connector.id)}
+                            type="button"
+                            className={`connector-card ${available ? "connector-available" : "connector-occupied"}`}
+                            onClick={() => selectConnector(connector)}
+                            disabled={!available}
+                            aria-disabled={!available}
+                          >
+                            <span className="connector-card-icon">
+                              <StallChargerIcon size={34} />
+                            </span>
+                            <span className="connector-card-info">
+                              <strong>{connector.connector_type}</strong>
+                              <small>
+                                Connector {connector.connector_number}
+                                {connector.max_power_kw != null
+                                  ? ` · ${connector.max_power_kw} kW`
+                                  : ""}
+                              </small>
+                              <span className={`connector-status ${available ? "available-status" : "occupied-status"}`}>
+                                <span className={available ? "stall-status-dot" : "occupied-status-dot"} />
+                                {connector.status || "Unknown"}
+                              </span>
+                            </span>
+                            <span className="connector-select-icon">
+                              {available ? <ChevronRight size={19} /> : <X size={18} />}
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {(stalls.find((item) => item.id === selectedStall)?.connectors.length ?? 0) === 0 && (
+                        <div className="empty-state">
+                          <PlugZap size={24} />
+                          <b>No connectors found</b>
+                          <p>This charger has no connector records in the database.</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="connector-note">
                       <CircleDot size={17} />
-                      <p>
-                        Connector availability is simulated for this demo.
-                        Check the charger's actual status before use.
-                      </p>
+                      <p>Connector types and statuses are loaded from the database.</p>
                     </div>
                   </div>
                 </div>
@@ -1719,14 +1749,14 @@ export default function Home() {
 
                     <section className="details-section">
                       <div className="details-section-heading">
-                        <h3>Available stalls</h3>
-                        <span>LIVE DEMO</span>
+                        <h3>Chargers</h3>
+                        <span>DATABASE</span>
                       </div>
 
                       <div className="stall-availability-summary">
                         <div>
                           <strong> {availableStalls.length} of {stalls.length} available </strong>
-                          <p>CCS2 · DC fast charging</p>
+                          <p>Charger availability from database status</p>
                         </div>
                       </div>
 
@@ -1741,14 +1771,14 @@ export default function Home() {
                             key={stall.id}
                             type="button"
                             className={`stall-option ${
-                              stall.status === "Available"
+                              isAvailableStatus(stall.status)
                                 ? "stall-available"
                                 : "stall-occupied"
                             }`}
                             onClick={() => openStall(stall.id, stall.status)}
-                            aria-label={`Stall ${stall.id}: ${stall.status}, ${stall.power} kW`}
+                            aria-label={`Charger ${stall.chargerId}: ${stall.status}, ${stall.power} kW`}
                           >
-                            <span className="stall-number">Stall {stall.id}</span>
+                            <span className="stall-number">Charger {stall.chargerId}</span>
                             <span className="stall-charger-icon">
                               <StallChargerIcon size={29} />
                             </span>
@@ -1756,15 +1786,13 @@ export default function Home() {
                             <span className="stall-power-output">
                               {stall.power} <small>kW</small>
                             </span>
-                            <small>CCS2</small>
+                            <small>{stall.connectors.length} connector{stall.connectors.length === 1 ? "" : "s"}</small>
                           </button>
                         ))}
                       </div>
 
                       <p className="details-note">
-                        Demonstration data only. Stall availability and power
-                        output are simulated and are not connected to live
-                        charger telemetry.
+                        Charger IDs, status, power, and connector counts are loaded from your database.
                       </p>
                     </section>
 
