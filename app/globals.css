@@ -2204,7 +2204,7 @@ button { cursor: pointer; }
 
 .cancel-route-button {
   position: absolute;
-  top: 10px;
+  top: 16px;
   right: 20px;
   width: 36px;
   height: 36px;
