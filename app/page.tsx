@@ -150,11 +150,11 @@ function getPowerLabel(station: MapStation) {
 }
 
 function getAvailabilityLabel(station: MapStation) {
-  if (station.available == null || station.plugs == null) {
+  if (station.available == null || station.chargers == null) {
     return "Availability unavailable";
   }
 
-  return `${station.available} of ${station.plugs} available`;
+  return `${station.available} of ${station.chargers} available`;
 }
 
 function getPriceLabel(station: MapStation) {
@@ -743,7 +743,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                     className={`filter-chip ${availableOnly ? "active" : ""}`}
                     onClick={() => setAvailableOnly(!availableOnly)}
                   >
-                    2+ Plugs Available
+                    2+ chargers Available
                   </button>
                 </div>
               )}
