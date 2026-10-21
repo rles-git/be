@@ -2397,6 +2397,8 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
     )}
   </>
 )}
+              </div>
+            )}
 
             <nav className="bottom-nav">
               {(
