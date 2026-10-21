@@ -4,14 +4,6 @@ import { getAuthenticatedAccountId, getSql } from "../../../../lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Must use the same verified session lookup as the GET/POST route.
-async function getAuthenticatedAccountId(
-  _request: NextRequest
-): Promise<string | null> {
-  // Connect your existing authentication/session logic here.
-  return null;
-}
-
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ stationId: string }> }
