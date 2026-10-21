@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const accountId = await getAuthenticatedAccountId(request);
+    const accountId = await getAuthenticatedAccountId();
 
     if (!accountId) {
       return NextResponse.json(
