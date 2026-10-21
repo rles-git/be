@@ -20,7 +20,7 @@ type Station = {
   name: string;
   shortName: string;
   address: string;
-  plugs: number | null;
+  chargers: number | null;
   available: number | null;
   power: number | null;
   price: number | null;
