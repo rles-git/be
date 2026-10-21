@@ -23,24 +23,24 @@ export type DatabaseCharger = {
   status: string;
   protocol: string | null;
   protocol_identity: string | null;
-  connectors: DatabaseConnector[];
+  connectors?: DatabaseConnector[] | null;
 };
 
 export type DatabaseStation = {
   id: string | number;
   name: string;
-  shortName: string;
+  shortName?: string | null;
+  short_name?: string | null;
   address: string | null;
   lat: number;
   lng: number;
-  chargerCount?: number | null;
-  available: number | null;
+  available?: number | null;
   power: number | null;
   price: number | null;
   kind: "DC fast" | "AC";
   distance: string | null;
   minutes: number | null;
-  chargers?: DatabaseCharger[] || null;
+  chargers?: DatabaseCharger[] | null;
 };
 
 export type MapConnector = {
@@ -66,7 +66,6 @@ export type MapCharger = {
   connectors: MapConnector[];
 };
 
-
 export type MapStation = {
   id: string;
   name: string;
@@ -74,8 +73,7 @@ export type MapStation = {
   address: string;
   lat: number;
   lng: number;
-  chargerCount: station.chargerCount ?? null,
-  available: number | null;
+  available: number;
   power: number | null;
   price: number | null;
   kind: "DC fast" | "AC";
@@ -83,115 +81,126 @@ export type MapStation = {
   minutes: number;
   status: string;
   operator: string | null;
-  chargers: MapCharger[] || null;
+  chargers: MapCharger[];
 };
-
 
 export const mapStations = (
   rows: DatabaseStation[]
 ): MapStation[] =>
-  rows.map((station) => ({
-    id: String(station.id),
-    name: station.name,
-    shortName: station.shortName || station.name,
-    address: station.address ?? "Address unavailable",
-    lat: Number(station.lat),
-    lng: Number(station.lng),
-    chargerCount: station.chargers,
-    available: station.available,
-    power: station.power,
-    price: station.price,
-    kind: station.kind,
-    distance: station.distance ?? "",
-    minutes: station.minutes ?? 0,
-    status:
-      station.available === 0
-        ? "offline"
-        : station.available != null && station.available > 0
-          ? "online"
-          : "unknown",
-    operator: null,
+  rows.map((station) => {
+    const chargers: MapCharger[] = (station.chargers ?? []).map(
+      (charger) => ({
+        id: String(charger.id),
+        station_id: String(charger.station_id),
+        name: charger.name,
+        manufacturer: charger.manufacturer,
+        model: charger.model,
+        serial_number: charger.serial_number,
+        max_power_kw: charger.max_power_kw,
+        status: charger.status,
+        protocol: charger.protocol,
+        protocol_identity: charger.protocol_identity,
 
-    // Preserve chargers and connectors returned by the API.
-    chargers: (station.chargers ?? []).map((charger) => ({
-      id: String(charger.id),
-      station_id: String(charger.station_id),
-      name: charger.name,
-      manufacturer: charger.manufacturer,
-      model: charger.model,
-      serial_number: charger.serial_number,
-      max_power_kw: charger.max_power_kw,
-      status: charger.status,
-      protocol: charger.protocol,
-      protocol_identity: charger.protocol_identity,
+        connectors: (charger.connectors ?? []).map((connector) => ({
+          id: String(connector.id),
+          charger_id: String(connector.charger_id),
+          connector_number: connector.connector_number,
+          connector_type: connector.connector_type,
+          max_power_kw: connector.max_power_kw,
+          status: connector.status,
+        })),
+      })
+    );
 
-      connectors: (charger.connectors ?? []).map((connector) => ({
-        id: String(connector.id),
-        charger_id: String(connector.charger_id),
-        connector_number: connector.connector_number,
-        connector_type: connector.connector_type,
-        max_power_kw: connector.max_power_kw,
-        status: connector.status,
-      })),
-    })),
-  }));
+    // Count chargers directly from the chargers table data.
+    const available = chargers.filter(
+      (charger) =>
+        charger.status?.trim().toLowerCase() === "available"
+    ).length;
+
+    return {
+      id: String(station.id),
+      name: station.name,
+      shortName:
+        station.shortName || station.short_name || station.name,
+      address: station.address ?? "Address unavailable",
+      lat: Number(station.lat),
+      lng: Number(station.lng),
+
+      // Number of available chargers from the charger records.
+      available,
+
+      power: station.power,
+      price: station.price,
+      kind: station.kind,
+      distance: station.distance ?? "",
+      minutes: station.minutes ?? 0,
+
+      status:
+        chargers.length === 0
+          ? "unknown"
+          : available === 0
+            ? "offline"
+            : "online",
+
+      operator: null,
+
+      // Array of individual chargers.
+      chargers,
+    };
+  });
 
 export function useStations() {
   const [stations, setStations] = useState<MapStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
 
-useEffect(() => {
-  let cancelled = false;
-  let isFirstLoad = true;
+    async function loadStations() {
+      try {
+        const response = await fetch("/api/stations", {
+          cache: "no-store",
+        });
 
-  async function loadStations() {
-    try {
-      const response = await fetch("/api/stations", {
-        cache: "no-store",
-      });
+        if (!response.ok) {
+          throw new Error("Could not load stations");
+        }
 
-      if (!response.ok) {
-        throw new Error("Could not load stations");
-      }
+        const data: DatabaseStation[] = await response.json();
 
-      const data: DatabaseStation[] = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid stations response");
+        }
 
-      if (!Array.isArray(data)) {
-        throw new Error("Invalid stations response");
-      }
+        if (!cancelled) {
+          setStations(mapStations(data));
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to load stations:", err);
 
-      if (!cancelled) {
-        setStations(mapStations(data));
-        setError(null);
-      }
-    } catch (err) {
-      console.error("Failed to load stations:", err);
-
-      if (!cancelled) {
-        setError("Unable to load charging stations.");
-      }
-    } finally {
-      if (!cancelled && isFirstLoad) {
-        setLoading(false);
-        isFirstLoad = false;
+        if (!cancelled) {
+          setError("Unable to load charging stations.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
-  }
 
-  loadStations();
-
-  const intervalId = window.setInterval(() => {
     loadStations();
-  }, 5000);
 
-  return () => {
-    cancelled = true;
-    window.clearInterval(intervalId);
-  };
-}, []);
+    // Refresh station and charger data every five seconds.
+    const intervalId = window.setInterval(loadStations, 5000);
 
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return { stations, loading, error };
 }
