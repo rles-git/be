@@ -1,8 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
   Eye,
@@ -15,19 +13,15 @@ import {
 } from "lucide-react";
 import styles from "./auth.module.css";
 
-type Mode = "login" | "signup";
-
-type Notice = {
-  type: "error" | "success";
-  text: string;
-};
+type AuthMode = "login" | "signup";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState("");
+  const [noticeType, setNoticeType] = useState<"error" | "success">("error");
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,9 +29,9 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  function changeMode(nextMode: Mode) {
+  function changeMode(nextMode: AuthMode) {
     setMode(nextMode);
-    setNotice(null);
+    setNotice("");
     setPassword("");
     setConfirmPassword("");
     setShowPassword(false);
@@ -46,16 +40,17 @@ export default function AuthPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (loading) return;
-
-    setNotice(null);
+    setNotice("");
 
     if (mode === "signup" && password !== confirmPassword) {
-      setNotice({
-        type: "error",
-        text: "Passwords do not match. Please try again.",
-      });
+      setNoticeType("error");
+      setNotice("Your passwords do not match. Please try again.");
+      return;
+    }
+
+    if (mode === "signup" && password.length < 8) {
+      setNoticeType("error");
+      setNotice("Your password must contain at least 8 characters.");
       return;
     }
 
@@ -68,39 +63,42 @@ export default function AuthPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fullName: fullName.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
+          ...(mode === "signup" ? { fullName, phone } : {}),
+          email: email.trim(),
           password,
         }),
       });
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            `Request failed (${response.status}). Please try again.`
+          data?.error ||
+            data?.message ||
+            "Something went wrong. Please try again."
         );
       }
 
-      setNotice({
-        type: "success",
-        text:
-          mode === "signup"
-            ? "Your account is ready. Welcome to Be-Electric!"
-            : "You're signed in. Welcome back!",
-      });
+      setNoticeType("success");
+      setNotice(
+        mode === "signup"
+          ? "Your account has been created successfully."
+          : "Login successful. Redirecting..."
+      );
 
-      window.location.assign("/");
+      if (mode === "signup") {
+        // Switch to login if signup doesn't automatically establish a session.
+        window.location.assign("/");
+      } else {
+        window.location.assign("/");
+      }
     } catch (error) {
-      setNotice({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Unable to connect. Please try again.",
-      });
+      setNoticeType("error");
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Unable to connect. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -108,52 +106,60 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.content}>
-        <div className={styles.illustration} aria-hidden="true">
+      <div className={styles.content}>
+        {/* Decorative panel for larger screens */}
+        <section className={styles.illustration}>
           <div className={`${styles.orbit} ${styles.orbitOne}`} />
           <div className={`${styles.orbit} ${styles.orbitTwo}`} />
 
           <div className={styles.chargeCard}>
             <div className={styles.chargeTop}>
-              <span className={styles.miniBrand}>
-                <Zap size={15} />
-              </span>
-              <span className={styles.liveDot}>NETWORK READY</span>
+              <div className={styles.miniBrand}>
+                <Zap size={17} />
+              </div>
+              <span className={styles.liveDot}>● LIVE</span>
             </div>
 
             <div className={styles.bolt}>
-              <Zap size={58} fill="currentColor" strokeWidth={1.5} />
+              <Zap size={78} strokeWidth={1.2} />
             </div>
 
             <div className={styles.chargeLine} />
-            <div className={`${styles.chargeLine} ${styles.short}`} />
+            <div
+              className={`${styles.chargeLine} ${styles.short}`}
+            />
 
             <div className={styles.chargeBottom}>
-              <span>BE-ELECTRIC NETWORK</span>
-              <span>⚡</span>
+              <span>BE-ELECTRIC</span>
+              <span>READY TO GO</span>
             </div>
           </div>
 
           <div className={styles.floatingPin}>
-            <Zap size={17} fill="currentColor" />
-            Charging made simple
+            <Zap size={15} />
+            Smart charging, simplified
           </div>
 
           <div className={styles.illustrationCopy}>
-            <span>EV CHARGING, SIMPLIFIED</span>
+            <span>DRIVE INTO TOMORROW</span>
             <h2>
-              Every journey
+              Your journeys,
               <br />
-              starts with a <em>charge.</em>
+              <em>powered smarter.</em>
             </h2>
             <p>
-              Find stations, plan your route, and keep moving with
+              Find your next charge and keep moving with
               Be-Electric.
             </p>
           </div>
-        </div>
+        </section>
 
-        <div className={styles.formPanel}>
+        {/* Authentication panel */}
+        <section
+          className={`${styles.formPanel} ${
+            mode === "login" ? styles.loginPanel : ""
+          }`}
+        >
           <div className={styles.formHeading}>
             <span className={styles.eyebrow}>
               {mode === "login" ? "WELCOME BACK" : "JOIN THE NETWORK"}
@@ -172,70 +178,63 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <div
-            className={styles.modeSwitch}
-            role="tablist"
-            aria-label="Account access"
-          >
+          {/* Login / signup tabs */}
+          <div className={styles.modeSwitch}>
             <button
               type="button"
-              role="tab"
-              aria-selected={mode === "login"}
               className={mode === "login" ? styles.activeMode : ""}
               onClick={() => changeMode("login")}
+              aria-pressed={mode === "login"}
             >
               Log in
             </button>
 
             <button
               type="button"
-              role="tab"
-              aria-selected={mode === "signup"}
               className={mode === "signup" ? styles.activeMode : ""}
               onClick={() => changeMode("signup")}
+              aria-pressed={mode === "signup"}
             >
               Sign up
             </button>
           </div>
 
+          {/* Authentication form */}
           <form className={styles.form} onSubmit={submit}>
             {mode === "signup" && (
               <>
                 <label htmlFor="fullName">Full name</label>
 
                 <div className={styles.inputWrap}>
-                  <UserRound size={18} />
-
+                  <UserRound size={18} aria-hidden="true" />
                   <input
                     id="fullName"
                     name="fullName"
                     type="text"
-                    autoComplete="name"
                     placeholder="Enter your full name"
+                    autoComplete="name"
                     value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
+                    onChange={(event) =>
+                      setFullName(event.target.value)
+                    }
                     required
-                    maxLength={150}
                   />
                 </div>
 
-                <label htmlFor="phone">
-                  Phone number
-                </label>
+                <label htmlFor="phone">Phone number</label>
 
                 <div className={styles.inputWrap}>
-                  <Phone size={18} />
-
+                  <Phone size={18} aria-hidden="true" />
                   <input
                     id="phone"
                     name="phone"
                     type="tel"
-                    autoComplete="tel"
                     placeholder="+974 0000 0000"
+                    autoComplete="tel"
                     value={phone}
-                    required
-                    onChange={(event) => setPhone(event.target.value)}
-                    maxLength={30}
+                    onChange={(event) =>
+                      setPhone(event.target.value)
+                    }
                   />
                 </div>
               </>
@@ -244,56 +243,59 @@ export default function AuthPage() {
             <label htmlFor="email">Email address</label>
 
             <div className={styles.inputWrap}>
-              <Mail size={18} />
-
+              <Mail size={18} aria-hidden="true" />
               <input
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
                 placeholder="you@example.com"
+                autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
-                maxLength={255}
               />
             </div>
 
-            <div className={styles.passwordLabel}>
-              <label htmlFor="password">Password</label>
+            <label htmlFor="password" className={styles.passwordLabel}>
+              <span>Password</span>
 
-              {mode === "login" && <span>Keep it secure</span>}
-            </div>
+              {mode === "login" && (
+                <span>Keep it secure</span>
+              )}
+            </label>
 
             <div className={styles.inputWrap}>
-              <LockKeyhole size={18} />
+              <LockKeyhole size={18} aria-hidden="true" />
 
               <input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
+                placeholder={
+                  mode === "signup"
+                    ? "At least 8 characters"
+                    : "Enter your password"
+                }
                 autoComplete={
                   mode === "login"
                     ? "current-password"
                     : "new-password"
                 }
-                placeholder={
-                  mode === "login"
-                    ? "Enter your password"
-                    : "At least 8 characters"
-                }
+                minLength={mode === "signup" ? 8 : undefined}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 required
-                minLength={mode === "signup" ? 8 : 1}
-                maxLength={128}
               />
 
               <button
-                className={styles.eyeButton}
                 type="button"
-                onClick={() => setShowPassword((previous) => !previous)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                className={styles.eyeButton}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={
+                  showPassword ? "Hide password" : "Show password"
+                }
               >
                 {showPassword ? (
                   <EyeOff size={18} />
@@ -305,31 +307,33 @@ export default function AuthPage() {
 
             {mode === "signup" && (
               <>
-                <label htmlFor="confirmPassword">Confirm password</label>
+                <label htmlFor="confirmPassword">
+                  Confirm password
+                </label>
 
                 <div className={styles.inputWrap}>
-                  <LockKeyhole size={18} />
+                  <LockKeyhole size={18} aria-hidden="true" />
 
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
+                    type={
+                      showConfirmPassword ? "text" : "password"
+                    }
                     placeholder="Re-enter your password"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(event) =>
                       setConfirmPassword(event.target.value)
                     }
                     required
-                    minLength={8}
-                    maxLength={128}
                   />
 
                   <button
-                    className={styles.eyeButton}
                     type="button"
+                    className={styles.eyeButton}
                     onClick={() =>
-                      setShowConfirmPassword((previous) => !previous)
+                      setShowConfirmPassword(!showConfirmPassword)
                     }
                     aria-label={
                       showConfirmPassword
@@ -346,8 +350,8 @@ export default function AuthPage() {
                 </div>
 
                 <p className={styles.terms}>
-                  By creating an account, you agree to use Be-Electric
-                  responsibly.
+                  By creating an account, you agree to use
+                  Be-Electric responsibly.
                 </p>
               </>
             )}
@@ -355,36 +359,38 @@ export default function AuthPage() {
             {notice && (
               <div
                 className={`${styles.notice} ${
-                  notice.type === "error"
+                  noticeType === "error"
                     ? styles.error
                     : styles.success
                 }`}
-                role="status"
-                aria-live="polite"
+                role={noticeType === "error" ? "alert" : "status"}
               >
-                {notice.text}
+                {notice}
               </div>
             )}
 
             <button
-              className={styles.submitButton}
               type="submit"
+              className={styles.submitButton}
               disabled={loading}
             >
-              {loading
-                ? "Please wait..."
-                : mode === "login"
-                  ? "Log in"
-                  : "Create account"}
+              <span>
+                {loading
+                  ? "Please wait..."
+                  : mode === "login"
+                    ? "Log in"
+                    : "Create account"}
+              </span>
 
-              <ArrowRight size={18} />
+              {!loading && <ArrowRight size={18} />}
             </button>
           </form>
 
+          {/* Link to switch modes */}
           <p className={styles.switchPrompt}>
             {mode === "login"
               ? "New to Be-Electric?"
-              : "Already have an account?"}{" "}
+              : "Already have an account?"}
 
             <button
               type="button"
@@ -401,8 +407,32 @@ export default function AuthPage() {
             Your journeys, powered smarter
             <span />
           </div>
-        </div>
-      </section>
+
+          {/* Mobile-only inspiration card, shown on login */}
+          {mode === "login" && (
+            <section className={styles.inspiration}>
+              <p className={styles.inspirationTitle}>
+                Journey inspiration
+              </p>
+
+              <div className={styles.inspirationCard}>
+                <div className={styles.inspirationImage}>
+                  <span className={styles.inspirationBadge}>
+                    <Zap size={12} />
+                    A BETTER WAY FORWARD
+                  </span>
+
+                  <h2>
+                    Your journeys,
+                    <br />
+                    powered smarter.
+                  </h2>
+                </div>
+              </div>
+            </section>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
