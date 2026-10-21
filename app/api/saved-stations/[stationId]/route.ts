@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
 import { getAuthenticatedAccountId, getSql } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function getSql() {
-  const url = process.env.DATABASE_URL;
-
-  if (!url) {
-    throw new Error("DATABASE_URL is not configured.");
-  }
-
-  return neon(url);
-}
 
 // Must use the same verified session lookup as the GET/POST route.
 async function getAuthenticatedAccountId(
