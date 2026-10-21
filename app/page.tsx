@@ -1748,6 +1748,9 @@ export default function Home() {
                     </div>
 
                     <section className="details-section">
+                      <button className="primary-button" onClick={openRoute}>
+                        <Navigation size={18} /> Get Directions
+                      </button>
                       <div className="details-section-heading">
                         <h3>Chargers</h3>
                         <span>DATABASE</span>
@@ -1796,42 +1799,6 @@ export default function Home() {
                       </p>
                     </section>
 
-                    <section className="details-section">
-                      <h3>Wayfinding instructions</h3>
-                      <div className="wayfinding-list">
-                        <div>
-                          <span>1</span>
-                          <div>
-                            <strong>Navigate to the location</strong>
-                            <p>Follow the route to {selected.shortName}.</p>
-                          </div>
-                        </div>
-                        <div>
-                          <span>2</span>
-                          <div>
-                            <strong>Find the charging area</strong>
-                            <p>
-                              Follow on-site parking and EV charging signs
-                              to locate the charging bays.
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <span>3</span>
-                          <div>
-                            <strong>Verify the charger</strong>
-                            <p>
-                              Check the charger display and connector before
-                              connecting your vehicle.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button className="primary-button" onClick={openRoute}>
-                        <Navigation size={18} /> Get Directions
-                      </button>
-                    </section>
 
                     <section className="details-section">
                       <h3>Station record</h3>
