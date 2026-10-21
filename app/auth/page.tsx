@@ -258,9 +258,6 @@ export default function AuthPage() {
 
             <label htmlFor="password" className={styles.passwordLabel}>
               <span>Password</span>
-
-              {mode === "login" && (
-              )}
             </label>
 
             <div className={styles.inputWrap}>
