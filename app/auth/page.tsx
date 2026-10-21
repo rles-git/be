@@ -95,30 +95,16 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
-
       <section className={styles.content}>
-
-        <div className={styles.formPanel}>
-          <button
-            className={styles.backButton}
-            type="button"
-            onClick={() => window.location.assign("/")}
-          >
-            <ArrowLeft size={16} />
-            Back to explore
-          </button>
-
           <div className={styles.formHeading}>
             <span className={styles.eyebrow}>
               {mode === "login" ? "WELCOME BACK" : "JOIN THE NETWORK"}
             </span>
-
             <h1>
               {mode === "login"
                 ? "Good to see you."
                 : "Create your account."}
             </h1>
-
             <p>
               {mode === "login"
                 ? "Sign in to continue your electric journey."
