@@ -813,3 +813,117 @@
     min-height: 110px;
   }
 }
+
+/* ========================================
+   Responsive signup refinements
+   Keeps signup compact on phones while allowing natural page scrolling.
+   ======================================== */
+@media (max-width: 800px) {
+  .page {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+    overflow-y: visible;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .content {
+    min-height: 0;
+  }
+
+  .formPanel {
+    padding-top: 24px;
+    padding-bottom: 20px;
+  }
+
+  /* Signup has more fields than login, so reduce its vertical gaps. */
+  .formPanel:not(.loginPanel) .formHeading h1 {
+    font-size: clamp(25px, 6.8vw, 30px);
+    line-height: 1.15;
+    margin: 9px 0 6px;
+  }
+
+  .formPanel:not(.loginPanel) .formHeading p {
+    line-height: 1.5;
+  }
+
+  .formPanel:not(.loginPanel) .modeSwitch {
+    margin: 17px 0 17px;
+  }
+
+  .formPanel:not(.loginPanel) .form label {
+    margin-bottom: 5px;
+  }
+
+  .formPanel:not(.loginPanel) .inputWrap {
+    height: 43px;
+    margin-bottom: 12px;
+    padding: 0 11px;
+    gap: 9px;
+  }
+
+  .formPanel:not(.loginPanel) .inputWrap input {
+    font-size: 12px;
+  }
+
+  .formPanel:not(.loginPanel) .terms {
+    margin: -1px 0 12px;
+  }
+
+  .formPanel:not(.loginPanel) .submitButton {
+    min-height: 46px;
+  }
+
+  .formPanel:not(.loginPanel) .switchPrompt {
+    margin: 15px 0 14px;
+  }
+}
+
+/* On short phones, prioritize fitting more of signup without clipping content. */
+@media (max-width: 800px) and (max-height: 760px) {
+  .formPanel:not(.loginPanel) {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .formPanel:not(.loginPanel) .eyebrow {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  .formPanel:not(.loginPanel) .formHeading h1 {
+    font-size: 25px;
+    margin: 7px 0 5px;
+  }
+
+  .formPanel:not(.loginPanel) .modeSwitch {
+    margin: 13px 0 14px;
+  }
+
+  .formPanel:not(.loginPanel) .inputWrap {
+    height: 40px;
+    margin-bottom: 10px;
+  }
+
+  .formPanel:not(.loginPanel) .terms {
+    font-size: 9px;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+
+  .formPanel:not(.loginPanel) .switchPrompt {
+    margin: 12px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .formPanel:not(.loginPanel) .inputWrap {
+    padding: 0 9px;
+    gap: 7px;
+  }
+
+  .formPanel:not(.loginPanel) .inputWrap input {
+    font-size: 11px;
+  }
+}
