@@ -220,7 +220,7 @@ export default function AuthPage() {
                 </div>
 
                 <label htmlFor="phone">
-                  Phone number <span>(optional)</span>
+                  Phone number
                 </label>
 
                 <div className={styles.inputWrap}>
@@ -233,6 +233,7 @@ export default function AuthPage() {
                     autoComplete="tel"
                     placeholder="+974 0000 0000"
                     value={phone}
+                    required
                     onChange={(event) => setPhone(event.target.value)}
                     maxLength={30}
                   />
