@@ -99,19 +99,6 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.topbar}>
-        <a className={styles.brand} href="/" aria-label="Be-Electric home">
-          <span className={styles.brandIcon}>
-            <Zap size={20} fill="currentColor" />
-          </span>
-          <span>be-electric</span>
-        </a>
-
-        <span className={styles.secure}>
-          <LockKeyhole size={14} />
-          Secure access
-        </span>
-      </div>
 
       <section className={styles.content}>
         <div className={styles.illustration} aria-hidden="true">
@@ -159,14 +146,6 @@ export default function AuthPage() {
         </div>
 
         <div className={styles.formPanel}>
-          <button
-            className={styles.backButton}
-            type="button"
-            onClick={() => window.location.assign("/")}
-          >
-            <ArrowLeft size={16} />
-            Back to explore
-          </button>
 
           <div className={styles.formHeading}>
             <span className={styles.eyebrow}>
