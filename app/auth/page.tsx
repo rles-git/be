@@ -411,10 +411,6 @@ export default function AuthPage() {
           {/* Mobile-only inspiration card, shown on login */}
           {mode === "login" && (
             <section className={styles.inspiration}>
-              <p className={styles.inspirationTitle}>
-                Journey inspiration
-              </p>
-
               <div className={styles.inspirationCard}>
                 <div className={styles.inspirationImage}>
                   <span className={styles.inspirationBadge}>
