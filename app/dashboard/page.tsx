@@ -241,6 +241,15 @@ function MapArtwork() {
   );
 }
 
+type UserProfile = {
+  id?: string;
+  fullName?: string;
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  createdAt?: string | null;
+};
+
 export default function Home() {
   const { stations, loading, error } = useStations();
 
@@ -264,7 +273,73 @@ export default function Home() {
   const [chargeTarget, setChargeTarget] = useState("80");
   const [customTarget, setCustomTarget] = useState("");
   const [carConnected, setCarConnected] = useState(false);
+const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+const [profileLoading, setProfileLoading] = useState(false);
+const [profileError, setProfileError] = useState("");
 
+useEffect(() => {
+  if (activeTab !== "Profile") return;
+
+  let cancelled = false;
+
+  async function loadProfile() {
+    try {
+      setProfileLoading(true);
+      setProfileError("");
+
+      const response = await fetch("/api/stations/auth/me", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || "Unable to load your account details."
+        );
+      }
+
+      const profile = data.user ?? data.profile ?? data;
+
+      if (!cancelled) {
+        setUserProfile({
+          id: profile.id,
+          fullName:
+            profile.fullName ??
+            profile.full_name ??
+            profile.name ??
+            "",
+          email: profile.email ?? "",
+          phone: profile.phone ?? profile.phone_number ?? null,
+          createdAt:
+            profile.createdAt ??
+            profile.created_at ??
+            null,
+        });
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load your account details."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setProfileLoading(false);
+      }
+    }
+  }
+
+  loadProfile();
+
+  return () => {
+    cancelled = true;
+  };
+}, [activeTab]);
   const sheetPointerStart = useRef<number | null>(null);
 
 
@@ -2125,57 +2200,203 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                 )}
 
                 {activeTab === "Profile" && (
-                  <>
-                    <h2>Your profile</h2>
-                    <p className="tab-subtitle">
-                      Manage your Be-Electric preferences.
-                    </p>
+  <>
+    <h2>Your profile</h2>
+    <p className="tab-subtitle">
+      Manage your account and Be-Electric preferences.
+    </p>
 
-                    <div className="profile-card">
-                      <div className="avatar">
-                        <UserRound size={25} />
-                      </div>
-                      <div>
-                        <b>Guest driver</b>
-                        <small>Demo account</small>
-                      </div>
-                      <span className="demo-tag">DEMO</span>
-                    </div>
+    {profileLoading ? (
+      <div className="empty-state">
+        <UserRound size={26} />
+        <b>Loading your profile...</b>
+        <p>Retrieving your account information.</p>
+      </div>
+    ) : profileError ? (
+      <div className="empty-state">
+        <UserRound size={26} />
+        <b>Unable to load your profile</b>
+        <p>{profileError}</p>
 
-                    {[
-                      "Account details",
-                      "Notifications",
-                      "Charging preferences",
-                      "Privacy & security",
-                    ].map((item, index) => (
-                      <button
-                        key={item}
-                        className="settings-row"
-                        onClick={() => notify(`${item} is a demo setting.`)}
-                      >
-                        <span>
-                          {[
-                            <UserRound key="account" size={18} />,
-                            <Activity key="notifications" size={18} />,
-                            <Settings2 key="preferences" size={18} />,
-                            <CircleDot key="privacy" size={18} />,
-                          ][index]}
-                        </span>
-                        {item}
-                        <ChevronRight size={18} />
-                      </button>
-                    ))}
-                  </>
-                )}
+        <button
+          type="button"
+          onClick={() => {
+            setProfileError("");
+            setActiveTab("Explore");
+            window.setTimeout(() => setActiveTab("Profile"), 0);
+          }}
+        >
+          Try again
+        </button>
+      </div>
+    ) : userProfile ? (
+      <>
+        <div className="profile-card">
+          <div className="avatar">
+            <UserRound size={25} />
+          </div>
 
-                <div className="tab-map-mini">
-                  <MapArtwork />
-                  <button onClick={() => setActiveTab("Explore")}>
-                    <Compass size={16} /> Back to Explore
-                  </button>
-                </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <b>
+              {userProfile.fullName ||
+                userProfile.name ||
+                "Be-Electric user"}
+            </b>
+            <small>{userProfile.email || "Email not provided"}</small>
+          </div>
+
+          <span className="demo-tag">ACCOUNT</span>
+        </div>
+
+        <section className="details-section">
+          <div className="details-section-heading">
+            <h3>Personal information</h3>
+            <span>ACCOUNT</span>
+          </div>
+
+          <div className="operating-card">
+            <span className="operating-icon">
+              <UserRound size={20} />
+            </span>
+            <div>
+              <strong>Full name</strong>
+              <p>
+                {userProfile.fullName ||
+                  userProfile.name ||
+                  "Not provided"}
+              </p>
+            </div>
+          </div>
+
+          <div className="operating-card">
+            <span className="operating-icon">
+              <Activity size={20} />
+            </span>
+            <div>
+              <strong>Email address</strong>
+              <p>{userProfile.email || "Not provided"}</p>
+            </div>
+          </div>
+
+          <div className="operating-card">
+            <span className="operating-icon">
+              <CircleDot size={20} />
+            </span>
+            <div>
+              <strong>Phone number</strong>
+              <p>{userProfile.phone || "Not provided"}</p>
+            </div>
+          </div>
+
+          {userProfile.createdAt && (
+            <div className="operating-card">
+              <span className="operating-icon">
+                <History size={20} />
+              </span>
+              <div>
+                <strong>Member since</strong>
+                <p>
+                  {new Date(userProfile.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )}
+                </p>
               </div>
-            )}
+            </div>
+          )}
+        </section>
+
+        <section className="details-section">
+          <div className="details-section-heading">
+            <h3>Preferences</h3>
+            <span>SETTINGS</span>
+          </div>
+
+          {[
+            {
+              label: "Account details",
+              icon: <UserRound size={18} />,
+            },
+            {
+              label: "Notifications",
+              icon: <Activity size={18} />,
+            },
+            {
+              label: "Charging preferences",
+              icon: <Settings2 size={18} />,
+            },
+            {
+              label: "Privacy & security",
+              icon: <CircleDot size={18} />,
+            },
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              className="settings-row"
+              onClick={() =>
+                notify(`${item.label} settings are not connected yet.`)
+              }
+            >
+              <span>{item.icon}</span>
+              {item.label}
+              <ChevronRight size={18} />
+            </button>
+          ))}
+        </section>
+
+        <button
+          type="button"
+          className="secondary-button"
+          style={{ marginTop: 18, marginBottom: 20 }}
+          onClick={async () => {
+            try {
+              const response = await fetch(
+                "/api/stations/auth/logout",
+                {
+                  method: "POST",
+                  credentials: "include",
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error("Sign out failed.");
+              }
+
+              window.location.assign("/auth");
+            } catch {
+              notify(
+                "Unable to sign out. Check your logout API route."
+              );
+            }
+          }}
+        >
+          Sign out
+        </button>
+      </>
+    ) : (
+      <div className="empty-state">
+        <UserRound size={26} />
+        <b>No profile information found</b>
+        <p>
+          Sign in again or check that your profile API returns the
+          authenticated user's details.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => window.location.assign("/auth")}
+        >
+          Go to login
+        </button>
+      </div>
+    )}
+  </>
+)}
 
             <nav className="bottom-nav">
               {(
