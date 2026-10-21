@@ -1765,44 +1765,39 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
     gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
   }}
 >
-  {availableStalls.length > 0 ? (
-    availableStalls.map((charger) => (
-      <button
-        key={charger.chargerId}
-        type="button"
-        className="stall-option stall-available"
-        onClick={() => openStall(charger.id, charger.status)}
-        aria-label={`Charger ${charger.chargerId}: ${charger.status}, ${charger.power} kW`}
-      >
-        <span className="stall-number">
-          Charger {charger.chargerId}
-        </span>
+  {stalls.map((stall) => (
+    <button
+      key={stall.id}
+      type="button"
+      className={`stall-option ${
+        isAvailableStatus(stall.status)
+          ? "stall-available"
+          : "stall-occupied"
+      }`}
+      onClick={() => openStall(stall.id, stall.status)}
+      aria-label={`Charger ${stall.chargerId}: ${stall.status}, ${stall.power} kW`}
+    >
+      <span className="stall-number">
+        Charger {stall.chargerId}
+      </span>
 
-        <span className="stall-charger-icon">
-          <StallChargerIcon size={29} />
-        </span>
+      {/* Keep the charger icon visible */}
+      <span className="stall-charger-icon">
+        <StallChargerIcon size={29} />
+      </span>
 
-        <strong>{charger.status}</strong>
+      <strong>{stall.status}</strong>
 
-        <span className="stall-power-output">
-          {charger.power} <small>kW</small>
-        </span>
+      <span className="stall-power-output">
+        {stall.power} <small>kW</small>
+      </span>
 
-        <small>
-          {charger.connectors.length} connector
-          {charger.connectors.length === 1 ? "" : "s"}
-        </small>
-      </button>
-    ))
-  ) : (
-    <div className="empty-state">
-      <PlugZap size={24} />
-      <b>No available chargers</b>
-      <p>
-        This station has no chargers with an available status in the database.
-      </p>
-    </div>
-  )}
+      <small>
+        {stall.connectors.length} connector
+        {stall.connectors.length === 1 ? "" : "s"}
+      </small>
+    </button>
+  ))}
 </div>
 
 
