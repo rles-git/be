@@ -262,6 +262,8 @@ export default function Home() {
   const [acOnly, setAcOnly] = useState(false);
   const [availableOnly, setAvailableOnly] = useState(false);
   const [saved, setSaved] = useState<string[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savingStationId, setSavingStationId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetDragY, setSheetDragY] = useState(0);
