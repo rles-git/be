@@ -25,7 +25,7 @@ export async function GET() {
         s.address,
         s.lat,
         s.lng,
-        s.plugs,
+        s.chargers,
         s.available,
         s.power,
         s.price,
