@@ -33,7 +33,7 @@ export type DatabaseStation = {
   address: string | null;
   lat: number;
   lng: number;
-  plugs: number | null;
+  chargers: number | null;
   available: number | null;
   power: number | null;
   price: number | null;
@@ -73,7 +73,7 @@ export type MapStation = {
   address: string;
   lat: number;
   lng: number;
-  plugs: number | null;
+  chargers: number | null;
   available: number | null;
   power: number | null;
   price: number | null;
@@ -95,7 +95,7 @@ export const mapStations = (
     address: station.address ?? "Address unavailable",
     lat: Number(station.lat),
     lng: Number(station.lng),
-    plugs: station.plugs,
+    chargers: station.chargers,
     available: station.available,
     power: station.power,
     price: station.price,
