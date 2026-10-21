@@ -468,9 +468,7 @@ const stalls: ChargerDisplay[] = databaseChargers.map(
   })
 );
 
-  const savedStations = stations.filter((station) =>
-  saved.includes(String(station.id))
-);
+
   
 const availableStalls = stalls.filter((charger) =>
   isAvailableStatus(charger.status)
