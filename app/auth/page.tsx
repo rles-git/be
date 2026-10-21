@@ -95,68 +95,8 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.topbar}>
-        <a
-          className={styles.brand}
-          href="/"
-          aria-label="Be-Electric home"
-        >
-          <span className={styles.brandIcon}>
-            <Zap size={20} fill="currentColor" />
-          </span>
-          <span>be-electric</span>
-        </a>
-
-        <span className={styles.secure}>
-          <LockKeyhole size={14} />
-          Secure access
-        </span>
-      </div>
 
       <section className={styles.content}>
-        <div className={styles.illustration} aria-hidden="true">
-          <div className={`${styles.orbit} ${styles.orbitOne}`} />
-          <div className={`${styles.orbit} ${styles.orbitTwo}`} />
-
-          <div className={styles.chargeCard}>
-            <div className={styles.chargeTop}>
-              <span className={styles.miniBrand}>
-                <Zap size={15} />
-              </span>
-              <span className={styles.liveDot}>NETWORK READY</span>
-            </div>
-
-            <div className={styles.bolt}>
-              <Zap size={58} fill="currentColor" strokeWidth={1.5} />
-            </div>
-
-            <div className={styles.chargeLine} />
-            <div className={`${styles.chargeLine} ${styles.short}`} />
-
-            <div className={styles.chargeBottom}>
-              <span>BE-ELECTRIC NETWORK</span>
-              <span>⚡</span>
-            </div>
-          </div>
-
-          <div className={styles.floatingPin}>
-            <Zap size={17} fill="currentColor" />
-            Charging made simple
-          </div>
-
-          <div className={styles.illustrationCopy}>
-            <span>EV CHARGING, SIMPLIFIED</span>
-            <h2>
-              Every journey
-              <br />
-              starts with a <em>charge.</em>
-            </h2>
-            <p>
-              Find stations, plan your route, and keep moving with
-              Be-Electric.
-            </p>
-          </div>
-        </div>
 
         <div className={styles.formPanel}>
           <button
