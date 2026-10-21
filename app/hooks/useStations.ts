@@ -139,59 +139,57 @@ export function useStations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
 
-    async function loadStations() {
-      try {
-        setLoading(true);
+useEffect(() => {
+  let cancelled = false;
+  let isFirstLoad = true;
 
-        const response = await fetch("/api/stations", {
-          cache: "no-store",
-        });
+  async function loadStations() {
+    try {
+      const response = await fetch("/api/stations", {
+        cache: "no-store",
+      });
 
-        if (!response.ok) {
-          throw new Error("Could not load stations");
-        }
+      if (!response.ok) {
+        throw new Error("Could not load stations");
+      }
 
-        const data: DatabaseStation[] = await response.json();
+      const data: DatabaseStation[] = await response.json();
 
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid stations response");
-        }
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid stations response");
+      }
 
-        if (!cancelled) {
-          setStations(mapStations(data));
-          setError(null);
+      if (!cancelled) {
+        setStations(mapStations(data));
+        setError(null);
+      }
+    } catch (err) {
+      console.error("Failed to load stations:", err);
 
-          console.log(
-            "Stations and chargers loaded:",
-            data.map((station) => ({
-              station: station.name,
-              chargerCount: station.chargers?.length ?? 0,
-              chargers: station.chargers ?? [],
-            }))
-          );
-        }
-      } catch (err) {
-        console.error("Failed to load stations:", err);
-
-        if (!cancelled) {
-          setError("Unable to load charging stations.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      if (!cancelled) {
+        setError("Unable to load charging stations.");
+      }
+    } finally {
+      if (!cancelled && isFirstLoad) {
+        setLoading(false);
+        isFirstLoad = false;
       }
     }
+  }
 
+  loadStations();
+
+  const intervalId = window.setInterval(() => {
     loadStations();
+  }, 5000);
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  return () => {
+    cancelled = true;
+    window.clearInterval(intervalId);
+  };
+}, []);
+
 
   return { stations, loading, error };
 }
