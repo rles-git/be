@@ -30,7 +30,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useStations, type MapStation } from "./hooks/useStations";
+import { useStations, type MapStation } from "../hooks/useStations";
 
 function StallChargerIcon({ size = 29 }: { size?: number }) {
   return (
@@ -51,7 +51,7 @@ function StallChargerIcon({ size = 29 }: { size?: number }) {
   );
 }
 
-const LeafletMap = dynamic(() => import("./LeafletMap"), {
+const LeafletMap = dynamic(() => import("../LeafletMap"), {
   ssr: false,
   loading: () => <div className="leaflet-loading">Loading OpenStreetMap…</div>,
 });
