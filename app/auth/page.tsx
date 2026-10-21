@@ -88,9 +88,9 @@ export default function AuthPage() {
 
       if (mode === "signup") {
         // Switch to login if signup doesn't automatically establish a session.
-        window.location.assign("/");
+        window.location.assign("/auth");
       } else {
-        window.location.assign("/");
+        window.location.assign("/dashboard");
       }
     } catch (error) {
       setNoticeType("error");
