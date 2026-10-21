@@ -50,7 +50,7 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/auth/${mode}`, {
+      const response = await fetch(`/api/stations/auth/${mode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
