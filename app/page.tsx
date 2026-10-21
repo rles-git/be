@@ -1746,11 +1746,11 @@ export default function Home() {
                       </div>
                       <span className="details-open-badge">{selected.status}</span>
                     </div>
-
-                    <section className="details-section">
                       <button className="primary-button" onClick={openRoute}>
                         <Navigation size={18} /> Get Directions
                       </button>
+                    <section className="details-section">
+
                       <div className="details-section-heading">
                         <h3>Chargers</h3>
                         <span>DATABASE</span>
