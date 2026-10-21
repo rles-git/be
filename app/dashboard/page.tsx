@@ -342,6 +342,107 @@ useEffect(() => {
     cancelled = true;
   };
 }, [activeTab]);
+
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadSavedStations() {
+    try {
+      setSavedLoading(true);
+
+      const response = await fetch("/api/saved-stations", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (response.status === 401) {
+        if (!cancelled) setSaved([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load saved stations.");
+      }
+
+      if (!cancelled) {
+        setSaved(
+          (data.savedStations ?? []).map(
+            (item: { station_id: string | number }) =>
+              String(item.station_id)
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Load saved stations error:", error);
+    } finally {
+      if (!cancelled) setSavedLoading(false);
+    }
+  }
+
+  void loadSavedStations();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+
+  
+async function toggleSavedStation(stationId: string | number) {
+  const id = String(stationId);
+
+  if (savingStationId !== null) return;
+
+  const isSaved = saved.includes(id);
+
+  try {
+    setSavingStationId(id);
+
+    const response = await fetch(
+      isSaved
+        ? `/api/saved-stations/${encodeURIComponent(id)}`
+        : "/api/saved-stations",
+      {
+        method: isSaved ? "DELETE" : "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        ...(!isSaved
+          ? { body: JSON.stringify({ station_id: id }) }
+          : {}),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to update saved stations.");
+    }
+
+    setSaved((previous) =>
+      isSaved
+        ? previous.filter((savedId) => savedId !== id)
+        : previous.includes(id)
+          ? previous
+          : [...previous, id]
+    );
+  } catch (error) {
+    console.error("Toggle saved station error:", error);
+
+    setMessage(
+      error instanceof Error
+        ? error.message
+        : "Unable to update saved stations."
+    );
+  } finally {
+    setSavingStationId(null);
+  }
+}
+
+  
+  
   const sheetPointerStart = useRef<number | null>(null);
 
 
@@ -367,6 +468,10 @@ const stalls: ChargerDisplay[] = databaseChargers.map(
   })
 );
 
+  const savedStations = stations.filter((station) =>
+  saved.includes(String(station.id))
+);
+  
 const availableStalls = stalls.filter((charger) =>
   isAvailableStatus(charger.status)
 );
@@ -1974,20 +2079,26 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
 
                   <div className="station-title-row">
                     <h2>{selected.name}</h2>
+                  
                     <button
                       className={`save-button ${
-                        saved.includes(selected.id) ? "saved" : ""
+                        saved.includes(String(selected.id)) ? "saved" : ""
                       }`}
-                      onClick={() =>
-                        setSaved((previous) =>
-                          previous.includes(selected.id)
-                            ? previous.filter((id) => id !== selected.id)
-                            : [...previous, selected.id]
-                        )
+                      onClick={() => void toggleSavedStation(selected.id)}
+                      disabled={savingStationId !== null}
+                      aria-label={
+                        saved.includes(String(selected.id))
+                          ? "Remove saved station"
+                          : "Save station"
                       }
-                      aria-label="Save station"
+                      aria-pressed={saved.includes(String(selected.id))}
+                      title={
+                        saved.includes(String(selected.id))
+                          ? "Remove saved station"
+                          : "Save station"
+                      }
                     >
-                      {saved.includes(selected.id) ? (
+                      {saved.includes(String(selected.id)) ? (
                         <BookmarkCheck size={19} />
                       ) : (
                         <Bookmark size={19} />
