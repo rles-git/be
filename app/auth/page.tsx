@@ -50,24 +50,28 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/stations/auth/${mode}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: fullName.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
-          password,
-        }),
-      });
+      const response = await fetch(
+        `/api/stations/auth/${mode}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fullName: fullName.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            password,
+          }),
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Something went wrong. Please try again."
+          data.error ||
+            `Request failed (${response.status}). Please try again.`
         );
       }
 
@@ -95,16 +99,86 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
+      <div className={styles.topbar}>
+        <a className={styles.brand} href="/" aria-label="Be-Electric home">
+          <span className={styles.brandIcon}>
+            <Zap size={20} fill="currentColor" />
+          </span>
+          <span>be-electric</span>
+        </a>
+
+        <span className={styles.secure}>
+          <LockKeyhole size={14} />
+          Secure access
+        </span>
+      </div>
+
       <section className={styles.content}>
+        <div className={styles.illustration} aria-hidden="true">
+          <div className={`${styles.orbit} ${styles.orbitOne}`} />
+          <div className={`${styles.orbit} ${styles.orbitTwo}`} />
+
+          <div className={styles.chargeCard}>
+            <div className={styles.chargeTop}>
+              <span className={styles.miniBrand}>
+                <Zap size={15} />
+              </span>
+              <span className={styles.liveDot}>NETWORK READY</span>
+            </div>
+
+            <div className={styles.bolt}>
+              <Zap size={58} fill="currentColor" strokeWidth={1.5} />
+            </div>
+
+            <div className={styles.chargeLine} />
+            <div className={`${styles.chargeLine} ${styles.short}`} />
+
+            <div className={styles.chargeBottom}>
+              <span>BE-ELECTRIC NETWORK</span>
+              <span>⚡</span>
+            </div>
+          </div>
+
+          <div className={styles.floatingPin}>
+            <Zap size={17} fill="currentColor" />
+            Charging made simple
+          </div>
+
+          <div className={styles.illustrationCopy}>
+            <span>EV CHARGING, SIMPLIFIED</span>
+            <h2>
+              Every journey
+              <br />
+              starts with a <em>charge.</em>
+            </h2>
+            <p>
+              Find stations, plan your route, and keep moving with
+              Be-Electric.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.formPanel}>
+          <button
+            className={styles.backButton}
+            type="button"
+            onClick={() => window.location.assign("/")}
+          >
+            <ArrowLeft size={16} />
+            Back to explore
+          </button>
+
           <div className={styles.formHeading}>
             <span className={styles.eyebrow}>
               {mode === "login" ? "WELCOME BACK" : "JOIN THE NETWORK"}
             </span>
+
             <h1>
               {mode === "login"
                 ? "Good to see you."
                 : "Create your account."}
             </h1>
+
             <p>
               {mode === "login"
                 ? "Sign in to continue your electric journey."
@@ -121,9 +195,7 @@ export default function AuthPage() {
               type="button"
               role="tab"
               aria-selected={mode === "login"}
-              className={
-                mode === "login" ? styles.activeMode : ""
-              }
+              className={mode === "login" ? styles.activeMode : ""}
               onClick={() => changeMode("login")}
             >
               Log in
@@ -133,9 +205,7 @@ export default function AuthPage() {
               type="button"
               role="tab"
               aria-selected={mode === "signup"}
-              className={
-                mode === "signup" ? styles.activeMode : ""
-              }
+              className={mode === "signup" ? styles.activeMode : ""}
               onClick={() => changeMode("signup")}
             >
               Sign up
@@ -157,9 +227,7 @@ export default function AuthPage() {
                     autoComplete="name"
                     placeholder="Enter your full name"
                     value={fullName}
-                    onChange={(event) =>
-                      setFullName(event.target.value)
-                    }
+                    onChange={(event) => setFullName(event.target.value)}
                     required
                     maxLength={150}
                   />
@@ -179,9 +247,7 @@ export default function AuthPage() {
                     autoComplete="tel"
                     placeholder="+974 0000 0000"
                     value={phone}
-                    onChange={(event) =>
-                      setPhone(event.target.value)
-                    }
+                    onChange={(event) => setPhone(event.target.value)}
                     maxLength={30}
                   />
                 </div>
@@ -200,9 +266,7 @@ export default function AuthPage() {
                 autoComplete="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
+                onChange={(event) => setEmail(event.target.value)}
                 required
                 maxLength={255}
               />
@@ -211,9 +275,7 @@ export default function AuthPage() {
             <div className={styles.passwordLabel}>
               <label htmlFor="password">Password</label>
 
-              {mode === "login" && (
-                <span>Keep it secure</span>
-              )}
+              {mode === "login" && <span>Keep it secure</span>}
             </div>
 
             <div className={styles.inputWrap}>
@@ -234,9 +296,7 @@ export default function AuthPage() {
                     : "At least 8 characters"
                 }
                 value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(event) => setPassword(event.target.value)}
                 required
                 minLength={mode === "signup" ? 8 : 1}
                 maxLength={128}
@@ -245,12 +305,8 @@ export default function AuthPage() {
               <button
                 className={styles.eyeButton}
                 type="button"
-                onClick={() =>
-                  setShowPassword((previous) => !previous)
-                }
-                aria-label={
-                  showPassword ? "Hide password" : "Show password"
-                }
+                onClick={() => setShowPassword((previous) => !previous)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff size={18} />
