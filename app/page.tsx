@@ -1908,10 +1908,27 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
 
                   <p className="station-address">{selected.address}</p>
 
-                  <div className="station-summary">
-                    <span>{getAvailabilityLabel(selected)}</span>
-                    <small>{selected.distance || "Distance not calculated"}</small>
-                  </div>
+<div className="station-summary">
+  <span>
+    {(() => {
+      const station = stations.find(
+        (item) => String(item.id) === String(selected.id)
+      ) as StationWithChargers | undefined;
+
+      const chargers = station?.chargers ?? [];
+
+      const available = chargers.filter((charger) =>
+        isAvailableStatus(charger.status)
+      ).length;
+
+      return `${available} of ${chargers.length} chargers available`;
+    })()}
+  </span>
+
+  <small>
+    {selected.distance || "Distance not calculated"}
+  </small>
+</div>
 
                   <div className="spec-grid">
                     <div>
