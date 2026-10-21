@@ -4,15 +4,6 @@ import { getAuthenticatedAccountId, getSql } from "../../../lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Replace this with your verified server-side session lookup.
-// Do not get the account ID from request JSON or query parameters.
-async function getAuthenticatedAccountId(
-  _request: NextRequest
-): Promise<string | null> {
-  // Connect your existing authentication/session logic here.
-  return null;
-}
-
 export async function GET(request: NextRequest) {
   try {
     const accountId = await getAuthenticatedAccountId(request);
