@@ -4,7 +4,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import {
-  ArrowLeft,
   ArrowRight,
   Eye,
   EyeOff,
@@ -26,6 +25,7 @@ type Notice = {
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
 
@@ -33,12 +33,15 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
     setNotice(null);
     setPassword("");
+    setConfirmPassword("");
     setShowPassword(false);
+    setShowConfirmPassword(false);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -47,24 +50,30 @@ export default function AuthPage() {
     if (loading) return;
 
     setNotice(null);
+
+    if (mode === "signup" && password !== confirmPassword) {
+      setNotice({
+        type: "error",
+        text: "Passwords do not match. Please try again.",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `/api/stations/auth/${mode}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fullName: fullName.trim(),
-            email: email.trim().toLowerCase(),
-            phone: phone.trim(),
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`/api/stations/auth/${mode}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          password,
+        }),
+      });
 
       const data = await response.json().catch(() => ({}));
 
@@ -99,7 +108,6 @@ export default function AuthPage() {
 
   return (
     <main className={styles.page}>
-
       <section className={styles.content}>
         <div className={styles.illustration} aria-hidden="true">
           <div className={`${styles.orbit} ${styles.orbitOne}`} />
@@ -146,7 +154,6 @@ export default function AuthPage() {
         </div>
 
         <div className={styles.formPanel}>
-
           <div className={styles.formHeading}>
             <span className={styles.eyebrow}>
               {mode === "login" ? "WELCOME BACK" : "JOIN THE NETWORK"}
@@ -296,10 +303,52 @@ export default function AuthPage() {
             </div>
 
             {mode === "signup" && (
-              <p className={styles.terms}>
-                By creating an account, you agree to use Be-Electric
-                responsibly.
-              </p>
+              <>
+                <label htmlFor="confirmPassword">Confirm password</label>
+
+                <div className={styles.inputWrap}>
+                  <LockKeyhole size={18} />
+
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChange={(event) =>
+                      setConfirmPassword(event.target.value)
+                    }
+                    required
+                    minLength={8}
+                    maxLength={128}
+                  />
+
+                  <button
+                    className={styles.eyeButton}
+                    type="button"
+                    onClick={() =>
+                      setShowConfirmPassword((previous) => !previous)
+                    }
+                    aria-label={
+                      showConfirmPassword
+                        ? "Hide confirm password"
+                        : "Show confirm password"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+
+                <p className={styles.terms}>
+                  By creating an account, you agree to use Be-Electric
+                  responsibly.
+                </p>
+              </>
             )}
 
             {notice && (
