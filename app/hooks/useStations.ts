@@ -33,14 +33,14 @@ export type DatabaseStation = {
   address: string | null;
   lat: number;
   lng: number;
-  chargers: number | null;
+  chargerCount?: number | null;
   available: number | null;
   power: number | null;
   price: number | null;
   kind: "DC fast" | "AC";
   distance: string | null;
   minutes: number | null;
-  chargers?: DatabaseCharger[];
+  chargers?: DatabaseCharger[] || null;
 };
 
 export type MapConnector = {
@@ -66,6 +66,7 @@ export type MapCharger = {
   connectors: MapConnector[];
 };
 
+
 export type MapStation = {
   id: string;
   name: string;
@@ -73,7 +74,7 @@ export type MapStation = {
   address: string;
   lat: number;
   lng: number;
-  chargers: number | null;
+  chargerCount: station.chargerCount ?? null,
   available: number | null;
   power: number | null;
   price: number | null;
@@ -82,8 +83,9 @@ export type MapStation = {
   minutes: number;
   status: string;
   operator: string | null;
-  chargers: MapCharger[];
+  chargers: MapCharger[] || null;
 };
+
 
 export const mapStations = (
   rows: DatabaseStation[]
@@ -95,7 +97,7 @@ export const mapStations = (
     address: station.address ?? "Address unavailable",
     lat: Number(station.lat),
     lng: Number(station.lng),
-    chargers: station.chargers,
+    chargerCount: station.chargers,
     available: station.available,
     power: station.power,
     price: station.price,
