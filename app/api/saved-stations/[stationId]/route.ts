@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: Promise<{ stationId: string }> }
 ) {
   try {
-    const accountId = await getAuthenticatedAccountId(request);
+    const accountId = await getAuthenticatedAccountId();
 
     if (!accountId) {
       return NextResponse.json(
