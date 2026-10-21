@@ -48,6 +48,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate the signed-in user.
     const accountId = await getAuthenticatedAccountId();
 
     if (!accountId) {
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Read the station ID sent by the frontend.
     let body: { station_id?: unknown };
 
     try {
@@ -71,50 +73,49 @@ export async function POST(request: NextRequest) {
     const rawStationId = body?.station_id;
 
     if (
-      (typeof rawStationId !== "string" &&
-        typeof rawStationId !== "number") ||
-      String(rawStationId).trim() === ""
+      typeof rawStationId !== "string" ||
+      !/^Q\d{3}$/i.test(rawStationId.trim())
     ) {
       return NextResponse.json(
-        { error: "A valid station_id is required." },
+        {
+          error:
+            "Invalid station ID. Expected a format like Q001.",
+        },
         { status: 400 }
       );
     }
 
-    const stationId = String(rawStationId).trim();
-
-    if (!/^\d+$/.test(stationId)) {
-      return NextResponse.json(
-        { error: "station_id must be a valid numeric ID." },
-        { status: 400 }
-      );
-    }
-
+    const stationId = rawStationId.trim().toUpperCase();
     const sql = getSql();
 
-    const station = await sql`
+    // Find the station using its actual ID.
+    const stations = await sql`
       SELECT id
       FROM public.stations
-      WHERE id = ${stationId}
+      WHERE id::text = ${stationId}
       LIMIT 1
     `;
 
-    if (station.length === 0) {
+    if (stations.length === 0) {
       return NextResponse.json(
-        { error: "Station not found." },
+        {
+          error: `Station ${stationId} was not found in the database.`,
+        },
         { status: 404 }
       );
     }
 
+    // Insert the actual database ID, preserving its underlying type.
     await sql`
       INSERT INTO public.saved_stations (
         account_id,
         station_id
       )
-      VALUES (
+      SELECT
         ${accountId},
-        ${stationId}
-      )
+        s.id
+      FROM public.stations AS s
+      WHERE s.id::text = ${stationId}
       ON CONFLICT (account_id, station_id) DO NOTHING
     `;
 
