@@ -260,7 +260,6 @@ export default function AuthPage() {
               <span>Password</span>
 
               {mode === "login" && (
-                <span>Keep it secure</span>
               )}
             </label>
 
