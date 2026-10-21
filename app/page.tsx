@@ -150,11 +150,23 @@ function getPowerLabel(station: MapStation) {
 }
 
 function getAvailabilityLabel(station: MapStation) {
-  if (station.available == null || station.chargers == null) {
-    return "Availability unavailable";
+  const stationWithChargers = station as StationWithChargers;
+
+  const chargers = Array.isArray(stationWithChargers.chargers)
+    ? stationWithChargers.chargers
+    : [];
+
+  const total = chargers.length;
+
+  const available = chargers.filter((charger) =>
+    isAvailableStatus(charger.status)
+  ).length;
+
+  if (total === 0) {
+    return "No chargers available";
   }
 
-  return `${station.available} of ${station.chargers} available`;
+  return `${available} of ${total} chargers available`;
 }
 
 function getPriceLabel(station: MapStation) {
