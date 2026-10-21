@@ -341,9 +341,7 @@
   background: #fff;
   color: #90968e;
   margin-bottom: 19px;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .inputWrap:focus-within {
@@ -509,8 +507,7 @@
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 0 21px
-      calc(24px + env(safe-area-inset-bottom));
+    padding: 0 21px calc(24px + env(safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -535,7 +532,7 @@
     width: 100%;
     max-width: none;
     min-width: 0;
-    padding: clamp(28px, 8vh, 66px) 0 24px;
+    padding: clamp(28px, 2vh, 66px) 0 24px;
     margin: 0 auto;
   }
 
@@ -612,10 +609,6 @@
    ======================================== */
 
 @media (max-width: 800px) and (max-height: 750px) {
-  .formPanel {
-    padding-top: 20px;
-  }
-
   .modeSwitch {
     margin: 18px 0 20px;
   }
@@ -682,7 +675,7 @@
 
 @media (max-width: 800px) {
   .loginPanel {
-    padding-top: clamp(38px, 6vh, 54px);
+    padding-top: clamp(28px, 2vh, 66px);
     padding-bottom: 24px;
   }
 
@@ -798,11 +791,8 @@
 }
 
 /* Extra compact layout on short phones */
-@media (max-width: 800px) and (max-height: 700px) {
-  .loginPanel {
-    padding-top: 25px;
-  }
 
+@media (max-width: 800px) and (max-height: 700px) {
   .loginPanel .modeSwitch {
     margin: 15px 0;
   }
