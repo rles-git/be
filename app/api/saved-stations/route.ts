@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const accountId = await getAuthenticatedAccountId(request);
+    const accountId = await getAuthenticatedAccountId();
 
     if (!accountId) {
       return NextResponse.json(
@@ -72,17 +72,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    const body = await request.json();
-    const stationId = String(body.station_id ?? "").trim();
-
-    if (!/^\d+$/.test(stationId)) {
-      return NextResponse.json(
-        { error: "A valid station ID is required." },
-        { status: 400 }
-      );
-    }
-
+    
     const sql = getSql();
 
     const result = await sql`
