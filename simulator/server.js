@@ -145,6 +145,37 @@ function broadcast(chargerId) {
   }
 }
 
+function broadcastHandshakeResult(result) {
+  if (!wss) return;
+
+  const message = JSON.stringify({
+    type: "handshake_result",
+    ...result,
+  });
+
+  for (const client of wss.clients) {
+    if (client.readyState !== WebSocket.OPEN) continue;
+
+    // Only notify clients watching this charger.
+    if (
+      client.chargerId &&
+      String(client.chargerId) !== String(result.chargerId)
+    ) {
+      continue;
+    }
+
+    // If a client specified a connector, match that too.
+    if (
+      client.connectorId &&
+      String(client.connectorId) !== String(result.connectorId)
+    ) {
+      continue;
+    }
+
+    client.send(message);
+  }
+}
+
 async function loadChargers() {
   requireDatabase();
 
