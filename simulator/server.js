@@ -455,7 +455,7 @@ async function startSession(input) {
   ).slice(0, 100);
 
   const rows = await sql`
-    INSERT INTO public.charger_sessions (
+    INSERT INTO public.charging_sessions (
       connector_id,
       external_session_id,
       status,
@@ -516,7 +516,7 @@ async function stopSession(input) {
   const energy = round(session.energy);
 
   const rows = await sql`
-    UPDATE public.charger_sessions
+    UPDATE public.charging_sessions
     SET status = 'completed',
         ended_at = NOW(),
         energy_kwh = ${energy}
@@ -1201,7 +1201,7 @@ const server = http.createServer(async (req, res) => {
           energy_kwh,
           created_at,
           account_id
-        FROM public.charger_sessions
+        FROM public.charging_sessions
         ORDER BY created_at DESC
         LIMIT 20
       `;
