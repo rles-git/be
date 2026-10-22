@@ -280,92 +280,158 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
-async function handleCableConnection() {
-  console.log("handleCableConnection started");
 
+async function handleCableConnection() {
   if (handshakePending || carConnected) return;
+
+  if (selectedStall === null || !selectedConnector) {
+    setHandshakeError("Please select an available charger and connector first.");
+    return;
+  }
+
+  const selectedCharger = stalls.find(
+    (item) => item.id === selectedStall
+  );
+
+  if (!selectedCharger) {
+    setHandshakeError("The selected charger could not be found.");
+    return;
+  }
 
   setHandshakePending(true);
   setHandshakeError("");
 
+  let socket: WebSocket | null = null;
+  let timeout: number | undefined;
+
   try {
-    // Connect to your mock simulator.
-    const socket = new WebSocket(
+    const wsUrl =
       process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
-        "wss://be-electric-simulator.onrender.com/ws"
-    );
+      "wss://be-electric-simulator.onrender.com/ws";
+
+    socket = new WebSocket(wsUrl);
+
+    const activeSocket = socket;
 
     await new Promise<void>((resolve, reject) => {
-      const timeout = window.setTimeout(() => {
-        socket.close();
-        reject(new Error("Charger handshake timed out."));
-      }, 15000);
+      let settled = false;
 
-      socket.onopen = () => {
-        // IMPORTANT:
-        // Send the handshake request expected by your simulator here.
-        // The exact message format must match its server implementation.
-        socket.send(
-          JSON.stringify({
-            type: "RUN_HANDSHAKE",
-            chargerId: String(
-              stalls.find((item) => item.id === selectedStall)?.chargerId ?? ""
-            ),
-            connectorId: selectedConnector?.id,
-          })
-        );
-      };
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+        if (timeout !== undefined) {
+          window.clearTimeout(timeout);
+        }
 
-          // Only accept an explicit successful handshake response.
-          if (
-            data.type === "handshakeResult" &&
-            data.ok === true
-          ) {
-            window.clearTimeout(timeout);
-            socket.close();
-            resolve();
-          } else if (
-            data.type === "handshakeResult" &&
-            data.ok === false
-          ) {
-            window.clearTimeout(timeout);
-            socket.close();
-            reject(
-              new Error(data.message || "The charger handshake failed.")
-            );
-          }
-        } catch {
-          // Ignore unrelated or non-JSON telemetry messages.
+        if (activeSocket.readyState === WebSocket.OPEN) {
+          activeSocket.close();
+        }
+
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
         }
       };
 
-      socket.onerror = () => {
-        window.clearTimeout(timeout);
-        reject(new Error("Could not connect to the mock charger simulator."));
+      timeout = window.setTimeout(() => {
+        finish(new Error("Charger handshake timed out. Check the simulator response."));
+      }, 20000);
+
+      activeSocket.onopen = () => {
+        console.log("Simulator WebSocket connected.");
+
+        activeSocket.send(
+          JSON.stringify({
+            type: "RUN_HANDSHAKE",
+            chargerId: selectedCharger.chargerId,
+            connectorId: String(selectedConnector.id),
+          })
+        );
+
+        console.log("Handshake request sent:", {
+          chargerId: selectedCharger.chargerId,
+          connectorId: String(selectedConnector.id),
+        });
       };
 
-      socket.onclose = () => {
-        // A connection closing without a successful handshake
-        // must not be treated as a successful connection.
+      activeSocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("Simulator response:", data);
+
+          // Accept the response type used by the simulator.
+          if (
+            data.type === "handshake_result" ||
+            data.type === "handshakeResult"
+          ) {
+            if (data.ok === true) {
+              finish();
+            } else {
+              finish(
+                new Error(
+                  data.error ||
+                    data.message ||
+                    "The charger handshake failed."
+                )
+              );
+            }
+          } else if (data.type === "error") {
+            finish(
+              new Error(
+                data.error || "The simulator returned an error."
+              )
+            );
+          }
+        } catch (error) {
+          console.error("Could not parse simulator response:", error);
+        }
+      };
+
+      activeSocket.onerror = () => {
+        finish(
+          new Error("Could not connect to the mock charger simulator.")
+        );
+      };
+
+      activeSocket.onclose = (event) => {
+        if (!settled) {
+          finish(
+            new Error(
+              `Simulator connection closed before the handshake completed (code ${event.code}).`
+            )
+          );
+        }
       };
     });
 
     setCarConnected(true);
+    setHandshakeError("");
+    console.log("Charger handshake completed successfully.");
   } catch (error) {
     setCarConnected(false);
+
     setHandshakeError(
       error instanceof Error
         ? error.message
         : "The charger handshake failed. Please try again."
     );
+
+    console.error("Charger handshake failed:", error);
   } finally {
+    if (timeout !== undefined) {
+      window.clearTimeout(timeout);
+    }
+
+    if (socket && socket.readyState < WebSocket.CLOSING) {
+      socket.close();
+    }
+
     setHandshakePending(false);
   }
 }
+
   
 useEffect(() => {
   if (activeTab !== "Profile") return;
@@ -1487,8 +1553,6 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                             type="button"
                             disabled={handshakePending || carConnected}
                             onClick={() => {
-                              alert("BUTTON CLICK WORKS");
-                              console.log("Confirm cable button clicked");
                               void handleCableConnection();
                             }}
                             style={{
