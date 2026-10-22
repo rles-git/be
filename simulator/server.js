@@ -922,7 +922,8 @@ function renderTelemetry(t) {
     new Date(t.timestamp).toLocaleTimeString();
 
   $("connected").checked = t.connected;
-  $("status").value = STATUSES.includes(t.status) ? t.status : "idle";
+  const validStatuses = ["idle", "charging", "fault", "preparing", "suspended", "finishing"];
+  $("status").value = validStatuses.includes(t.status) ? t.status : "idle";
 }
 
 function connectSocket() {
