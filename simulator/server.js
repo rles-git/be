@@ -1395,6 +1395,34 @@ wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
   socket.chargerId = url.searchParams.get("chargerId");
 
+  socket.on("message", async (message) => {
+  try {
+    const data = JSON.parse(message.toString());
+
+    if (data.type === "RUN_HANDSHAKE") {
+      const result = await handshake(data);
+
+      socket.send(
+        JSON.stringify({
+          type: "handshake_result",
+          ...result,
+        })
+      );
+    }
+  } catch (error) {
+    socket.send(
+      JSON.stringify({
+        type: "handshake_result",
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Handshake failed",
+      })
+    );
+  }
+});
+  
   // Load chargers before processing any incoming commands.
   const ready = (async () => {
     try {
