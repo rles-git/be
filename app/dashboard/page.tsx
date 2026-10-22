@@ -283,6 +283,21 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
 
+type ActiveChargingSession = {
+  id: string | number;
+  startedAt: string;
+  powerKw: number;
+};
+
+const [activeSession, setActiveSession] =
+  useState<ActiveChargingSession | null>(null);
+const [elapsedSeconds, setElapsedSeconds] = useState(0);
+const [chargingBusy, setChargingBusy] = useState(false);
+const [chargingError, setChargingError] = useState("");
+const [chargingHistory, setChargingHistory] = useState<any[]>([]);
+const [historyLoading, setHistoryLoading] = useState(false);
+
+  
 const handleCableConnection = () => {
   if (handshakePending || handshakeCompleted) return;
 
@@ -389,6 +404,177 @@ socket.onmessage = (event) => {
   const resetHandshake = () => {
   const socket = handshakeSocketRef.current;
 
+const startSimulatedCharging = async () => {
+  if (!handshakeCompleted) {
+    setChargingError("Complete a successful connector handshake first.");
+    return;
+  }
+
+  if (!selectedConnector) {
+    setChargingError("Select a connector before charging.");
+    return;
+  }
+
+  if (activeSession || chargingBusy) return;
+
+  setChargingBusy(true);
+  setChargingError("");
+
+  try {
+    const powerKw = Math.max(
+      0.1,
+      Number(selectedConnector.max_power_kw) || 7.4
+    );
+
+    const externalSessionId =
+      `demo_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+    const response = await fetch("/api/charging-sessions", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        connector_id: String(selectedConnector.id),
+        external_session_id: externalSessionId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not start charging.");
+    }
+
+    setActiveSession({
+      id: data.session.id,
+      startedAt: data.session.started_at,
+      powerKw,
+    });
+    setElapsedSeconds(0);
+    setPanel("charging-active");
+    notify("Simulation started. Charging session saved to Neon.");
+    void loadChargingHistory();
+  } catch (error) {
+    setChargingError(
+      error instanceof Error ? error.message : "Could not start charging."
+    );
+  } finally {
+    setChargingBusy(false);
+  }
+};
+
+const loadChargingHistory = async () => {
+  setHistoryLoading(true);
+
+  try {
+    const response = await fetch("/api/charging-sessions", {
+      credentials: "include",
+      cache: "no-store",
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not load charging history.");
+    }
+
+    setChargingHistory(data.sessions ?? []);
+  } catch (error) {
+    console.error("Charging history error:", error);
+  } finally {
+    setHistoryLoading(false);
+  }
+};
+
+const stopSimulatedCharging = async () => {
+  if (!activeSession || chargingBusy) return;
+
+  setChargingBusy(true);
+  setChargingError("");
+
+  try {
+    const elapsed = Math.max(
+      0,
+      Math.floor(
+        (Date.now() - new Date(activeSession.startedAt).getTime()) / 1000
+      )
+    );
+    const energy = Number(
+      ((activeSession.powerKw * elapsed) / 3600).toFixed(3)
+    );
+
+    const response = await fetch(
+      `/api/charging-sessions/${activeSession.id}`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "stop",
+          energy_kwh: energy,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not stop the session.");
+    }
+
+    setElapsedSeconds(elapsed);
+    setActiveSession(null);
+    setPanel("details");
+    notify(`Simulation ended. Total energy: ${energy.toFixed(3)} kWh.`);
+    await loadChargingHistory();
+  } catch (error) {
+    setChargingError(
+      error instanceof Error ? error.message : "Could not stop charging."
+    );
+  } finally {
+    setChargingBusy(false);
+  }
+};
+
+useEffect(() => {
+  if (!activeSession) return;
+
+  const updateTimer = () => {
+    const elapsed = Math.max(
+      0,
+      Math.floor(
+        (Date.now() - new Date(activeSession.startedAt).getTime()) / 1000
+      )
+    );
+
+    setElapsedSeconds(elapsed);
+
+    // Persist the simulated energy every 10 seconds.
+    if (elapsed > 0 && elapsed % 10 === 0) {
+      const energy = Number(
+        ((activeSession.powerKw * elapsed) / 3600).toFixed(3)
+      );
+
+      void fetch(`/api/charging-sessions/${activeSession.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          energy_kwh: energy,
+        }),
+      }).catch((error) => {
+        console.error("Could not save charging progress:", error);
+      });
+    }
+  };
+
+  updateTimer();
+  const timer = window.setInterval(updateTimer, 1000);
+
+  return () => window.clearInterval(timer);
+}, [activeSession]);
+
+    
   // Invalidate the old connection before closing it.
   handshakeSocketRef.current = null;
 
