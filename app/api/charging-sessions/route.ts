@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { getAuthenticatedAccount } from "./auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,9 +12,11 @@ function getSql() {
   return neon(url);
 }
 
-// Start a simulated charging session.
 export async function POST(request: Request) {
   try {
+    const auth = await getAuthenticatedAccount();
+    if (auth.response) return auth.response;
+
     const body = await request.json();
     const connectorId = String(body.connector_id ?? "").trim();
     const externalSessionId = String(
@@ -36,11 +39,11 @@ export async function POST(request: Request) {
 
     const sql = getSql();
 
-    // Only insert if the connector exists and has no active session.
     const rows = await sql`
       INSERT INTO public.charging_sessions (
         connector_id,
         external_session_id,
+        account_id,
         status,
         started_at,
         energy_kwh
@@ -48,10 +51,13 @@ export async function POST(request: Request) {
       SELECT
         c.id,
         ${externalSessionId},
+        a.id,
         'active',
         NOW(),
         0
       FROM public.connectors c
+      JOIN public.accounts a
+        ON a.id::text = ${auth.accountId}
       WHERE c.id = ${connectorId}
         AND NOT EXISTS (
           SELECT 1
@@ -63,6 +69,7 @@ export async function POST(request: Request) {
         id,
         connector_id,
         external_session_id,
+        account_id,
         status,
         started_at,
         energy_kwh
@@ -72,16 +79,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Connector not found or already has an active charging session.",
+            "Connector not found or already has an active session.",
         },
         { status: 409 }
       );
     }
 
-    return NextResponse.json(
-      { session: rows[0] },
-      { status: 201 }
-    );
+    return NextResponse.json({ session: rows[0] }, { status: 201 });
   } catch (error) {
     console.error("Start charging session error:", error);
     return NextResponse.json(
