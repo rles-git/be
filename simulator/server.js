@@ -373,10 +373,13 @@ if (!STATUSES.includes(input.status)) {
   return telemetry(c);
 }
 
+
 async function handshake(input) {
   const c = chargers.get(String(input.chargerId || ""));
 
-  if (!c) throw new Error("Unknown charger.");
+  if (!c) {
+    throw new Error("Unknown charger.");
+  }
 
   const co = c.connectors.find(
     (x) => x.id === input.connectorId
@@ -386,42 +389,85 @@ async function handshake(input) {
     throw new Error("This charger has no database connector.");
   }
 
-  if (c.overheatingFault) {
-    throw new Error("Clear the overheating fault before connecting.");
+  if (c.overheatingFault || c.status === "fault") {
+    throw new Error("Handshake failed: clear the charger fault before connecting.");
   }
 
+  if (!c.connected) {
+    throw new Error("Handshake failed: the charger is offline. Enable Network connected and retry.");
+  }
+
+  // Simulate a real handshake taking time.
   const sequence = [
-    ["BootNotification", "Charger identified itself to the central system."],
-    ["Heartbeat", "Heartbeat received."],
-    ["StatusNotification", "Connector status reported."],
-    ["Authorize", "Mock authorization accepted."],
+    {
+      type: "BootNotification",
+      message: "Charger identified itself to the central system.",
+    },
+    {
+      type: "Heartbeat",
+      message: "Heartbeat received.",
+    },
+    {
+      type: "StatusNotification",
+      message: "Connector status reported.",
+    },
+    {
+      type: "Authorize",
+      message: "Mock authorization accepted.",
+    },
   ];
 
-  for (const [type, message] of sequence) {
-    log(type, c.id, message, {
+  const completedEvents = [];
+
+  for (const step of sequence) {
+    // Simulate waiting for each mock handshake step.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+
+    const event = {
+      type: step.type,
+      message: step.message,
+    };
+
+    completedEvents.push(event);
+
+    log(step.type, c.id, step.message, {
       connectorId: co.id,
       protocol: c.protocol,
+      protocolIdentity: c.protocolIdentity,
       mock: true,
     });
   }
 
+  // Mark connected only after every step succeeds.
   c.connected = true;
 
-  if (c.status === "fault") c.status = "idle";
+  if (c.status === "fault") {
+    c.status = "idle";
+  }
 
   await updateStatuses(c);
   await saveTelemetry(c);
-
   broadcast(c.id);
+
+  log("handshake-success", c.id, "Mock handshake completed successfully.", {
+    connectorId: co.id,
+    protocol: c.protocol,
+    mock: true,
+  });
 
   return {
     ok: true,
+    status: "connected",
+    message: "Mock handshake completed successfully. Cable connection confirmed.",
     chargerId: c.id,
     connectorId: co.id,
-    events: sequence,
+    protocol: c.protocol,
+    protocolIdentity: c.protocolIdentity,
+    events: completedEvents,
     telemetry: telemetry(c),
   };
 }
+
 
 async function startSession(input) {
   requireDatabase();
