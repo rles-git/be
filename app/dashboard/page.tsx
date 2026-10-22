@@ -330,8 +330,10 @@ const connectorId = String(selectedConnector.id);
     // Wait for the simulator dashboard to initiate it.
   };
 
-  socket.onmessage = (event) => {
-    try {
+socket.onmessage = (event) => {
+  if (handshakeSocketRef.current !== socket) return;
+
+  try {
       const data = JSON.parse(event.data);
 
       if (data.type !== "handshake_result") return;
@@ -385,6 +387,21 @@ const connectorId = String(selectedConnector.id);
   };
 };
 
+  const resetHandshake = () => {
+  const socket = handshakeSocketRef.current;
+
+  // Invalidate the old connection before closing it.
+  handshakeSocketRef.current = null;
+
+  if (socket) {
+    socket.close();
+  }
+
+  setCarConnected(false);
+  setHandshakePending(false);
+  setHandshakeCompleted(false);
+  setHandshakeError("");
+};
   
 useEffect(() => {
   if (activeTab !== "Profile") return;
@@ -811,27 +828,28 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
       return;
     }
 
+  function selectCharger(chargerId: number) {
+    resetHandshake();
     setSelectedCharger(chargerId);
     setSelectedConnector(null);
-    setPanel("connector");
-    setSheetDragY(0);
   }
 
-  function selectConnector(connector: DbConnector) {
-    if (selectedCharger === null) return;
+function selectConnector(connector: DbConnector) {
+  if (selectedCharger === null) return;
 
-    if (!isAvailableStatus(connector.status)) {
-      notify(`Connector ${connector.connector_number} is not available.`);
-      return;
-    }
-
-    setSelectedConnector(connector);
-    setChargeTarget("80");
-    setCustomTarget("");
-    setCarConnected(false);
-    setPanel("charging");
-    setSheetDragY(0);
+  if (!isAvailableStatus(connector.status)) {
+    notify(`Connector ${connector.connector_number} is not available.`);
+    return;
   }
+
+  resetHandshake();
+
+  setSelectedConnector(connector);
+  setChargeTarget("80");
+  setCustomTarget("");
+  setPanel("charging");
+  setSheetDragY(0);
+}
 
   if (loading) {
     return (
