@@ -1294,10 +1294,32 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, telemetry: result });
     }
 
-    if (req.method === "POST" && url.pathname === "/api/simulator/handshake") {
-      const input = await readBody(req);
-      return json(res, 200, await handshake(input));
-    }
+if (
+  req.method === "POST" &&
+  url.pathname === "/api/simulator/handshake"
+) {
+  const input = await readBody(req);
+
+  try {
+    // This is the action that actually runs the handshake.
+    const result = await handshake(input);
+
+    // Notify the frontend only after the handshake succeeds.
+    broadcastHandshakeResult(result);
+
+    return json(res, 200, result);
+  } catch (error) {
+    // Notify the frontend if the handshake fails too.
+    broadcastHandshakeResult({
+      ok: false,
+      chargerId: String(input.chargerId || ""),
+      connectorId: String(input.connectorId || ""),
+      error: error.message || "Mock handshake failed.",
+    });
+
+    throw error;
+  }
+}
 
     if (req.method === "POST" && url.pathname === "/api/sessions/start") {
       const input = await readBody(req);
@@ -1423,7 +1445,9 @@ wss = new WebSocketServer({
   
 wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
+
   socket.chargerId = url.searchParams.get("chargerId");
+  socket.connectorId = url.searchParams.get("connectorId");
 
   // Load the charger list before sending telemetry or
   // accepting any commands from this WebSocket client.
