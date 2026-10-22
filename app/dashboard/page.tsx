@@ -1485,7 +1485,11 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                           <button
                             type="button"
                             disabled={handshakePending || carConnected}
-                            onClick={() => void handleCableConnection()}
+                            onClick={() => {
+                              alert("BUTTON CLICK WORKS");
+                              console.log("Confirm cable button clicked");
+                              void handleCableConnection();
+                            }}
                             style={{
                               width: "100%",
                               padding: "12px 14px",
