@@ -821,17 +821,29 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
     notify(`Arrival recorded at ${selected.shortName}.`);
   }
 
-  function openCharger(chargerId: number, status: string) {
-    if (!isAvailableStatus(status)) {
-      notify(`Charger ${chargers.find((item) => item.id === chargerId)?.chargerId ?? chargerId} is not available.`);
-      return;
-    }
-
-  function selectCharger(chargerId: number) {
-    resetHandshake();
-    setSelectedCharger(chargerId);
-    setSelectedConnector(null);
+function openCharger(chargerId: number, status: string) {
+  if (!isAvailableStatus(status)) {
+    notify(
+      `Charger ${
+        chargers.find((item) => item.id === chargerId)?.chargerId ??
+        chargerId
+      } is not available.`
+    );
+    return;
   }
+
+  resetHandshake();
+  setSelectedCharger(chargerId);
+  setSelectedConnector(null);
+  setPanel("connector");
+  setSheetDragY(0);
+}
+
+function selectCharger(chargerId: number) {
+  resetHandshake();
+  setSelectedCharger(chargerId);
+  setSelectedConnector(null);
+}
 
 function selectConnector(connector: DbConnector) {
   if (selectedCharger === null) return;
