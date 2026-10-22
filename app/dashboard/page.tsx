@@ -290,7 +290,7 @@ async function handleCableConnection() {
     // Connect to your mock simulator.
     const socket = new WebSocket(
       process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
-        "ws://localhost:10000/ws"
+        "ws://be-electric-simulator.onrender.com/ws"
     );
 
     await new Promise<void>((resolve, reject) => {
