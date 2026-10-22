@@ -282,13 +282,7 @@ export default function Home() {
   const [profileError, setProfileError] = useState("");
 async function handleCableConnection() {
   console.log("handleCableConnection started");
-  console.log("selectedStall:", selectedStall);
-  console.log("selectedConnector:", selectedConnector);
-  console.log("handshakePending:", handshakePending);
-  console.log(
-    "SIMULATOR URL:",
-  process.env.NEXT_PUBLIC_SIMULATOR_URL
-);
+
   if (handshakePending || carConnected) return;
 
   setHandshakePending(true);
