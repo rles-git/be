@@ -12,6 +12,48 @@ function getSql() {
   return neon(url);
 }
 
+
+export async function GET() {
+  try {
+    const auth = await getAuthenticatedAccount();
+    if (auth.response) return auth.response;
+
+    const sql = getSql();
+
+    const sessions = await sql`
+      SELECT
+        s.id,
+        s.connector_id,
+        s.external_session_id,
+        s.status,
+        s.started_at,
+        s.ended_at,
+        s.energy_kwh,
+        s.created_at,
+        c.connector_number,
+        c.connector_type
+      FROM public.charging_sessions s
+      LEFT JOIN public.connectors c
+        ON c.id = s.connector_id
+      WHERE s.account_id = ${auth.accountId}
+      ORDER BY s.created_at DESC
+      LIMIT 25
+    `;
+
+    return NextResponse.json(
+      { sessions },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
+  } catch (error) {
+    console.error("Load charging history error:", error);
+    return NextResponse.json(
+      { error: "Could not load charging history." },
+      { status: 500 }
+    );
+  }
+}
+
+
 export async function POST(request: Request) {
   try {
     const auth = await getAuthenticatedAccount();
