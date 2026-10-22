@@ -268,7 +268,7 @@ export default function Home() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
-  const [selectedStall, setSelectedStall] = useState<number | null>(null);
+  const [selectedCharger, setSelectedCharger] = useState<number | null>(null);
   const [selectedConnector, setSelectedConnector] = useState<DbConnector | null>(null);
 
   // Charging setup state
@@ -555,7 +555,7 @@ const databaseChargers = Array.isArray(
   ? selectedStationForChargers.chargers
   : [];
 
-const stalls: ChargerDisplay[] = databaseChargers.map(
+const chargers: ChargerDisplay[] = databaseChargers.map(
   (charger, index) => ({
     id: index + 1,
     chargerId: String(charger.id),
@@ -569,11 +569,11 @@ const stalls: ChargerDisplay[] = databaseChargers.map(
 
 
   
-const availableStalls = stalls.filter((charger) =>
+const availableChargers = charger.filter((charger) =>
   isAvailableStatus(charger.status)
 );
 
-const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
+const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
 
 
   const effectiveChargeTarget =
@@ -797,20 +797,20 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
     notify(`Arrival recorded at ${selected.shortName}.`);
   }
 
-  function openStall(stallId: number, status: string) {
+  function openCharger(chargerId: number, status: string) {
     if (!isAvailableStatus(status)) {
-      notify(`Charger ${stalls.find((item) => item.id === stallId)?.chargerId ?? stallId} is not available.`);
+      notify(`Charger ${chargers.find((item) => item.id === chargerId)?.chargerId ?? chargerId} is not available.`);
       return;
     }
 
-    setSelectedStall(stallId);
+    setSelectedCharger(chargerId);
     setSelectedConnector(null);
     setPanel("connector");
     setSheetDragY(0);
   }
 
   function selectConnector(connector: DbConnector) {
-    if (selectedStall === null) return;
+    if (selectedCharger === null) return;
 
     if (!isAvailableStatus(connector.status)) {
       notify(`Connector ${connector.connector_number} is not available.`);
@@ -1453,7 +1453,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                           lineHeight: 1.6,
                         }}
                       >
-                        Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
+                        Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                         <br />
                         DC fast charging
                       </p>
@@ -1886,7 +1886,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                           margin: 0,
                         }}
                       >
-                        Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
+                        Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                       </p>
                     </div>
 
@@ -1937,7 +1937,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                       className="primary-button"
                       onClick={() => {
                         notify(
-                          `Demo setup saved: Stall ${selectedStall}, target ${effectiveChargeTarget}%. No charger was activated.`
+                          `Demo setup saved: Charger ${selectedCharger}, target ${effectiveChargeTarget}%. No charger was activated.`
                         );
                         setPanel("details");
                       }}
@@ -1970,7 +1970,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                     </button>
                     <div>
                       <small>CONNECTOR SELECTION</small>
-                      <h2>Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"}</h2>
+                      <h2>Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"}</h2>
                     </div>
                     <span className="details-live-dot" />
                   </header>
@@ -1985,12 +1985,12 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                     </div>
 
                     <div className="connector-summary">
-                      <span>Charger {stalls.find((item) => item.id === selectedStall)?.chargerId ?? "—"}</span>
-                      <span>{stalls.find((item) => item.id === selectedStall)?.connectors.length ?? 0} connectors</span>
+                      <span>Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"}</span>
+                      <span>{chargers.find((item) => item.id === selectedCharger)?.connectors.length ?? 0} connectors</span>
                     </div>
 
                     <div className="connector-list">
-                      {(stalls.find((item) => item.id === selectedStall)?.connectors ?? []).map((connector) => {
+                      {(chargers.find((item) => item.id === selectedCharger)?.connectors ?? []).map((connector) => {
                         const available = isAvailableStatus(connector.status);
                         return (
                           <button
@@ -2023,7 +2023,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                           </button>
                         );
                       })}
-                      {(stalls.find((item) => item.id === selectedStall)?.connectors.length ?? 0) === 0 && (
+                      {(chargers.find((item) => item.id === selectedCharger)?.connectors.length ?? 0) === 0 && (
                         <div className="empty-state">
                           <PlugZap size={24} />
                           <b>No connectors found</b>
@@ -2082,7 +2082,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
 
                       <div className="stall-availability-summary">
                         <div>
-                          <strong> {availableStalls.length} of {stalls.length} available </strong>
+                          <strong> {availableChargers.length} of {chargers.length} available </strong>
                           <p>Charger availability from database status</p>
                         </div>
                       </div>
@@ -2094,20 +2094,20 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
     gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
   }}
 >
-  {stalls.map((stall) => (
+  {chargers.map((charger) => (
     <button
-      key={stall.id}
+      key={charger.id}
       type="button"
       className={`stall-option ${
-        isAvailableStatus(stall.status)
+        isAvailableStatus(charger.status)
           ? "stall-available"
           : "stall-occupied"
       }`}
-      onClick={() => openStall(stall.id, stall.status)}
-      aria-label={`Charger ${stall.chargerId}: ${stall.status}, ${stall.power} kW`}
+      onClick={() => openCharger(charger.id, charger.status)}
+      aria-label={`Charger ${charger.chargerId}: ${charger.status}, ${charger.power} kW`}
     >
       <span className="stall-number">
-        Charger {stall.chargerId}
+        Charger {charger.chargerId}
       </span>
 
       {/* Keep the charger icon visible */}
@@ -2115,15 +2115,15 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
         <StallChargerIcon size={29} />
       </span>
 
-      <strong>{stall.status}</strong>
+      <strong>{charger.status}</strong>
 
       <span className="stall-power-output">
-        {stall.power} <small>kW</small>
+        {charger.power} <small>kW</small>
       </span>
 
       <small>
-        {stall.connectors.length} connector
-        {stall.connectors.length === 1 ? "" : "s"}
+        {charger.connectors.length} connector
+        {charger.connectors.length === 1 ? "" : "s"}
       </small>
     </button>
   ))}
@@ -2696,7 +2696,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
               setCalculatedRoute(null);
               setSheetDragY(0);
               setSaved([]);
-              setSelectedStall(null);
+              setSelectedCharger(null);
               setChargeTarget("80");
               setCustomTarget("");
               setCarConnected(false);
