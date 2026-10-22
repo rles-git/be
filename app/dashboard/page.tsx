@@ -275,10 +275,96 @@ export default function Home() {
   const [chargeTarget, setChargeTarget] = useState("80");
   const [customTarget, setCustomTarget] = useState("");
   const [carConnected, setCarConnected] = useState(false);
-const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-const [profileLoading, setProfileLoading] = useState(false);
-const [profileError, setProfileError] = useState("");
+  const [handshakePending, setHandshakePending] = useState(false);
+  const [handshakeError, setHandshakeError] = useState("");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState("");
+async function handleCableConnection() {
+  if (handshakePending || carConnected) return;
 
+  setHandshakePending(true);
+  setHandshakeError("");
+
+  try {
+    // Connect to your mock simulator.
+    const socket = new WebSocket(
+      process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
+        "ws://localhost:10000/ws"
+    );
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = window.setTimeout(() => {
+        socket.close();
+        reject(new Error("Charger handshake timed out."));
+      }, 15000);
+
+      socket.onopen = () => {
+        // IMPORTANT:
+        // Send the handshake request expected by your simulator here.
+        // The exact message format must match its server implementation.
+        socket.send(
+          JSON.stringify({
+            type: "RUN_HANDSHAKE",
+            chargerId: String(
+              stalls.find((item) => item.id === selectedStall)?.chargerId ?? ""
+            ),
+            connectorId: selectedConnector?.id,
+          })
+        );
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          // Only accept an explicit successful handshake response.
+          if (
+            data.type === "handshakeResult" &&
+            data.ok === true
+          ) {
+            window.clearTimeout(timeout);
+            socket.close();
+            resolve();
+          } else if (
+            data.type === "handshakeResult" &&
+            data.ok === false
+          ) {
+            window.clearTimeout(timeout);
+            socket.close();
+            reject(
+              new Error(data.message || "The charger handshake failed.")
+            );
+          }
+        } catch {
+          // Ignore unrelated or non-JSON telemetry messages.
+        }
+      };
+
+      socket.onerror = () => {
+        window.clearTimeout(timeout);
+        reject(new Error("Could not connect to the mock charger simulator."));
+      };
+
+      socket.onclose = () => {
+        // A connection closing without a successful handshake
+        // must not be treated as a successful connection.
+      };
+    });
+
+    setCarConnected(true);
+  } catch (error) {
+    setCarConnected(false);
+    setHandshakeError(
+      error instanceof Error
+        ? error.message
+        : "The charger handshake failed. Please try again."
+    );
+  } finally {
+    setHandshakePending(false);
+  }
+}
+  
 useEffect(() => {
   if (activeTab !== "Profile") return;
 
@@ -1397,7 +1483,8 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                           </p>
                           <button
                             type="button"
-                            onClick={() => setCarConnected(!carConnected)}
+                            disabled={handshakePending || carConnected}
+                            onClick={() => void handleCableConnection()}
                             style={{
                               width: "100%",
                               padding: "12px 14px",
@@ -1408,7 +1495,11 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                               background: carConnected ? "#e5eee6" : "#fff",
                               color: "#36543c",
                               fontWeight: 600,
-                              cursor: "pointer",
+                              cursor:
+                                handshakePending || carConnected
+                                  ? "not-allowed"
+                                  : "pointer",
+                              opacity: handshakePending ? 0.7 : 1,
                               display: "flex",
                               justifyContent: "center",
                               alignItems: "center",
@@ -1420,6 +1511,11 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                                 <Check size={17} />
                                 Cable connected
                               </>
+                            ) : handshakePending ? (
+                              <>
+                                <Activity size={17} />
+                                Waiting for charger handshake…
+                              </>
                             ) : (
                               <>
                                 <PlugZap size={17} />
@@ -1427,6 +1523,20 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                               </>
                             )}
                           </button>
+                          
+                          {handshakeError && (
+                            <p
+                              role="alert"
+                              style={{
+                                color: "#b54747",
+                                fontSize: 12,
+                                lineHeight: 1.5,
+                                marginTop: 8,
+                              }}
+                            >
+                              {handshakeError}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </section>
