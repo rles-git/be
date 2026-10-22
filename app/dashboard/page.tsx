@@ -277,160 +277,105 @@ export default function Home() {
   const [carConnected, setCarConnected] = useState(false);
   const [handshakePending, setHandshakePending] = useState(false);
   const [handshakeError, setHandshakeError] = useState("");
+  const [handshakeCompleted, setHandshakeCompleted] = useState(false);
+  const handshakeSocketRef = useRef<WebSocket | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
 
-async function handleCableConnection() {
-  if (handshakePending || carConnected) return;
+const handleCableConnection = () => {
+  if (handshakePending || handshakeCompleted) return;
 
-  if (selectedStall === null || !selectedConnector) {
-    setHandshakeError("Please select an available charger and connector first.");
+  if (!selectedCharger || !selectedConnector) {
+    setHandshakeError("Select a charger and connector first.");
     return;
   }
 
-  const selectedCharger = stalls.find(
-    (item) => item.id === selectedStall
+  // Close any previous listener before opening another.
+  handshakeSocketRef.current?.close();
+  handshakeSocketRef.current = null;
+
+  const chargerId = String(selectedCharger.chargerId);
+  const connectorId = String(selectedConnector.id);
+
+  const wsUrl =
+    process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
+    "wss://be-electric-simulator.onrender.com/ws";
+
+  const separator = wsUrl.includes("?") ? "&" : "?";
+
+  const socket = new WebSocket(
+    `${wsUrl}${separator}chargerId=${encodeURIComponent(chargerId)}&connectorId=${encodeURIComponent(connectorId)}`
   );
 
-  if (!selectedCharger) {
-    setHandshakeError("The selected charger could not be found.");
-    return;
-  }
+  handshakeSocketRef.current = socket;
 
+  // The cable is confirmed independently of the handshake.
+  setCarConnected(true);
+  setHandshakeCompleted(false);
   setHandshakePending(true);
   setHandshakeError("");
 
-  let socket: WebSocket | null = null;
-  let timeout: number | undefined;
+  socket.onopen = () => {
+    // IMPORTANT:
+    // Do not send RUN_HANDSHAKE here.
+    // Wait for the simulator dashboard to initiate it.
+  };
 
-  try {
-    const wsUrl =
-      process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
-      "wss://be-electric-simulator.onrender.com/ws";
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
 
-    socket = new WebSocket(wsUrl);
+      if (data.type !== "handshake_result") return;
 
-    const activeSocket = socket;
+      if (String(data.chargerId) !== chargerId) return;
 
-    await new Promise<void>((resolve, reject) => {
-      let settled = false;
+      if (String(data.connectorId) !== connectorId) return;
 
-      const finish = (error?: Error) => {
-        if (settled) return;
-        settled = true;
-
-        if (timeout !== undefined) {
-          window.clearTimeout(timeout);
-        }
-
-        if (activeSocket.readyState === WebSocket.OPEN) {
-          activeSocket.close();
-        }
-
-        if (error) {
-          reject(error);
-        } else {
-          resolve();
-        }
-      };
-
-      timeout = window.setTimeout(() => {
-        finish(new Error("Charger handshake timed out. Check the simulator response."));
-      }, 20000);
-
-      activeSocket.onopen = () => {
-        console.log("Simulator WebSocket connected.");
-
-        activeSocket.send(
-          JSON.stringify({
-            type: "RUN_HANDSHAKE",
-            chargerId: selectedCharger.chargerId,
-            connectorId: String(selectedConnector.id),
-          })
+      if (data.ok === true) {
+        setHandshakeCompleted(true);
+        setHandshakePending(false);
+        setHandshakeError("");
+      } else {
+        setHandshakeCompleted(false);
+        setHandshakePending(false);
+        setHandshakeError(
+          data.error || "The charger handshake failed."
         );
+      }
 
-        console.log("Handshake request sent:", {
-          chargerId: selectedCharger.chargerId,
-          connectorId: String(selectedConnector.id),
-        });
-      };
+      socket.close();
+      handshakeSocketRef.current = null;
+    } catch (error) {
+      console.error("Could not process handshake result:", error);
+    }
+  };
 
-      activeSocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("Simulator response:", data);
+  socket.onerror = () => {
+    setHandshakePending(false);
+    setHandshakeError(
+      "Could not connect to the simulator. Check the simulator server."
+    );
+  };
 
-          // Accept the response type used by the simulator.
-          if (
-            data.type === "handshake_result" ||
-            data.type === "handshakeResult"
-          ) {
-            if (data.ok === true) {
-              finish();
-            } else {
-              finish(
-                new Error(
-                  data.error ||
-                    data.message ||
-                    "The charger handshake failed."
-                )
-              );
-            }
-          } else if (data.type === "error") {
-            finish(
-              new Error(
-                data.error || "The simulator returned an error."
-              )
-            );
-          }
-        } catch (error) {
-          console.error("Could not parse simulator response:", error);
-        }
-      };
+  socket.onclose = () => {
+    if (handshakeSocketRef.current === socket) {
+      handshakeSocketRef.current = null;
 
-      activeSocket.onerror = () => {
-        finish(
-          new Error("Could not connect to the mock charger simulator.")
-        );
-      };
-
-      activeSocket.onclose = (event) => {
-        if (!settled) {
-          finish(
-            new Error(
-              `Simulator connection closed before the handshake completed (code ${event.code}).`
-            )
+      // If the connection closes before a result arrives,
+      // stop showing the waiting state.
+      setHandshakePending((pending) => {
+        if (pending) {
+          setHandshakeError(
+            "Connection to the simulator closed before the handshake result arrived. Confirm the simulator is running and reconnect."
           );
         }
-      };
-    });
 
-    setCarConnected(true);
-    setHandshakeError("");
-    console.log("Charger handshake completed successfully.");
-  } catch (error) {
-    setCarConnected(false);
-
-    setHandshakeError(
-      error instanceof Error
-        ? error.message
-        : "The charger handshake failed. Please try again."
-    );
-
-    console.error("Charger handshake failed:", error);
-  } finally {
-    if (timeout !== undefined) {
-      window.clearTimeout(timeout);
+        return false;
+      });
     }
-
-    if (socket && socket.readyState < WebSocket.CLOSING) {
-      socket.close();
-    }
-
-    setHandshakePending(false);
-  }
-}
+  };
+};
 
   
 useEffect(() => {
@@ -1549,67 +1494,73 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                             Follow the instructions displayed on the physical
                             charger.
                           </p>
-                          <button
-                            type="button"
-                            disabled={handshakePending || carConnected}
-                            onClick={() => {
-                              void handleCableConnection();
-                            }}
-                            style={{
-                              width: "100%",
-                              padding: "12px 14px",
-                              borderRadius: 12,
-                              border: carConnected
-                                ? "1px solid #58715d"
-                                : "1px solid #d8ddd6",
-                              background: carConnected ? "#e5eee6" : "#fff",
-                              color: "#36543c",
-                              fontWeight: 600,
-                              cursor:
-                                handshakePending || carConnected
-                                  ? "not-allowed"
-                                  : "pointer",
-                              opacity: handshakePending ? 0.7 : 1,
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              gap: 8,
-                            }}
-                          >
-                            {carConnected ? (
-                              <>
-                                <Check size={17} />
-                                Cable connected
-                              </>
-                            ) : handshakePending ? (
-                              <>
-                                <Activity size={17} />
-                                Waiting for charger handshake…
-                              </>
-                            ) : (
-                              <>
-                                <PlugZap size={17} />
-                                Confirm cable is connected
-                              </>
-                            )}
-                          </button>
+                          
+<button
+  type="button"
+  disabled={handshakePending || carConnected}
+  onClick={() => {
+    void handleCableConnection();
+  }}
+  style={{
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 12,
+    border: carConnected
+      ? "1px solid #58715d"
+      : "1px solid #d8ddd6",
+    background: carConnected ? "#e5eee6" : "#fff",
+    color: "#36543c",
+    fontWeight: 600,
+    cursor:
+      handshakePending || carConnected
+        ? "not-allowed"
+        : "pointer",
+    opacity: handshakePending ? 0.7 : 1,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  }}
+>
+  {handshakeCompleted ? (
+    <>
+      <Check size={17} />
+      Handshake successful
+    </>
+  ) : handshakePending ? (
+    <>
+      <Activity size={17} />
+      Waiting for charger handshake…
+    </>
+  ) : carConnected ? (
+    <>
+      <Check size={17} />
+      Cable connected — awaiting handshake
+    </>
+  ) : (
+    <>
+      <PlugZap size={17} />
+      Confirm cable is connected
+    </>
+  )}
+</button>
+
                           
                           {handshakeError && (
-                            <p
-                              role="alert"
-                              style={{
-                                color: "#b54747",
-                                fontSize: 12,
-                                lineHeight: 1.5,
-                                marginTop: 8,
-                              }}
-                            >
-                              {handshakeError}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </section>
+  <p className="error-message">{handshakeError}</p>
+)}
+
+{handshakePending && (
+  <p> Cable connected — waiting for charger handshake...</p>
+)}
+
+{handshakeCompleted && (
+  <p>Handshake successful. Charger is ready.</p>
+)}
+
+{carConnected && !handshakePending && !handshakeCompleted && !handshakeError && (
+  <p>Cable connected. Waiting for Mock Handshake on the simulator dashboard.</p>
+)}
 
                     <section style={{ marginBottom: 24 }}>
                       <div className="details-section-heading">
