@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { getAuthenticatedAccount } from "../auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,14 +14,16 @@ function getSql() {
 
 type RouteContext = {
   params: Promise<{ id: string }>;
-}
+};
 
-// Update energy while charging, or finish the session.
 export async function PATCH(
   request: Request,
   context: RouteContext
 ) {
   try {
+    const auth = await getAuthenticatedAccount();
+    if (auth.response) return auth.response;
+
     const { id } = await context.params;
     const sessionId = Number(id);
 
@@ -32,8 +35,8 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const energy = Number(body.energy_kwh);
     const action = String(body.action ?? "update");
+    const energy = Number(body.energy_kwh);
 
     if (
       !Number.isFinite(energy) ||
@@ -64,34 +67,29 @@ export async function PATCH(
               status = 'completed',
               ended_at = NOW()
             WHERE id = ${sessionId}
+              AND account_id = ${auth.accountId}
               AND status = 'active'
             RETURNING
-              id,
-              connector_id,
-              external_session_id,
-              status,
-              started_at,
-              ended_at,
-              energy_kwh
+              id, connector_id, account_id,
+              status, started_at, ended_at, energy_kwh
           `
         : await sql`
             UPDATE public.charging_sessions
             SET energy_kwh = ${energy}
             WHERE id = ${sessionId}
+              AND account_id = ${auth.accountId}
               AND status = 'active'
             RETURNING
-              id,
-              connector_id,
-              external_session_id,
-              status,
-              started_at,
-              ended_at,
-              energy_kwh
+              id, connector_id, account_id,
+              status, started_at, ended_at, energy_kwh
           `;
 
     if (rows.length === 0) {
       return NextResponse.json(
-        { error: "No active session found for this ID." },
+        {
+          error:
+            "Active session not found, or you do not own this session.",
+        },
         { status: 404 }
       );
     }
