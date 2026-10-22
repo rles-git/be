@@ -577,7 +577,7 @@ const chargers: ChargerDisplay[] = databaseChargers.map(
 
 
   
-const availableChargers = charger.filter((charger) =>
+const availableChargers = chargers.filter((charger) =>
   isAvailableStatus(charger.status)
 );
 
