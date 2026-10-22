@@ -296,7 +296,7 @@ const handleCableConnection = () => {
   handshakeSocketRef.current = null;
 
   const selectedChargerData =
-  chargers.find((charger) => charger.id === selectedStall) ?? null;
+  chargers.find((charger) => charger.id === selectedCharger) ?? null;
 
 if (!selectedChargerData || !selectedConnector) {
   setHandshakeError("Select a charger and connector first.");
