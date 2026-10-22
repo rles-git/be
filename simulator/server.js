@@ -1392,38 +1392,13 @@ wss = new WebSocketServer({
 
 
 wss.on("connection", (socket, request) => {
+  
+wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
   socket.chargerId = url.searchParams.get("chargerId");
 
-  socket.on("message", async (message) => {
-  try {
-    const data = JSON.parse(message.toString());
-
-    if (data.type === "RUN_HANDSHAKE") {
-      const result = await handshake(data);
-
-      socket.send(
-        JSON.stringify({
-          type: "handshake_result",
-          ...result,
-        })
-      );
-    }
-  } catch (error) {
-    socket.send(
-      JSON.stringify({
-        type: "handshake_result",
-        ok: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Handshake failed",
-      })
-    );
-  }
-});
-  
-  // Load chargers before processing any incoming commands.
+  // Load the charger list before sending telemetry or
+  // accepting any commands from this WebSocket client.
   const ready = (async () => {
     try {
       const result = await loadChargers();
@@ -1432,15 +1407,20 @@ wss.on("connection", (socket, request) => {
         socket.chargerId &&
         !chargers.has(socket.chargerId)
       ) {
-        socket.close(1008, "Unknown charger ID");
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.close(1008, "Unknown charger ID");
+        }
         return;
       }
 
-      // Send initial telemetry to this WebSocket client.
-      for (const c of result) {
-        if (!socket.chargerId || socket.chargerId === c.id) {
-          if (socket.readyState !== WebSocket.OPEN) return;
+      if (socket.readyState !== WebSocket.OPEN) return;
 
+      // Send initial telemetry. This does NOT run a handshake.
+      for (const c of result) {
+        if (
+          !socket.chargerId ||
+          socket.chargerId === c.id
+        ) {
           socket.send(
             JSON.stringify({
               type: "telemetry",
@@ -1450,6 +1430,8 @@ wss.on("connection", (socket, request) => {
         }
       }
     } catch (error) {
+      console.error("WebSocket initialization failed:", error);
+
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(
           JSON.stringify({
@@ -1461,7 +1443,7 @@ wss.on("connection", (socket, request) => {
     }
   })();
 
-  // Listen for commands sent by the dashboard.
+  // Only an explicit RUN_HANDSHAKE message starts a handshake.
   socket.on("message", async (raw) => {
     try {
       await ready;
@@ -1492,13 +1474,16 @@ wss.on("connection", (socket, request) => {
         return;
       }
 
-      // Execute the existing mock handshake.
+      console.log("Explicit handshake request received:", {
+        chargerId: input.chargerId,
+        connectorId: input.connectorId,
+      });
+
       const result = await handshake({
         chargerId: String(input.chargerId || ""),
         connectorId: String(input.connectorId || ""),
       });
 
-      // Send the actual result back to the requesting dashboard.
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(
           JSON.stringify({
@@ -1526,6 +1511,7 @@ wss.on("connection", (socket, request) => {
     console.error("WebSocket error:", error.message);
   });
 });
+
 
 
 // Update simulated session energy and persist telemetry every 5 seconds.
