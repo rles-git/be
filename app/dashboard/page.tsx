@@ -295,7 +295,16 @@ const handleCableConnection = () => {
   handshakeSocketRef.current?.close();
   handshakeSocketRef.current = null;
 
-  const chargerId = String(selectedCharger.chargerId);
+  const selectedChargerData =
+  stalls.find((charger) => charger.id === selectedStall) ?? null;
+
+if (!selectedChargerData || !selectedConnector) {
+  setHandshakeError("Select a charger and connector first.");
+  return;
+}
+
+const chargerId = String(selectedChargerData.chargerId);
+const connectorId = String(selectedConnector.id);
   const connectorId = String(selectedConnector.id);
 
   const wsUrl =
