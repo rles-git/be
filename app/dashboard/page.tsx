@@ -1494,74 +1494,80 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableStalls.length)));
                             Follow the instructions displayed on the physical
                             charger.
                           </p>
-                          
-<button
-  type="button"
-  disabled={handshakePending || carConnected}
-  onClick={() => {
-    void handleCableConnection();
-  }}
-  style={{
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: 12,
-    border: carConnected
-      ? "1px solid #58715d"
-      : "1px solid #d8ddd6",
-    background: carConnected ? "#e5eee6" : "#fff",
-    color: "#36543c",
-    fontWeight: 600,
-    cursor:
-      handshakePending || carConnected
-        ? "not-allowed"
-        : "pointer",
-    opacity: handshakePending ? 0.7 : 1,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  }}
->
-  {handshakeCompleted ? (
-    <>
-      <Check size={17} />
-      Handshake successful
-    </>
-  ) : handshakePending ? (
-    <>
-      <Activity size={17} />
-      Waiting for charger handshake…
-    </>
-  ) : carConnected ? (
-    <>
-      <Check size={17} />
-      Cable connected — awaiting handshake
-    </>
-  ) : (
-    <>
-      <PlugZap size={17} />
-      Confirm cable is connected
-    </>
-  )}
-</button>
-
+                          <button
+                            type="button"
+                            disabled={handshakePending || carConnected}
+                            onClick={() => {
+                              void handleCableConnection();
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "12px 14px",
+                              borderRadius: 12,
+                              border: carConnected
+                                ? "1px solid #58715d"
+                                : "1px solid #d8ddd6",
+                              background: carConnected ? "#e5eee6" : "#fff",
+                              color: "#36543c",
+                              fontWeight: 600,
+                              cursor:
+                                handshakePending || carConnected
+                                  ? "not-allowed"
+                                  : "pointer",
+                              opacity: handshakePending ? 0.7 : 1,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            {handshakeCompleted ? (
+                              <>
+                                <Check size={17} />
+                                Handshake successful
+                              </>
+                            ) : handshakePending ? (
+                              <>
+                                <Activity size={17} />
+                                Waiting for charger handshake…
+                              </>
+                            ) : carConnected ? (
+                              <>
+                                <Check size={17} />
+                                Cable connected — awaiting handshake
+                              </>
+                            ) : (
+                              <>
+                                <PlugZap size={17} />
+                                Confirm cable is connected
+                              </>
+                            )}
+                          </button>
                           
                           {handshakeError && (
-  <p className="error-message">{handshakeError}</p>
-)}
-
-{handshakePending && (
-  <p> Cable connected — waiting for charger handshake...</p>
-)}
-
-{handshakeCompleted && (
-  <p>Handshake successful. Charger is ready.</p>
-)}
-
-{carConnected && !handshakePending && !handshakeCompleted && !handshakeError && (
-  <p>Cable connected. Waiting for Mock Handshake on the simulator dashboard.</p>
-)}
-
+                            <p className="error-message">{handshakeError}</p>
+                          )}
+                          
+                          {handshakePending && (
+                            <p>Cable connected — waiting for charger handshake...</p>
+                          )}
+                          
+                          {handshakeCompleted && (
+                            <p>Handshake successful. Charger is ready.</p>
+                          )}
+                          
+                          {carConnected &&
+                            !handshakePending &&
+                            !handshakeCompleted &&
+                            !handshakeError && (
+                              <p>
+                                Cable connected. Waiting for Mock Handshake on the
+                                simulator dashboard.
+                              </p>
+                            )}
+                          </div>
+                          </div>
+                          </section>
                     <section style={{ marginBottom: 24 }}>
                       <div className="details-section-heading">
                         <h3>2. Set charging limit</h3>
