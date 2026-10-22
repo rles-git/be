@@ -345,9 +345,9 @@ async function applyControls(input) {
     throw new Error("Temperature must be between -20 and 150 °C.");
   }
 
-if (["available", "charging", "offline", "fault", "maintenance", "unknown"].includes(t.status)) {
-    throw new Error("Invalid charger status.");
-  }
+if (!STATUSES.includes(input.status)) {
+  throw new Error("Invalid charger status.");
+}
 
   Object.assign(c, {
     powerKW: power,
