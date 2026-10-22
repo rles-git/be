@@ -1389,9 +1389,6 @@ wss = new WebSocketServer({
   server,
   path: "/ws",
 });
-
-
-wss.on("connection", (socket, request) => {
   
 wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
