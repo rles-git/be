@@ -1390,40 +1390,115 @@ wss = new WebSocketServer({
   path: "/ws",
 });
 
-wss.on("connection", async (socket, request) => {
+
+wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
   socket.chargerId = url.searchParams.get("chargerId");
 
-  try {
-    const result = await loadChargers();
+  // Load chargers before processing any incoming commands.
+  const ready = (async () => {
+    try {
+      const result = await loadChargers();
 
-    if (
-      socket.chargerId &&
-      !chargers.has(socket.chargerId)
-    ) {
-      socket.close(1008, "Unknown charger ID");
-      return;
-    }
+      if (
+        socket.chargerId &&
+        !chargers.has(socket.chargerId)
+      ) {
+        socket.close(1008, "Unknown charger ID");
+        return;
+      }
 
-    for (const c of result) {
-      if (!socket.chargerId || socket.chargerId === c.id) {
-        socket.send(JSON.stringify({
-          type: "telemetry",
-          ...c.telemetry,
-        }));
+      // Send initial telemetry to this WebSocket client.
+      for (const c of result) {
+        if (!socket.chargerId || socket.chargerId === c.id) {
+          if (socket.readyState !== WebSocket.OPEN) return;
+
+          socket.send(
+            JSON.stringify({
+              type: "telemetry",
+              ...c.telemetry,
+            })
+          );
+        }
+      }
+    } catch (error) {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            type: "error",
+            error: error.message || "Failed to load chargers.",
+          })
+        );
       }
     }
-  } catch (error) {
-    socket.send(JSON.stringify({
-      type: "error",
-      error: error.message,
-    }));
-  }
+  })();
 
-  socket.on("error", error => {
+  // Listen for commands sent by the dashboard.
+  socket.on("message", async (raw) => {
+    try {
+      await ready;
+
+      if (socket.readyState !== WebSocket.OPEN) return;
+
+      let input;
+
+      try {
+        input = JSON.parse(raw.toString());
+      } catch {
+        socket.send(
+          JSON.stringify({
+            type: "error",
+            error: "Invalid JSON message.",
+          })
+        );
+        return;
+      }
+
+      if (input.type !== "RUN_HANDSHAKE") {
+        socket.send(
+          JSON.stringify({
+            type: "error",
+            error: "Unsupported WebSocket command.",
+          })
+        );
+        return;
+      }
+
+      // Execute the existing mock handshake.
+      const result = await handshake({
+        chargerId: String(input.chargerId || ""),
+        connectorId: String(input.connectorId || ""),
+      });
+
+      // Send the actual result back to the requesting dashboard.
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            type: "handshake_result",
+            ...result,
+          })
+        );
+      }
+    } catch (error) {
+      console.error("WebSocket handshake failed:", error);
+
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(
+          JSON.stringify({
+            type: "handshake_result",
+            ok: false,
+            error: error.message || "Mock handshake failed.",
+          })
+        );
+      }
+    }
+  });
+
+  socket.on("error", (error) => {
     console.error("WebSocket error:", error.message);
   });
 });
+
 
 // Update simulated session energy and persist telemetry every 5 seconds.
 setInterval(async () => {
