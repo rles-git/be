@@ -67,6 +67,7 @@ type Panel =
   | "connector"
   | "charging"
   | "charging-review"
+  | "charging-active"
   | null;
 
 type RecentRoute = {
@@ -465,6 +466,12 @@ const startSimulatedCharging = async () => {
 
 const loadChargingHistory = async () => {
   setHistoryLoading(true);
+
+  useEffect(() => {
+  if (activeTab === "Activity") {
+    void loadChargingHistory();
+  }
+}, [activeTab]);
 
   try {
     const response = await fetch("/api/charging-sessions", {
@@ -2155,18 +2162,39 @@ function selectConnector(connector: DbConnector) {
                       automatic stopping.
                     </div>
 
+                                        
                     <button
                       type="button"
                       className="primary-button"
-                      onClick={() => {
-                        notify(
-                          `Demo setup saved: Charger ${selectedCharger}, target ${effectiveChargeTarget}%. No charger was activated.`
-                        );
-                        setPanel("details");
-                      }}
+                      onClick={startSimulatedCharging}
+                      disabled={
+                        !handshakeCompleted ||
+                        !selectedConnector ||
+                        chargingBusy ||
+                        !!activeSession
+                      }
                     >
-                      <Check size={18} /> Confirm demo setup
+                      <Zap size={18} />
+                      {chargingBusy
+                        ? "Starting simulation..."
+                        : !handshakeCompleted
+                          ? "Complete handshake first"
+                          : "Start simulated charging"}
                     </button>
+                    
+                    {chargingError && (
+                      <p
+                        role="alert"
+                        style={{
+                          color: "#b42318",
+                          fontSize: 13,
+                          marginTop: 10,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {chargingError}
+                      </p>
+                    )}
 
                     <button
                       type="button"
@@ -2178,7 +2206,159 @@ function selectConnector(connector: DbConnector) {
                     </button>
                   </div>
                 </div>
-              ) : panel === "connector" ? (
+              ) : panel === "charging-active" ? (
+  <div className="station-details-screen">
+    <header className="details-header">
+      <div>
+        <small>SIMULATED SESSION</small>
+        <h2>Charging in progress</h2>
+      </div>
+      <span className="details-live-dot" />
+    </header>
+
+    <div className="details-scroll" style={{ padding: 20 }}>
+      <div
+        style={{
+          background: "#edf4ed",
+          borderRadius: 18,
+          padding: 22,
+          textAlign: "center",
+          marginBottom: 18,
+        }}
+      >
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 32,
+            margin: "0 auto 12px",
+            display: "grid",
+            placeItems: "center",
+            background: "#d9e8da",
+            color: "#36543c",
+          }}
+        >
+          <BatteryCharging size={32} />
+        </div>
+
+        <small style={{ color: "#58715d", fontWeight: 700 }}>
+          SIMULATION ACTIVE
+        </small>
+
+        <h3
+          style={{
+            fontSize: 42,
+            letterSpacing: -1.5,
+            margin: "8px 0",
+            color: "#202522",
+          }}
+        >
+          {(
+            ((activeSession?.powerKw ?? 0) * elapsedSeconds) / 3600
+          ).toFixed(3)}{" "}
+          <span style={{ fontSize: 16 }}>kWh</span>
+        </h3>
+
+        <p style={{ margin: 0, color: "#687168", fontSize: 13 }}>
+          Simulated energy delivered
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 12,
+          marginBottom: 18,
+        }}
+      >
+        <div
+          style={{
+            border: "1px solid #e3e7e1",
+            borderRadius: 14,
+            padding: 15,
+          }}
+        >
+          <small style={{ color: "#858983" }}>ELAPSED TIME</small>
+          <h3 style={{ fontSize: 23, margin: "8px 0 0" }}>
+            {String(Math.floor(elapsedSeconds / 3600)).padStart(2, "0")}:
+            {String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, "0")}:
+            {String(elapsedSeconds % 60).padStart(2, "0")}
+          </h3>
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #e3e7e1",
+            borderRadius: 14,
+            padding: 15,
+          }}
+        >
+          <small style={{ color: "#858983" }}>SIMULATED POWER</small>
+          <h3 style={{ fontSize: 23, margin: "8px 0 0" }}>
+            {(activeSession?.powerKw ?? 0).toFixed(1)} kW
+          </h3>
+        </div>
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #e3e7e1",
+          borderRadius: 14,
+          padding: 15,
+          marginBottom: 18,
+        }}
+      >
+        <small style={{ color: "#858983" }}>SESSION REFERENCE</small>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontWeight: 700,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {activeSession?.id ?? "—"}
+        </p>
+        <p style={{ fontSize: 12, color: "#687168", marginBottom: 0 }}>
+          Connector {selectedConnector?.connector_number ?? "—"} ·{" "}
+          {selectedConnector?.connector_type ?? "—"}
+        </p>
+      </div>
+
+      <div
+        style={{
+          background: "#fff5e6",
+          color: "#805b23",
+          borderRadius: 12,
+          padding: 13,
+          fontSize: 12,
+          lineHeight: 1.6,
+          marginBottom: 18,
+        }}
+      >
+        Simulation only. The displayed energy is calculated from elapsed time
+        and configured power; it is not a measurement from physical charger
+        hardware.
+      </div>
+
+      {chargingError && (
+        <p role="alert" style={{ color: "#b42318", fontSize: 13 }}>
+          {chargingError}
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="primary-button"
+        onClick={stopSimulatedCharging}
+        disabled={chargingBusy}
+        style={{ background: "#b42318" }}
+      >
+        {chargingBusy ? "Saving session..." : "Stop charging"}
+      </button>
+    </div>
+  </div>
+) : panel === "connector" ? (
                 <div className="station-details-screen connector-selection-screen">
                   <header className="details-header">
                     <button
@@ -2643,15 +2823,76 @@ function selectConnector(connector: DbConnector) {
                       ))}
                     </div>
 
-                    <div className="activity-card" style={{ marginTop: 12 }}>
-                      <span><PlugZap size={20} /></span>
-                      <div>
-                        <b>Charging sessions</b>
-                        <small>
-                          Charging sessions are not connected to Neon yet.
-                        </small>
-                      </div>
-                    </div>
+                    
+<div className="recent-routes-section" style={{ marginTop: 12 }}>
+  <div className="activity-card header-card">
+    <span><PlugZap size={20} /></span>
+    <div>
+      <b>Charging sessions ({chargingHistory.length})</b>
+      <small>
+        {historyLoading
+          ? "Loading saved sessions..."
+          : "Sessions retrieved from your Neon account"}
+      </small>
+    </div>
+    <button
+      type="button"
+      onClick={() => void loadChargingHistory()}
+      disabled={historyLoading}
+      aria-label="Refresh charging sessions"
+      style={{
+        marginLeft: "auto",
+        border: "1px solid #e3e7e1",
+        borderRadius: 9,
+        background: "#fff",
+        padding: 8,
+        cursor: "pointer",
+      }}
+    >
+      <History size={16} />
+    </button>
+  </div>
+
+  {!historyLoading && chargingHistory.length === 0 && (
+    <p style={{ color: "#687168", fontSize: 13, padding: 12 }}>
+      No charging sessions saved yet. Complete a handshake and start a
+      simulation to create your first session.
+    </p>
+  )}
+
+  {chargingHistory.map((session) => (
+    <div
+      key={String(session.id)}
+      className="saved-card"
+      style={{ cursor: "default" }}
+    >
+      <span className="saved-zap">
+        <BatteryCharging size={18} />
+      </span>
+
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b>
+          Session #{session.id} · {session.status}
+        </b>
+        <small>
+          Connector {session.connector_number ?? session.connector_id}
+          {session.connector_type ? ` · ${session.connector_type}` : ""}
+        </small>
+        <small>
+          {Number(session.energy_kwh ?? 0).toFixed(3)} kWh · Started{" "}
+          {session.started_at
+            ? new Date(session.started_at).toLocaleString()
+            : "—"}
+        </small>
+        {session.ended_at && (
+          <small>
+            Ended {new Date(session.ended_at).toLocaleString()}
+          </small>
+        )}
+      </span>
+    </div>
+  ))}
+</div>
 
                     <div className="stat-cards">
                       <div>
