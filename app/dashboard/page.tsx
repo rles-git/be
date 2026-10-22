@@ -334,32 +334,31 @@ socket.onmessage = (event) => {
   if (handshakeSocketRef.current !== socket) return;
 
   try {
-      const data = JSON.parse(event.data);
+    const data = JSON.parse(event.data);
 
-      if (data.type !== "handshake_result") return;
+    if (data.type !== "handshake_result") return;
+    if (String(data.chargerId) !== chargerId) return;
+    if (String(data.connectorId) !== connectorId) return;
 
-      if (String(data.chargerId) !== chargerId) return;
-
-      if (String(data.connectorId) !== connectorId) return;
-
-      if (data.ok === true) {
-        setHandshakeCompleted(true);
-        setHandshakePending(false);
-        setHandshakeError("");
-      } else {
-        setHandshakeCompleted(false);
-        setHandshakePending(false);
-        setHandshakeError(
-          data.error || "The charger handshake failed."
-        );
-      }
-
-      socket.close();
-      handshakeSocketRef.current = null;
-    } catch (error) {
-      console.error("Could not process handshake result:", error);
+    if (data.ok === true) {
+      setHandshakeCompleted(true);
+      setHandshakePending(false);
+      setHandshakeError("");
+    } else {
+      setHandshakeCompleted(false);
+      setHandshakePending(false);
+      setHandshakeError(data.error || "The charger handshake failed.");
     }
-  };
+
+    socket.close();
+
+    if (handshakeSocketRef.current === socket) {
+      handshakeSocketRef.current = null;
+    }
+  } catch (error) {
+    console.error("Could not process handshake result:", error);
+  }
+};
 
   socket.onerror = () => {
     setHandshakePending(false);
