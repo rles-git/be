@@ -281,6 +281,7 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
 async function handleCableConnection() {
+  console.log("handleCableConnection started");
   if (handshakePending || carConnected) return;
 
   setHandshakePending(true);
