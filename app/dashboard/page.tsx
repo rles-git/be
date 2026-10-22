@@ -308,57 +308,35 @@ async function handleCableConnection() {
       }, 15000);
 
       socket.onopen = () => {
-        // IMPORTANT:
-        // Send the handshake request expected by your simulator here.
-        // The exact message format must match its server implementation.
-        socket.send(
-          JSON.stringify({
-            type: "RUN_HANDSHAKE",
-            chargerId: String(
-              stalls.find((item) => item.id === selectedStall)?.chargerId ?? ""
-            ),
-            connectorId: selectedConnector?.id,
-          })
-        );
-      };
+  console.log("WebSocket connected");
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+  const message = {
+    type: "RUN_HANDSHAKE",
+    chargerId: String(
+      stalls.find((item) => item.id === selectedStall)?.chargerId ?? ""
+    ),
+    connectorId: selectedConnector?.id,
+  };
 
-          // Only accept an explicit successful handshake response.
-          if (
-            data.type === "handshakeResult" &&
-            data.ok === true
-          ) {
-            window.clearTimeout(timeout);
-            socket.close();
-            resolve();
-          } else if (
-            data.type === "handshakeResult" &&
-            data.ok === false
-          ) {
-            window.clearTimeout(timeout);
-            socket.close();
-            reject(
-              new Error(data.message || "The charger handshake failed.")
-            );
-          }
-        } catch {
-          // Ignore unrelated or non-JSON telemetry messages.
-        }
-      };
+  console.log("Sending handshake message:", message);
+  socket.send(JSON.stringify(message));
+};
 
-      socket.onerror = () => {
-        window.clearTimeout(timeout);
-        reject(new Error("Could not connect to the mock charger simulator."));
-      };
+socket.onmessage = (event) => {
+  console.log("Simulator response:", event.data);
+};
 
-      socket.onclose = () => {
-        // A connection closing without a successful handshake
-        // must not be treated as a successful connection.
-      };
-    });
+socket.onerror = (event) => {
+  console.error("WebSocket error:", event);
+};
+
+socket.onclose = (event) => {
+  console.log("WebSocket closed:", {
+    code: event.code,
+    reason: event.reason,
+    wasClean: event.wasClean,
+  });
+};
 
     setCarConnected(true);
   } catch (error) {
