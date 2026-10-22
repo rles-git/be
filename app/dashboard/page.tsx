@@ -305,7 +305,6 @@ if (!selectedChargerData || !selectedConnector) {
 
 const chargerId = String(selectedChargerData.chargerId);
 const connectorId = String(selectedConnector.id);
-  const connectorId = String(selectedConnector.id);
 
   const wsUrl =
     process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
