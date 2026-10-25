@@ -13,6 +13,7 @@ function getSql() {
 }
 
 
+
 export async function GET() {
   try {
     const auth = await getAuthenticatedAccount();
@@ -30,8 +31,11 @@ export async function GET() {
         s.ended_at,
         s.energy_kwh,
         s.created_at,
+        c.charger_id,
         c.connector_number,
-        c.connector_type
+        c.connector_type,
+        c.max_power_kw,
+        c.status AS connector_status
       FROM public.charging_sessions s
       LEFT JOIN public.connectors c
         ON c.id = s.connector_id
@@ -40,18 +44,33 @@ export async function GET() {
       LIMIT 25
     `;
 
+    const activeSession =
+      sessions.find(
+        (session) =>
+          String(session.status).toLowerCase() === "active"
+      ) ?? null;
+
     return NextResponse.json(
-      { sessions },
-      { headers: { "Cache-Control": "no-store, max-age=0" } }
+      {
+        sessions,
+        activeSession,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
     );
   } catch (error) {
-    console.error("Load charging history error:", error);
+    console.error("Load charging sessions error:", error);
+
     return NextResponse.json(
-      { error: "Could not load charging history." },
+      { error: "Could not load charging sessions." },
       { status: 500 }
     );
   }
 }
+
 
 
 export async function POST(request: Request) {
