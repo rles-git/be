@@ -115,9 +115,65 @@ type StationWithChargers = MapStation & {
   chargers?: DbCharger[];
 };
 
+function normalizeStatus(status: string | null | undefined) {
+  return String(status ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\\s-]+/g, "_");
+}
+
 function isAvailableStatus(status: string | null | undefined) {
-  const normalized = String(status ?? "").toLowerCase();
-  return ["available", "online", "idle", "ready"].includes(normalized);
+  return ["available", "online", "idle", "ready"].includes(
+    normalizeStatus(status)
+  );
+}
+
+function isInUseStatus(status: string | null | undefined) {
+  return ["charging", "occupied", "in_use", "inuse"].includes(
+    normalizeStatus(status)
+  );
+}
+
+function isUnavailableStatus(status: string | null | undefined) {
+  return [
+    "unavailable",
+    "fault",
+    "faulted",
+    "error",
+    "offline",
+    "maintenance",
+    "out_of_service",
+    "disabled",
+  ].includes(normalizeStatus(status));
+}
+
+/**
+ * A charger with multiple connectors is available while at least one
+ * connector can be used. If every connector is occupied, show "In Use".
+ * Fault/offline/maintenance charger states always take priority.
+ */
+function getChargerDisplayStatus(charger: DbCharger) {
+  const chargerStatus = normalizeStatus(charger.status);
+  const connectors = Array.isArray(charger.connectors) ? charger.connectors : [];
+
+  if (isUnavailableStatus(chargerStatus)) {
+    return "Unavailable";
+  }
+
+  if (connectors.length === 0) {
+    if (isInUseStatus(chargerStatus)) return "In Use";
+    return isAvailableStatus(chargerStatus) ? "Available" : "Unavailable";
+  }
+
+  if (connectors.some((connector) => isAvailableStatus(connector.status))) {
+    return "Available";
+  }
+
+  if (connectors.every((connector) => isInUseStatus(connector.status))) {
+    return "In Use";
+  }
+
+  return "Unavailable";
 }
 
 function getConnectorStatusLabel(status: string | null | undefined) {
@@ -189,7 +245,7 @@ function getAvailabilityLabel(station: MapStation) {
   const total = chargers.length;
 
   const available = chargers.filter((charger) =>
-    isAvailableStatus(charger.status)
+    getChargerDisplayStatus(charger) === "Available"
   ).length;
 
   if (total === 0) {
@@ -868,7 +924,8 @@ const chargers: ChargerDisplay[] = databaseChargers.map(
   (charger, index) => ({
     id: index + 1,
     chargerId: String(charger.id),
-    status: String(charger.status ?? "Unknown"),
+    // Derive status from connector occupancy and charger health.
+    status: getChargerDisplayStatus(charger),
     power: Number(charger.max_power_kw) || 0,
     connectors: Array.isArray(charger.connectors)
       ? charger.connectors
@@ -954,9 +1011,18 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
           (!fastOnly || station.kind === "DC fast") &&
           (!acOnly || station.kind === "AC");
 
+         const stationWithChargers = station as StationWithChargers;
+        const stationChargers = Array.isArray(stationWithChargers.chargers)
+          ? stationWithChargers.chargers
+          : [];
+        const availableCount = stationChargers.length
+          ? stationChargers.filter(
+              (charger) => getChargerDisplayStatus(charger) === "Available"
+            ).length
+          : Number(station.available ?? 0);
+
         const matchesAvailability =
-          !availableOnly ||
-          (station.available != null && station.available >= 2);
+          !availableOnly || availableCount >= 2;
 
         const matchesSearch =
           `${station.name} ${station.address} ${station.id} ${
@@ -2633,7 +2699,7 @@ function selectConnector(connector: DbConnector) {
                       <div className="stall-availability-summary">
                         <div>
                           <strong> {availableChargers.length} of {chargers.length} available </strong>
-                          <p>Charger availability from database status</p>
+                          <p>Availability is calculated from connector status</p>
                         </div>
                       </div>
 
