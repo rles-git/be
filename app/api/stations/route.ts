@@ -55,7 +55,17 @@ export async function GET() {
                         'connector_number', co.connector_number,
                         'connector_type', co.connector_type,
                         'max_power_kw', co.max_power_kw,
-                        'status', co.status
+                        'status',
+                        CASE
+                          WHEN EXISTS (
+                            SELECT 1
+                            FROM public.charging_sessions cs
+                            WHERE cs.connector_id = co.id::text
+                              AND cs.status IN ('pending', 'active')
+                          )
+                          THEN 'In use'
+                          ELSE co.status
+                        END
                       )
                       ORDER BY co.connector_number ASC
                     )
