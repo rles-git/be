@@ -471,6 +471,62 @@ socket.onmessage = (event) => {
     }
   };
 
+
+const restoreActiveChargingSession = async () => {
+  try {
+    const response = await fetch("/api/charging-sessions", {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    // The visitor may not be signed in yet.
+    if (!response.ok) return;
+
+    const data = await response.json();
+    const session = data.activeSession;
+
+    // No active session: leave the normal dashboard unchanged.
+    if (
+      !session ||
+      String(session.status).toLowerCase() !== "active" ||
+      !session.started_at
+    ) {
+      return;
+    }
+
+    const powerKw = Math.max(
+      0.1,
+      Number(session.max_power_kw) || 7.4
+    );
+
+    // Restore the connector so its information appears on the
+    // charging screen even though the page has been reloaded.
+    setSelectedConnector({
+      id: session.connector_id,
+      charger_id: session.charger_id ?? "",
+      connector_number: Number(session.connector_number) || 1,
+      connector_type: session.connector_type ?? "Unknown",
+      max_power_kw: session.max_power_kw ?? powerKw,
+      status: session.connector_status ?? "charging",
+    });
+
+    setActiveSession({
+      id: session.id,
+      startedAt: session.started_at,
+      powerKw,
+    });
+
+    // Reopen the active session screen.
+    setActiveTab("Explore");
+    setPanel("charging-active");
+    setChargingError("");
+  } catch (error) {
+    console.error("Could not restore active charging session:", error);
+  }
+};
+
+  
   const startSimulatedCharging = async () => {
     if (!handshakeCompleted) {
       setChargingError("Complete a successful connector handshake first.");
@@ -590,6 +646,10 @@ socket.onmessage = (event) => {
     }
   }, [activeTab]);
 
+useEffect(() => {
+  void restoreActiveChargingSession();
+}, []);
+  
   useEffect(() => {
     if (!activeSession) return;
 
