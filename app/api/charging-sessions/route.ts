@@ -106,15 +106,18 @@ export async function POST(request: Request) {
           FROM public.charging_sessions s
           WHERE s.connector_id = c.id
             AND s.status IN ('pending', 'active')
-        )
-      RETURNING
-        id,
-        connector_id,
-        external_session_id,
-        account_id,
-        status,
-        started_at,
-        energy_kwh
+        ) 
+        ON CONFLICT (connector_id)
+        WHERE status IN ('pending', 'active')
+        DO NOTHING
+        RETURNING
+          id,
+          connector_id,
+          external_session_id,
+          account_id,
+          status,
+          started_at,
+          energy_kwh
     `;
 
     if (rows.length === 0) {
