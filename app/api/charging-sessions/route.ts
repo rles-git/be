@@ -40,7 +40,9 @@ export async function GET() {
       LEFT JOIN public.connectors c
         ON c.id = s.connector_id
       WHERE s.account_id = ${auth.accountId}
-      ORDER BY s.created_at DESC
+      ORDER BY
+        CASE WHEN s.status = 'active' THEN 0 ELSE 1 END,
+        s.created_at DESC
       LIMIT 25
     `;
 
