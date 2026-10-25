@@ -120,6 +120,35 @@ function isAvailableStatus(status: string | null | undefined) {
   return ["available", "online", "idle", "ready"].includes(normalized);
 }
 
+function getConnectorStatusLabel(status: string | null | undefined) {
+  const normalized = String(status ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (["charging", "occupied", "in_use", "inuse"].includes(normalized)) {
+    return "In Use";
+  }
+
+  if (["available", "online", "idle", "ready"].includes(normalized)) {
+    return "Available";
+  }
+
+  if (["fault", "faulted", "error"].includes(normalized)) {
+    return "Faulted";
+  }
+
+  if (normalized === "offline") {
+    return "Offline";
+  }
+
+  if (normalized === "maintenance") {
+    return "Maintenance";
+  }
+
+  return status || "Unknown";
+}
+
 const START_LOCATION: [number, number] = [
 25.254483277668196,51.47912950286491,
 ];
@@ -2422,7 +2451,7 @@ function selectConnector(connector: DbConnector) {
                               </small>
                               <span className={`connector-status ${available ? "available-status" : "occupied-status"}`}>
                                 <span className={available ? "stall-status-dot" : "occupied-status-dot"} />
-                                {connector.status || "Unknown"}
+                                {getConnectorStatusLabel(connector.status)}
                               </span>
                             </span>
                             <span className="connector-select-icon">
