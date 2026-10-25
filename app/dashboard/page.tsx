@@ -518,8 +518,6 @@ const restoreActiveChargingSession = async () => {
     });
 
     // Reopen the active session screen.
-    setActiveTab("Explore");
-    setPanel("charging-active");
     setChargingError("");
   } catch (error) {
     console.error("Could not restore active charging session:", error);
@@ -1239,6 +1237,61 @@ function selectConnector(connector: DbConnector) {
       <section className="emulator-column">
         <div className="phone-frame">
           <div className="phone-screen">
+            
+{activeSession && (
+  <div
+    style={{
+      position: "absolute",
+      top: 8,
+      left: 8,
+      right: 8,
+      zIndex: 2000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      padding: "10px 12px",
+      background: "#edf4ed",
+      border: "1px solid #d9e8da",
+      borderRadius: 12,
+      boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
+    }}
+  >
+    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+      <BatteryCharging size={19} color="#58715d" />
+      <div style={{ minWidth: 0 }}>
+        <strong style={{ fontSize: 12, color: "#36543c" }}>
+          Charging in progress
+        </strong>
+        <div style={{ fontSize: 11, color: "#687168" }}>
+          {Math.floor(elapsedSeconds / 60)} min elapsed
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => {
+        setActiveTab("Explore");
+        setPanel("charging-active");
+      }}
+      style={{
+        border: 0,
+        borderRadius: 9,
+        padding: "8px 10px",
+        background: "#58715d",
+        color: "#fff",
+        fontSize: 11,
+        fontWeight: 600,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      View Session
+    </button>
+  </div>
+)}
+
             <div
               className="map-screen"
               style={{
