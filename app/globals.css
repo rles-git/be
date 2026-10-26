@@ -635,7 +635,7 @@ button { cursor: pointer; }
 .bottom-nav {
   height: 68px;
   position: absolute;
-  z-index: 1200;
+  z-index: 12;
   left: 0;
   right: 0;
   background: #fff;
