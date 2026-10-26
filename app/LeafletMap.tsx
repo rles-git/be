@@ -87,6 +87,21 @@ function MapController({
   const map = useMap();
   const lastFittedRouteKey = useRef<string | null>(null);
   const lastGpsLocation = useRef<[number, number] | null>(null);
+  const userPannedMap = useRef(false);
+  const previousRouteTarget = useRef<string | null>(null);
+
+  // Once the user manually pans, don't let route/GPS updates recenter the map.
+  // Reset this only when the route is closed or a different destination is chosen.
+  useEffect(() => {
+    const markManualPan = () => {
+      userPannedMap.current = true;
+    };
+
+    map.on("dragstart", markManualPan);
+    return () => {
+      map.off("dragstart", markManualPan);
+    };
+  }, [map]);
 
   useEffect(() => {
     if (!userLocation) return;
@@ -183,19 +198,26 @@ function MapController({
     // the user manually zooms or pans.
     if (!routeMode) {
       lastFittedRouteKey.current = null;
+      previousRouteTarget.current = null;
+      userPannedMap.current = false;
       return;
+    }
+
+    // A newly selected destination starts a new route preview and may fit once.
+    if (previousRouteTarget.current !== selectedId) {
+      previousRouteTarget.current = selectedId;
+      userPannedMap.current = false;
     }
 
     if (routeCoords.length < 2) return;
 
-    // Fit only once for each selected destination during a route preview.
-    // Do not key this to route geometry: GPS updates can slightly change the
-    // OSRM geometry and would otherwise reset the user's zoom level.
+    // Fit only once per target, and never override a manual pan. GPS updates
+    // can redraw route geometry, but must not pull the map back to the target.
     const routeKey = selectedId;
-
     if (lastFittedRouteKey.current === routeKey) return;
 
     lastFittedRouteKey.current = routeKey;
+    if (userPannedMap.current) return;
 
     map.fitBounds(L.latLngBounds(routeCoords), {
       padding: [60, 60],
