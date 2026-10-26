@@ -338,11 +338,14 @@ type ActiveChargingSession = {
   powerKw: number;
 };
 
+const FALLBACK_LOCATION: [number, number] = [25.254483277668196, 51.47912950286491];
+
 export default function Home() {
   const { stations, loading, error } = useStations();
 
-  // Device GPS is the source of truth for map origin, routes, and nearby results.
+  // Use device GPS when available; otherwise fall back to the original starting location.
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const effectiveLocation = userLocation ?? FALLBACK_LOCATION;
   const [locationStatus, setLocationStatus] = useState<
     "loading" | "ready" | "denied" | "unavailable"
   >("loading");
@@ -1157,14 +1160,12 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
   
   const nearbyStations = useMemo(
     () => {
-      if (!userLocation) return [];
-
       return filtered
         .map((station) => ({
           station,
           distanceKm: getDistanceKm(
-            userLocation[0],
-            userLocation[1],
+            effectiveLocation[0],
+            effectiveLocation[1],
             station.lat,
             station.lng
           ),
@@ -1173,7 +1174,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
         .sort((a, b) => a.distanceKm - b.distanceKm)
         .map(({ station }) => station);
     },
-    [filtered, userLocation]
+    [filtered, effectiveLocation]
   );
 
   const savedStations = stations.filter((station) =>
@@ -1206,9 +1207,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
       `${selected.name}, ${selected.address}`
     );
 
-    const origin = userLocation
-      ? `${userLocation[0]},${userLocation[1]}`
-      : "";
+    const origin = `${effectiveLocation[0]},${effectiveLocation[1]}`;
 
     const urls: Record<string, string> = {
       "Google Maps": `https://www.google.com/maps/dir/?api=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}&destination=${destination}`,
@@ -1443,7 +1442,8 @@ function selectConnector(connector: DbConnector) {
             >
               <LeafletMap
                 stations={filtered}
-                userLocation={userLocation}
+                userLocation={effectiveLocation}
+                isFallbackLocation={!userLocation}
                 onRequestLocation={requestDeviceLocation}
                 selectedId={selectedId}
                 routeMode={routeMode}
@@ -1752,7 +1752,7 @@ function selectConnector(connector: DbConnector) {
                     <div className="sheet-title-row">
                       <div>
                         <h2>Nearby stations</h2>
-                        <p>{userLocation ? `${nearbyStations.length} stations within 5 km of your GPS location` : "Enable device location to find stations within 5 km"}</p>
+                        <p>{userLocation ? `${nearbyStations.length} stations within 5 km of your GPS location` : `${nearbyStations.length} stations within 5 km of the default starting location`}</p>
                       </div>
                       <button
                         className="sheet-close"
@@ -1763,14 +1763,15 @@ function selectConnector(connector: DbConnector) {
                       </button>
                     </div>
 
-                    {!userLocation ? (
-                      <div className="empty-state">
+                    {!userLocation && (
+                      <div className="empty-state" style={{ marginBottom: 12 }}>
                         <LocateFixed size={24} />
-                        <b>Device location is needed</b>
-                        <p>Allow location access to calculate nearby stations and distances.</p>
+                        <b>Using the default starting location</b>
+                        <p>Allow device location to calculate distances from your current position instead.</p>
                         <button type="button" onClick={requestDeviceLocation}>Use my location</button>
                       </div>
-                    ) : nearbyStations.length === 0 ? (
+                    )}
+                    {nearbyStations.length === 0 ? (
                       <div className="empty-state">
                         <MapPin size={24} />
                         <b>No nearby stations match these filters</b>
@@ -1824,14 +1825,12 @@ function selectConnector(connector: DbConnector) {
                           </span>
                           <span style={{ textAlign: "right", flexShrink: 0 }}>
                             <b>
-                              {userLocation
-                                ? `${getDistanceKm(
-                                    userLocation[0],
-                                    userLocation[1],
-                                    station.lat,
-                                    station.lng
-                                  ).toFixed(1)} km`
-                                : "GPS needed"}
+                              `${getDistanceKm(
+                                effectiveLocation[0],
+                                effectiveLocation[1],
+                                station.lat,
+                                station.lng
+                              ).toFixed(1)} km`
                             </b>
                             <small style={{ display: "block", marginTop: 4 }}>
                               {station.status}
@@ -3024,8 +3023,8 @@ function selectConnector(connector: DbConnector) {
                       <LocateFixed size={19} />
                     </span>
                     <span>
-                      <b>{userLocation ? `${nearbyStations.length} stations nearby` : "Find stations near me"}</b>
-                      <small>{userLocation ? "Sorted by distance from your GPS location" : "Enable GPS to calculate nearby stations"}</small>
+                      <b>{nearbyStations.length} stations nearby</b>
+                      <small>{userLocation ? "Sorted by distance from your GPS location" : "Using the default starting location until GPS is available"}</small>
                     </span>
                     <List size={19} />
                   </button>
@@ -3203,7 +3202,7 @@ function selectConnector(connector: DbConnector) {
                         <small>Completed trips</small>
                       </div>
                       <div>
-                        <b>{userLocation ? nearbyStations.length : "—"}</b>
+                        <b>{nearbyStations.length}</b>
                         <small>Nearby stations</small>
                       </div>
                     </div>
