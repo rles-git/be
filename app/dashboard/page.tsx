@@ -1370,7 +1370,6 @@ function selectConnector(connector: DbConnector) {
                 routeMode={routeMode}
                 onSelect={(id: string) => {
                   setSelectedId(id);
-                  setPanel("station");
                   setRouteMode(false);
                   setSheetDragY(0);
                   setCalculatedRoute(null);
