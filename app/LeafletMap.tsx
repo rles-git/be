@@ -37,11 +37,58 @@ type Props = {
   selectedId: string;
   routeMode: boolean;
   onSelect: (id: string) => void;
+  onViewStation: (id: string) => void; // <-- Add this prop
   onRouteCalculated?: (metrics: {
     distance: string;
     minutes: number;
   }) => void;
 };
+
+// Update PopupContent to accept onViewStation instead of onSelect
+function PopupContent({
+  station,
+  onViewStation,
+}: {
+  station: Station;
+  onViewStation: (id: string) => void;
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+
+    const handleClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      onViewStation(station.id); // <-- Opens the panel only when clicked here
+    };
+
+    btn.addEventListener("click", handleClick);
+    return () => {
+      btn.removeEventListener("click", handleClick);
+    };
+  }, [station.id, onViewStation]);
+
+  const totalChargers = station.chargers.length;
+  const availableChargers = station.available ?? 0;
+
+  return (
+    <div className="station-popup">
+      <strong>{station.name}</strong>
+      <span>{station.address}</span>
+      <span>
+        {station.power != null ? `${station.power} kW` : "Power not specified"}
+      </span>
+      <span>Total chargers: {totalChargers}</span>
+      <span>Available chargers: {availableChargers}</span>
+      <span>Status: {station.status}</span>
+
+      <button ref={buttonRef} type="button">
+        View station
+      </button>
+    </div>
+  );
+}
 
 const start: [number, number] = [
   25.25429558108845,
