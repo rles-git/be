@@ -36,17 +36,14 @@ type Props = {
   stations: Station[];
   selectedId: string;
   routeMode: boolean;
+  userLocation: [number, number] | null;
+  onRequestLocation?: () => void;
   onSelect: (id: string) => void;
   onRouteCalculated?: (metrics: {
     distance: string;
     minutes: number;
   }) => void;
 };
-
-const start: [number, number] = [
-  25.25429558108845,
-  51.47903323900277,
-];
 
 function stationIcon(station: Station, selected: boolean) {
   const available = station.available ?? 0;
@@ -76,16 +73,43 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeCoords,
   routeMode,
+  userLocation,
+  onRequestLocation,
 }: {
   routeCoords: [number, number][];
   routeMode: boolean;
+  userLocation: [number, number] | null;
+  onRequestLocation?: () => void;
 }) {
   const map = useMap();
   const lastFittedRouteKey = useRef<string | null>(null);
+  const lastGpsLocation = useRef<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (!userLocation) return;
+
+    // Center on the first GPS fix, but do not fight the user by recentering
+    // the map every time the device reports a small location change.
+    if (!lastGpsLocation.current) {
+      map.flyTo(userLocation, 15, { duration: 0.7 });
+    }
+    lastGpsLocation.current = userLocation;
+  }, [map, userLocation]);
 
   useEffect(() => {
     const locate = () => {
-      map.flyTo(start, 15, { duration: 0.7 });
+      if (userLocation) {
+        map.flyTo(userLocation, 15, { duration: 0.7 });
+      } else {
+        onRequestLocation?.();
+      }
+    };
+
+    const locationUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+      const { lat, lng } = customEvent.detail ?? {};
+      if (typeof lat !== "number" || typeof lng !== "number") return;
+      map.flyTo([lat, lng], 15, { duration: 0.7 });
     };
 
     const refreshMapSize = () => {
@@ -113,6 +137,7 @@ function MapController({
     };
 
     window.addEventListener("be-electric-locate", locate);
+    window.addEventListener("be-electric-location-updated", locationUpdated);
     window.addEventListener(
       "be-electric-map-visible",
       refreshMapSize
@@ -124,6 +149,7 @@ function MapController({
 
     return () => {
       window.removeEventListener("be-electric-locate", locate);
+      window.removeEventListener("be-electric-location-updated", locationUpdated);
       window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
@@ -133,7 +159,7 @@ function MapController({
         panToStation
       );
     };
-  }, [map]);
+  }, [map, userLocation, onRequestLocation]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -174,6 +200,8 @@ export default function LeafletMap({
   stations,
   selectedId,
   routeMode,
+  userLocation,
+  onRequestLocation,
   onSelect,
   onRouteCalculated,
 }: Props) {
@@ -198,6 +226,7 @@ export default function LeafletMap({
   useEffect(() => {
     if (
       !routeMode ||
+      !userLocation ||
       selectedLat == null ||
       selectedLng == null
     ) {
@@ -211,7 +240,7 @@ export default function LeafletMap({
       try {
         const url =
           `https://router.project-osrm.org/route/v1/driving/` +
-          `${start[1]},${start[0]};${selectedLng},${selectedLat}` +
+          `${userLocation[1]},${userLocation[0]};${selectedLng},${selectedLat}` +
           `?overview=full&geometries=geojson`;
 
         const response = await fetch(url, {
@@ -264,6 +293,7 @@ export default function LeafletMap({
     selectedStationId,
     selectedLat,
     selectedLng,
+    userLocation,
   ]);
 
   return (
@@ -273,8 +303,8 @@ export default function LeafletMap({
       }`}
     >
       <MapContainer
-        center={start}
-        zoom={15}
+        center={userLocation ?? ([stations[0].lat, stations[0].lng] as [number, number])}
+        zoom={userLocation ? 15 : 12}
         zoomControl={false}
         scrollWheelZoom={true}
         attributionControl={true}
@@ -288,22 +318,26 @@ export default function LeafletMap({
         <MapController
           routeCoords={roadCoordinates}
           routeMode={routeMode}
+          userLocation={userLocation}
+          onRequestLocation={onRequestLocation}
         />
 
-        <CircleMarker
-          center={start}
-          radius={8}
-          pathOptions={{
-            color: "#ffffff",
-            weight: 4,
-            fillColor: "#91a795",
-            fillOpacity: 1,
-          }}
-        >
-          <Popup>
-            <strong>Your Location</strong>
-          </Popup>
-        </CircleMarker>
+        {userLocation && (
+          <CircleMarker
+            center={userLocation}
+            radius={8}
+            pathOptions={{
+              color: "#ffffff",
+              weight: 4,
+              fillColor: "#91a795",
+              fillOpacity: 1,
+            }}
+          >
+            <Popup>
+              <strong>Your GPS Location</strong>
+            </Popup>
+          </CircleMarker>
+        )}
 
         {stations.map((station) => {
           const totalChargers = station.chargers.length;
