@@ -88,12 +88,27 @@ function MapController({
   const routeModeRef = useRef(routeMode);
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
+  const previousRouteMode = useRef(routeMode);
 
-  // Keep event listeners reading the latest props without re-registering them.
+  // Update refs synchronously during render so events fired in the same tick
+  // as route selection cannot read a stale routeMode value.
+  routeModeRef.current = routeMode;
+  userLocationRef.current = userLocation;
+
+  // When route preview starts, focus the map on the GPS/start location once.
+  // Never fit the whole route or keep recentering as route data changes.
   useEffect(() => {
-    routeModeRef.current = routeMode;
-    userLocationRef.current = userLocation;
-  }, [routeMode, userLocation]);
+    const justEnteredRoutePreview = routeMode && !previousRouteMode.current;
+    previousRouteMode.current = routeMode;
+
+    if (justEnteredRoutePreview && userLocationRef.current) {
+      userHasManuallyMovedMap.current = false;
+      map.flyTo(userLocationRef.current, 15, {
+        animate: true,
+        duration: 0.7,
+      });
+    }
+  }, [map, routeMode]);
 
   useEffect(() => {
     const markUserInteraction = () => {
