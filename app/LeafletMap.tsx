@@ -181,31 +181,15 @@ function MapController({
       }, 100);
     };
 
-    const panToStation = (event: Event) => {
-      // This event is for an explicit station selection. Ignore stale or
-      // unrelated station-pan events while a route is being reviewed.
-      if (routeModeRef.current) return;
-
-      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
-      const { lat, lng } = customEvent.detail ?? {};
-      if (typeof lat !== "number" || typeof lng !== "number") return;
-
-      map.flyTo([lat, lng], Math.max(map.getZoom(), 16), {
-        animate: true,
-        duration: 0.9,
-      });
-    };
 
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-location-updated", locationUpdated);
     window.addEventListener("be-electric-map-visible", refreshMapSize);
-    window.addEventListener("be-electric-pan-to-station", panToStation);
 
     return () => {
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener("be-electric-location-updated", locationUpdated);
       window.removeEventListener("be-electric-map-visible", refreshMapSize);
-      window.removeEventListener("be-electric-pan-to-station", panToStation);
     };
   }, [map, onRequestLocation]);
 
