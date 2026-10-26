@@ -205,10 +205,6 @@ function getConnectorStatusLabel(status: string | null | undefined) {
   return status || "Unknown";
 }
 
-const START_LOCATION: [number, number] = [
-25.254483277668196,51.47912950286491,
-];
-
 const CHARGING_TARGETS = [20, 30, 40, 50, 60, 70, 80, 90];
 
 function getDistanceKm(
@@ -344,6 +340,77 @@ type ActiveChargingSession = {
 
 export default function Home() {
   const { stations, loading, error } = useStations();
+
+  // Device GPS is the source of truth for map origin, routes, and nearby results.
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationStatus, setLocationStatus] = useState<
+    "loading" | "ready" | "denied" | "unavailable"
+  >("loading");
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("unavailable");
+      return;
+    }
+
+    const onPosition = (position: GeolocationPosition) => {
+      setUserLocation([position.coords.latitude, position.coords.longitude]);
+      setLocationStatus("ready");
+    };
+
+    const onError = (error: GeolocationPositionError) => {
+      console.warn("Unable to get device location:", error.message);
+      setLocationStatus(
+        error.code === error.PERMISSION_DENIED ? "denied" : "unavailable"
+      );
+    };
+
+    // Watch for location changes so nearby stations and routes stay current.
+    const watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+      enableHighAccuracy: true,
+      maximumAge: 15000,
+      timeout: 15000,
+    });
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  function requestDeviceLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus("unavailable");
+      notify("This browser does not support device location.");
+      return;
+    }
+
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextLocation: [number, number] = [
+          position.coords.latitude,
+          position.coords.longitude,
+        ];
+        setUserLocation(nextLocation);
+        setLocationStatus("ready");
+        window.dispatchEvent(
+          new CustomEvent("be-electric-location-updated", {
+            detail: { lat: nextLocation[0], lng: nextLocation[1] },
+          })
+        );
+        notify("Your current GPS location has been updated.");
+      },
+      (error) => {
+        setLocationStatus(
+          error.code === error.PERMISSION_DENIED ? "denied" : "unavailable"
+        );
+        notify(
+          error.code === error.PERMISSION_DENIED
+            ? "Allow location access in your browser to use nearby stations and routes."
+            : "Unable to get your GPS location. Check device location settings and try again."
+        );
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  }
 
   const [selectedId, setSelectedId] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("Explore");
@@ -1089,18 +1156,24 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
 
   
   const nearbyStations = useMemo(
-    () =>
-      filtered.filter((station) => {
-        const distance = getDistanceKm(
-          START_LOCATION[0],
-          START_LOCATION[1],
-          station.lat,
-          station.lng
-        );
+    () => {
+      if (!userLocation) return [];
 
-        return distance <= 5;
-      }),
-    [filtered]
+      return filtered
+        .map((station) => ({
+          station,
+          distanceKm: getDistanceKm(
+            userLocation[0],
+            userLocation[1],
+            station.lat,
+            station.lng
+          ),
+        }))
+        .filter(({ distanceKm }) => distanceKm <= 5)
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .map(({ station }) => station);
+    },
+    [filtered, userLocation]
   );
 
   const savedStations = stations.filter((station) =>
@@ -1133,10 +1206,14 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
       `${selected.name}, ${selected.address}`
     );
 
+    const origin = userLocation
+      ? `${userLocation[0]},${userLocation[1]}`
+      : "";
+
     const urls: Record<string, string> = {
-      "Google Maps": `https://www.google.com/maps/dir/?api=1&destination=${destination}`,
-      "Apple Maps": `https://maps.apple.com/?daddr=${destination}`,
-      Waze: `https://waze.com/ul?q=${destination}&navigate=yes`,
+      "Google Maps": `https://www.google.com/maps/dir/?api=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}&destination=${destination}`,
+      "Apple Maps": `https://maps.apple.com/?${origin ? `saddr=${encodeURIComponent(origin)}&` : ""}daddr=${destination}`,
+      Waze: `https://waze.com/ul?ll=${encodeURIComponent(`${selected.lat},${selected.lng}`)}&navigate=yes`,
     };
 
     if (urls[app]) {
@@ -1366,6 +1443,8 @@ function selectConnector(connector: DbConnector) {
             >
               <LeafletMap
                 stations={filtered}
+                userLocation={userLocation}
+                onRequestLocation={requestDeviceLocation}
                 selectedId={selectedId}
                 routeMode={routeMode}
                 onSelect={(id: string) => {
@@ -1501,7 +1580,7 @@ function selectConnector(connector: DbConnector) {
 
                   <div>
                     <span className="route-origin-dot" />
-                    <span>Your location · Doha, Qatar</span>
+                    <span>{locationStatus === "ready" ? "Your current GPS location" : "Waiting for device GPS"}</span>
                   </div>
 
                   <div>
@@ -1547,8 +1626,7 @@ function selectConnector(connector: DbConnector) {
                 <button
                   className="tool-button"
                   onClick={() => {
-                    window.dispatchEvent(new Event("be-electric-locate"));
-                    notify("Map centered on the starting location.");
+                    requestDeviceLocation();
                   }}
                   aria-label="Locate starting point"
                 >
@@ -1674,7 +1752,7 @@ function selectConnector(connector: DbConnector) {
                     <div className="sheet-title-row">
                       <div>
                         <h2>Nearby stations</h2>
-                        <p>{nearbyStations.length} stations within 5 km</p>
+                        <p>{userLocation ? `${nearbyStations.length} stations within 5 km of your GPS location` : "Enable device location to find stations within 5 km"}</p>
                       </div>
                       <button
                         className="sheet-close"
@@ -1685,7 +1763,14 @@ function selectConnector(connector: DbConnector) {
                       </button>
                     </div>
 
-                    {nearbyStations.length === 0 ? (
+                    {!userLocation ? (
+                      <div className="empty-state">
+                        <LocateFixed size={24} />
+                        <b>Device location is needed</b>
+                        <p>Allow location access to calculate nearby stations and distances.</p>
+                        <button type="button" onClick={requestDeviceLocation}>Use my location</button>
+                      </div>
+                    ) : nearbyStations.length === 0 ? (
                       <div className="empty-state">
                         <MapPin size={24} />
                         <b>No nearby stations match these filters</b>
@@ -1739,13 +1824,14 @@ function selectConnector(connector: DbConnector) {
                           </span>
                           <span style={{ textAlign: "right", flexShrink: 0 }}>
                             <b>
-                              {getDistanceKm(
-                                START_LOCATION[0],
-                                START_LOCATION[1],
-                                station.lat,
-                                station.lng
-                              ).toFixed(1)}{" "}
-                              km
+                              {userLocation
+                                ? `${getDistanceKm(
+                                    userLocation[0],
+                                    userLocation[1],
+                                    station.lat,
+                                    station.lng
+                                  ).toFixed(1)} km`
+                                : "GPS needed"}
                             </b>
                             <small style={{ display: "block", marginTop: 4 }}>
                               {station.status}
@@ -2938,8 +3024,8 @@ function selectConnector(connector: DbConnector) {
                       <LocateFixed size={19} />
                     </span>
                     <span>
-                      <b>{nearbyStations.length} stations nearby</b>
-                      <small>Based on stored station coordinates</small>
+                      <b>{userLocation ? `${nearbyStations.length} stations nearby` : "Find stations near me"}</b>
+                      <small>{userLocation ? "Sorted by distance from your GPS location" : "Enable GPS to calculate nearby stations"}</small>
                     </span>
                     <List size={19} />
                   </button>
@@ -3117,7 +3203,7 @@ function selectConnector(connector: DbConnector) {
                         <small>Completed trips</small>
                       </div>
                       <div>
-                        <b>{nearbyStations.length}</b>
+                        <b>{userLocation ? nearbyStations.length : "—"}</b>
                         <small>Nearby stations</small>
                       </div>
                     </div>
