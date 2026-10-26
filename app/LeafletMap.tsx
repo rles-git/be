@@ -171,20 +171,23 @@ function MapController({
   }, [map, routeMode]);
 
   useEffect(() => {
-    if (routeCoords.length < 2) {
+    // Reset only when route preview is closed. While a route is active,
+    // ignore small GPS-origin changes so the map does not snap back after
+    // the user manually zooms or pans.
+    if (!routeMode) {
       lastFittedRouteKey.current = null;
       return;
     }
 
-    const first = routeCoords[0];
+    if (routeCoords.length < 2) return;
+
     const last = routeCoords[routeCoords.length - 1];
 
-    const routeKey =
-      `${first[0]},${first[1]}:${last[0]},${last[1]}`;
+    // Key the fit to the destination only. GPS can update slightly while
+    // moving, but that should not trigger fitBounds again.
+    const routeKey = `${last[0]},${last[1]}`;
 
-    if (lastFittedRouteKey.current === routeKey) {
-      return;
-    }
+    if (lastFittedRouteKey.current === routeKey) return;
 
     lastFittedRouteKey.current = routeKey;
 
@@ -192,7 +195,7 @@ function MapController({
       padding: [60, 60],
       animate: false,
     });
-  }, [map, routeCoords]);
+  }, [map, routeCoords, routeMode]);
 
   return null;
 }
