@@ -74,66 +74,56 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeMode,
   userLocation,
+  roadCoordinates,
+  selectedStationId,
   onRequestLocation,
 }: {
   routeMode: boolean;
   userLocation: [number, number] | null;
+  roadCoordinates: [number, number][];
+  selectedStationId?: string;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
-
-  // Track manual map interaction separately from route geometry updates.
-  const userInteractedWithRoute = useRef(false);
-  const userHasManuallyMovedMap = useRef(false);
-  const routeModeRef = useRef(routeMode);
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
-  const previousRouteMode = useRef(routeMode);
+  const fittedRouteCoordinates = useRef<[number, number][] | null>(null);
+  const routeModeRef = useRef(routeMode);
 
-  // Update refs synchronously during render so events fired in the same tick
-  // as route selection cannot read a stale routeMode value.
-  routeModeRef.current = routeMode;
+  // Keep event handlers in sync without forcing map movement on GPS updates.
   userLocationRef.current = userLocation;
+  routeModeRef.current = routeMode;
 
-  // When route preview starts, focus the map on the GPS/start location once.
-  // Never fit the whole route or keep recentering as route data changes.
+  // Fit the complete route once when routing starts or the destination changes.
+  // After that, the user owns the viewport: manual pan/zoom is never overridden.
   useEffect(() => {
-    const justEnteredRoutePreview = routeMode && !previousRouteMode.current;
-    previousRouteMode.current = routeMode;
-
-    if (justEnteredRoutePreview && userLocationRef.current) {
-      userHasManuallyMovedMap.current = false;
-      map.flyTo(userLocationRef.current, 15, {
-        animate: true,
-        duration: 0.7,
-      });
+    if (!routeMode) {
+      fittedRouteCoordinates.current = null;
+      return;
     }
-  }, [map, routeMode]);
+
+    if (roadCoordinates.length < 2) return;
+
+    if (fittedRouteCoordinates.current === roadCoordinates) return;
+
+    const bounds = L.latLngBounds(roadCoordinates);
+    if (!bounds.isValid()) return;
+
+    fittedRouteCoordinates.current = roadCoordinates;
+    map.fitBounds(bounds, {
+      padding: [44, 44],
+      maxZoom: 15,
+      animate: true,
+      duration: 0.7,
+    });
+  }, [map, routeMode, roadCoordinates]);
 
   useEffect(() => {
-    const markUserInteraction = () => {
-      // Once the user pans or zooms, background updates must not take control
-      // of the viewport again. Locate Me remains an explicit reset action.
-      userHasManuallyMovedMap.current = true;
-      if (routeModeRef.current) {
-        userInteractedWithRoute.current = true;
-      }
-    };
-
-    map.on("dragstart", markUserInteraction);
-    map.on("zoomstart", markUserInteraction);
-
-    return () => {
-      map.off("dragstart", markUserInteraction);
-      map.off("zoomstart", markUserInteraction);
-    };
-  }, [map]);
-
-  useEffect(() => {
-    // GPS may initialize the map once, but must not recenter an active route.
+    // Initialize on the first known location only. Never recenter because GPS
+    // coordinates change, especially while the user is exploring a route.
     if (!userLocation || routeMode) return;
 
-    if (!lastGpsLocation.current && !userHasManuallyMovedMap.current) {
+    if (!lastGpsLocation.current) {
       map.flyTo(userLocation, 15, { duration: 0.7 });
     }
     lastGpsLocation.current = userLocation;
@@ -141,46 +131,43 @@ function MapController({
 
   useEffect(() => {
     const locate = () => {
-      // Explicit Locate Me action may recenter even during route preview.
       const latestLocation = userLocationRef.current;
       if (latestLocation) {
-        userHasManuallyMovedMap.current = false;
-        map.flyTo(latestLocation, 15, { duration: 0.7 });
+        map.flyTo(latestLocation, 15, {
+          animate: true,
+          duration: 0.7,
+        });
       } else {
         onRequestLocation?.();
       }
     };
 
     const locationUpdated = (event: Event) => {
-  const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
-  const { lat, lng } = customEvent.detail ?? {};
+      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+      const { lat, lng } = customEvent.detail ?? {};
 
-  if (
-    typeof lat !== "number" ||
-    typeof lng !== "number" ||
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng)
-  ) {
-    return;
-  }
+      if (
+        typeof lat !== "number" ||
+        typeof lng !== "number" ||
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng)
+      ) {
+        return;
+      }
 
-  // This event is dispatched after the user explicitly requests their location.
-  // Recenter even when route preview is active or the map was manually moved.
-  userHasManuallyMovedMap.current = false;
+      // This event follows an explicit Locate Me request, so recentering is
+      // intentional even if the user has previously panned the map.
+      map.flyTo([lat, lng], 15, {
+        animate: true,
+        duration: 0.7,
+      });
+    };
 
-  map.flyTo([lat, lng], 15, {
-    animate: true,
-    duration: 0.7,
-  });
-};
-
-    
     const refreshMapSize = () => {
       window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
       }, 100);
     };
-
 
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-location-updated", locationUpdated);
@@ -200,9 +187,6 @@ function MapController({
 
     return () => window.clearTimeout(timer);
   }, [map, routeMode]);
-
-  // Do not fitBounds to the route. Keep the initial GPS/fallback start location
-  // as the focus; route geometry updates must not override manual pan or zoom.
 
   return null;
 }
@@ -333,6 +317,8 @@ export default function LeafletMap({
         <MapController
           routeMode={routeMode}
           userLocation={userLocation}
+          roadCoordinates={roadCoordinates}
+          selectedStationId={selectedStationId}
           onRequestLocation={onRequestLocation}
         />
 
