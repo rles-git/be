@@ -74,11 +74,13 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeCoords,
   routeMode,
+  selectedId,
   userLocation,
   onRequestLocation,
 }: {
   routeCoords: [number, number][];
   routeMode: boolean;
+  selectedId: string;
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
 }) {
@@ -91,11 +93,11 @@ function MapController({
 
     // Center on the first GPS fix, but do not fight the user by recentering
     // the map every time the device reports a small location change.
-    if (!lastGpsLocation.current) {
+    if (!lastGpsLocation.current && !routeMode) {
       map.flyTo(userLocation, 15, { duration: 0.7 });
     }
     lastGpsLocation.current = userLocation;
-  }, [map, userLocation]);
+  }, [map, userLocation, routeMode]);
 
   useEffect(() => {
     const locate = () => {
@@ -110,7 +112,12 @@ function MapController({
       const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
       const { lat, lng } = customEvent.detail ?? {};
       if (typeof lat !== "number" || typeof lng !== "number") return;
-      map.flyTo([lat, lng], 15, { duration: 0.7 });
+
+      // GPS watch updates must not move the map while the user is viewing
+      // a route. Otherwise every location update interrupts manual zooming.
+      if (!routeMode) {
+        map.flyTo([lat, lng], 15, { duration: 0.7 });
+      }
     };
 
     const refreshMapSize = () => {
@@ -160,7 +167,7 @@ function MapController({
         panToStation
       );
     };
-  }, [map, userLocation, onRequestLocation]);
+  }, [map, userLocation, onRequestLocation, routeMode]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -181,11 +188,10 @@ function MapController({
 
     if (routeCoords.length < 2) return;
 
-    const last = routeCoords[routeCoords.length - 1];
-
-    // Key the fit to the destination only. GPS can update slightly while
-    // moving, but that should not trigger fitBounds again.
-    const routeKey = `${last[0]},${last[1]}`;
+    // Fit only once for each selected destination during a route preview.
+    // Do not key this to route geometry: GPS updates can slightly change the
+    // OSRM geometry and would otherwise reset the user's zoom level.
+    const routeKey = selectedId;
 
     if (lastFittedRouteKey.current === routeKey) return;
 
@@ -195,7 +201,7 @@ function MapController({
       padding: [60, 60],
       animate: false,
     });
-  }, [map, routeCoords, routeMode]);
+  }, [map, routeCoords, routeMode, selectedId]);
 
   return null;
 }
@@ -326,6 +332,7 @@ export default function LeafletMap({
         <MapController
           routeCoords={roadCoordinates}
           routeMode={routeMode}
+          selectedId={selectedId}
           userLocation={userLocation}
           onRequestLocation={onRequestLocation}
         />
