@@ -37,6 +37,7 @@ type Props = {
   selectedId: string;
   routeMode: boolean;
   userLocation: [number, number] | null;
+  isFallbackLocation?: boolean;
   onRequestLocation?: () => void;
   onSelect: (id: string) => void;
   onRouteCalculated?: (metrics: {
@@ -201,6 +202,7 @@ export default function LeafletMap({
   selectedId,
   routeMode,
   userLocation,
+  isFallbackLocation = false,
   onRequestLocation,
   onSelect,
   onRouteCalculated,
@@ -235,12 +237,15 @@ export default function LeafletMap({
     }
 
     const controller = new AbortController();
+    // Capture the non-null GPS location so TypeScript can safely narrow it
+    // inside the asynchronous route-fetch function.
+    const routeOrigin = userLocation;
 
     async function fetchDrivingRoute() {
       try {
         const url =
           `https://router.project-osrm.org/route/v1/driving/` +
-          `${userLocation[1]},${userLocation[0]};${selectedLng},${selectedLat}` +
+          `${routeOrigin[1]},${routeOrigin[0]};${selectedLng},${selectedLat}` +
           `?overview=full&geometries=geojson`;
 
         const response = await fetch(url, {
@@ -334,7 +339,7 @@ export default function LeafletMap({
             }}
           >
             <Popup>
-              <strong>Your GPS Location</strong>
+              <strong>{isFallbackLocation ? "Default Starting Location" : "Your GPS Location"}</strong>
             </Popup>
           </CircleMarker>
         )}
