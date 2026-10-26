@@ -152,16 +152,29 @@ function MapController({
     };
 
     const locationUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
-      const { lat, lng } = customEvent.detail ?? {};
-      if (typeof lat !== "number" || typeof lng !== "number") return;
+  const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+  const { lat, lng } = customEvent.detail ?? {};
 
-      // Do not move the map due to background GPS updates during route review.
-      if (!routeModeRef.current && !userHasManuallyMovedMap.current) {
-        map.flyTo([lat, lng], 15, { duration: 0.7 });
-      }
-    };
+  if (
+    typeof lat !== "number" ||
+    typeof lng !== "number" ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
+    return;
+  }
 
+  // This event is dispatched after the user explicitly requests their location.
+  // Recenter even when route preview is active or the map was manually moved.
+  userHasManuallyMovedMap.current = false;
+
+  map.flyTo([lat, lng], 15, {
+    animate: true,
+    duration: 0.7,
+  });
+};
+
+    
     const refreshMapSize = () => {
       window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
