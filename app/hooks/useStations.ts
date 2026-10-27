@@ -84,6 +84,90 @@ export type MapStation = {
   chargers: MapCharger[];
 };
 
+const normalizeStatus = (status: unknown): string =>
+  String(status ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+const IN_USE_STATUSES = [
+  "charging",
+  "in_use",
+  "occupied",
+  "preparing",
+  "reserved",
+  "starting",
+  "suspended_ev",
+  "suspended_evse",
+  "finishing",
+];
+
+const UNAVAILABLE_STATUSES = [
+  "fault",
+  "faulted",
+  "error",
+  "offline",
+  "unavailable",
+  "disabled",
+  "out_of_order",
+  "maintenance",
+];
+
+const AVAILABLE_STATUSES = [
+  "available",
+  "online",
+  "idle",
+  "ready",
+];
+
+function isConnectorAvailable(connector: MapConnector): boolean {
+  const status = normalizeStatus(connector.status);
+
+  if (UNAVAILABLE_STATUSES.includes(status)) return false;
+  if (IN_USE_STATUSES.includes(status)) return false;
+
+  return AVAILABLE_STATUSES.includes(status);
+}
+
+/**
+ * Determine the charger state from its connectors.
+ *
+ * - All connectors in use => charging
+ * - At least one usable connector => available
+ * - No usable connectors and at least one fault/offline => faulted/offline
+ * - Otherwise preserve the existing charger status
+ */
+function getEffectiveChargerStatus(charger: MapCharger): string {
+  const connectors = charger.connectors ?? [];
+
+  if (connectors.length === 0) {
+    return normalizeStatus(charger.status) || "unknown";
+  }
+
+  const availableConnectors = connectors.filter(
+    isConnectorAvailable
+  ).length;
+
+  const inUseConnectors = connectors.filter((connector) =>
+    IN_USE_STATUSES.includes(normalizeStatus(connector.status))
+  ).length;
+
+  const unavailableConnectors = connectors.filter((connector) =>
+    UNAVAILABLE_STATUSES.includes(normalizeStatus(connector.status))
+  ).length;
+
+  if (availableConnectors > 0) {
+    return "available";
+  }
+
+  if (inUseConnectors === connectors.length) {
+    return "charging";
+  }
+
+  if (unavailableConnectors > 0) {
+    return "faulted";
+  }
+
+  return normalizeStatus(charger.status) || "unknown";
+}
+
 export const mapStations = (
   rows: DatabaseStation[]
 ): MapStation[] =>
@@ -97,26 +181,32 @@ export const mapStations = (
         model: charger.model,
         serial_number: charger.serial_number,
         max_power_kw: charger.max_power_kw,
-        status: charger.status,
+        status: normalizeStatus(charger.status) || "unknown",
         protocol: charger.protocol,
         protocol_identity: charger.protocol_identity,
-
         connectors: (charger.connectors ?? []).map((connector) => ({
           id: String(connector.id),
           charger_id: String(connector.charger_id),
           connector_number: connector.connector_number,
           connector_type: connector.connector_type,
           max_power_kw: connector.max_power_kw,
-          status: connector.status,
+          status: normalizeStatus(connector.status) || "unknown",
         })),
       })
     );
 
-    // Count chargers directly from the chargers table data.
-    const available = chargers.filter(
-      (charger) =>
-        charger.status?.trim().toLowerCase() === "available"
-    ).length;
+    // Derive availability from connectors, not the possibly stale
+    // station.available value or chargers.status value.
+    const available = chargers.filter((charger) => {
+      const effectiveStatus = getEffectiveChargerStatus(charger);
+      return effectiveStatus === "available";
+    }).length;
+
+    // Keep the effective status available to all UI components.
+    const chargersWithEffectiveStatus = chargers.map((charger) => ({
+      ...charger,
+      status: getEffectiveChargerStatus(charger),
+    }));
 
     return {
       id: String(station.id),
@@ -126,27 +216,24 @@ export const mapStations = (
       address: station.address ?? "Address unavailable",
       lat: Number(station.lat),
       lng: Number(station.lng),
-
-      // Number of available chargers from the charger records.
       available,
-
       power: station.power,
       price: station.price,
       kind: station.kind,
       distance: station.distance ?? "",
       minutes: station.minutes ?? 0,
-
       status:
         chargers.length === 0
           ? "unknown"
           : available === 0
-            ? "offline"
+            ? chargersWithEffectiveStatus.every((charger) =>
+                ["charging", "in_use"].includes(charger.status)
+              )
+              ? "in_use"
+              : "unavailable"
             : "online",
-
       operator: null,
-
-      // Array of individual chargers.
-      chargers,
+      chargers: chargersWithEffectiveStatus,
     };
   });
 
@@ -193,7 +280,6 @@ export function useStations() {
 
     loadStations();
 
-    // Refresh station and charger data every five seconds.
     const intervalId = window.setInterval(loadStations, 5000);
 
     return () => {
