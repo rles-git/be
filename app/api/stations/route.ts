@@ -1,23 +1,15 @@
 
 import { NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import { getSql } from "../../../lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const databaseUrl = process.env.DATABASE_URL;
+    const sql = getSql();
 
-    if (!databaseUrl) {
-      return NextResponse.json(
-        { error: "DATABASE_URL is not configured." },
-        { status: 500 }
-      );
-    }
-
-    const sql = neon(databaseUrl);
-
+    
     // Read Q001 directly for diagnostics.
     const diagnostic = await sql`
       SELECT
