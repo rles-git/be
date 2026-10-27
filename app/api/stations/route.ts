@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSql } from "../../../lib/auth";
+import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,8 +15,22 @@ export async function GET() {
       );
     }
 
-    const sql = getSql();
-
+    const sql = neon(databaseUrl);
+    const diagnostic = await sql`
+      SELECT
+        current_database() AS database_name,
+        current_schema() AS schema_name,
+        (
+          SELECT name
+          FROM public.stations
+          WHERE id = 'Q001'
+          LIMIT 1
+        ) AS q001_name
+    `;
+    
+    if (new URL(request.url).searchParams.get("debug") === "1") {
+      return NextResponse.json(diagnostic[0]);
+    }
     const stations = await sql`
       SELECT
         s.id,
