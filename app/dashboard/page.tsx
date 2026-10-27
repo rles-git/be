@@ -26,6 +26,7 @@ import {
   Route,
   Search,
   Settings2,
+  Star,
   UserRound,
   X,
   Zap,
@@ -332,6 +333,14 @@ type UserProfile = {
   createdAt?: string | null;
 };
 
+type StationReview = {
+  id: string | number;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at?: string;
+};
+
 type ActiveChargingSession = {
   id: string | number;
   startedAt: string;
@@ -453,6 +462,16 @@ const [chargingError, setChargingError] = useState("");
 const [chargingHistory, setChargingHistory] = useState<any[]>([]);
 const [historyLoading, setHistoryLoading] = useState(false);
 const [chargingSessionsExpanded, setChargingSessionsExpanded] = useState(false);
+const [stationReviews, setStationReviews] = useState<StationReview[]>([]);
+const [reviewsAverageRating, setReviewsAverageRating] = useState(0);
+const [reviewsTotal, setReviewsTotal] = useState(0);
+const [reviewsLoading, setReviewsLoading] = useState(false);
+const [reviewRating, setReviewRating] = useState(5);
+const [reviewComment, setReviewComment] = useState("");
+const [reviewSubmitting, setReviewSubmitting] = useState(false);
+const [reviewError, setReviewError] = useState("");
+const [reviewNotice, setReviewNotice] = useState("");
+
 
   
 const handleCableConnection = () => {
@@ -807,6 +826,112 @@ useEffect(() => {
   }, [activeSession]);
 
   useEffect(() => {
+  if (panel !== "details" || !selectedId) return;
+
+  let cancelled = false;
+
+  async function loadStationReviews() {
+    setReviewsLoading(true);
+    setReviewError("");
+
+    try {
+      const response = await fetch(
+        `/api/stations/${encodeURIComponent(selectedId)}/reviews`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not load station reviews.");
+      }
+
+      if (!cancelled) {
+        setStationReviews(Array.isArray(data.reviews) ? data.reviews : []);
+        setReviewsAverageRating(Number(data.averageRating) || 0);
+        setReviewsTotal(Number(data.totalReviews) || 0);
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setReviewError(
+          error instanceof Error ? error.message : "Could not load station reviews."
+        );
+      }
+    } finally {
+      if (!cancelled) setReviewsLoading(false);
+    }
+  }
+
+  void loadStationReviews();
+
+  return () => {
+    cancelled = true;
+  };
+}, [panel, selectedId]);
+
+async function submitStationReview(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  if (!selected) return;
+
+  setReviewSubmitting(true);
+  setReviewError("");
+  setReviewNotice("");
+
+  try {
+    const response = await fetch(
+      `/api/stations/${encodeURIComponent(String(selected.id))}/reviews`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not submit your review.");
+    }
+
+    setReviewComment("");
+    setReviewRating(5);
+    setReviewNotice("Your review has been submitted.");
+
+    const refreshed = await fetch(
+      `/api/stations/${encodeURIComponent(String(selected.id))}/reviews`,
+      {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
+    const refreshedData = await refreshed.json();
+
+    if (refreshed.ok) {
+      setStationReviews(
+        Array.isArray(refreshedData.reviews) ? refreshedData.reviews : []
+      );
+      setReviewsAverageRating(Number(refreshedData.averageRating) || 0);
+      setReviewsTotal(Number(refreshedData.totalReviews) || 0);
+    }
+  } catch (error) {
+    setReviewError(
+      error instanceof Error ? error.message : "Could not submit your review."
+    );
+  } finally {
+    setReviewSubmitting(false);
+  }
+}
+
+useEffect(() => {
   if (activeTab !== "Profile") return;
 
   let cancelled = false;
@@ -2845,6 +2970,177 @@ function selectConnector(connector: DbConnector) {
                               : "Operator not specified"}
                           </small>
                         </div>
+                      </div>
+                    </section>
+
+                    <section className="details-section" aria-labelledby="station-reviews-heading">
+                      <div className="details-section-heading">
+                        <h3 id="station-reviews-heading">Station reviews</h3>
+                        <span>COMMUNITY</span>
+                      </div>
+
+                      <div
+                        className="operating-card"
+                        style={{ alignItems: "center", marginBottom: 14 }}
+                      >
+                        <span className="operating-icon">
+                          <Star size={20} />
+                        </span>
+                        <div>
+                          <strong style={{ fontSize: 20 }}>
+                            {reviewsAverageRating.toFixed(1)} / 5
+                          </strong>
+                          <p>
+                            {reviewsTotal} {reviewsTotal === 1 ? "review" : "reviews"}
+                          </p>
+                          <div
+                            aria-label={`${reviewsAverageRating.toFixed(1)} out of 5 stars`}
+                            style={{ display: "flex", gap: 2, marginTop: 4, color: "#b88725" }}
+                          >
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                size={15}
+                                fill={star <= Math.round(reviewsAverageRating) ? "currentColor" : "none"}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <form onSubmit={submitStationReview} className="community-card" style={{ display: "block" }}>
+                        <strong>Rate this station</strong>
+                        <p style={{ marginTop: 4 }}>
+                          Share feedback about this location, its facilities, and your overall charging experience.
+                        </p>
+
+                        <div
+                          role="radiogroup"
+                          aria-label="Your star rating"
+                          style={{ display: "flex", gap: 5, margin: "12px 0" }}
+                        >
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRating(star)}
+                              aria-label={`${star} ${star === 1 ? "star" : "stars"}`}
+                              aria-pressed={reviewRating === star}
+                              style={{
+                                border: 0,
+                                background: "transparent",
+                                padding: 3,
+                                color: star <= reviewRating ? "#b88725" : "#a8afa8",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Star
+                                size={27}
+                                fill={star <= reviewRating ? "currentColor" : "none"}
+                              />
+                            </button>
+                          ))}
+                        </div>
+
+                        <label
+                          htmlFor="station-review-comment"
+                          style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6 }}
+                        >
+                          Comment (optional)
+                        </label>
+                        <textarea
+                          id="station-review-comment"
+                          value={reviewComment}
+                          onChange={(event) => setReviewComment(event.target.value)}
+                          maxLength={2000}
+                          rows={3}
+                          placeholder="How was your experience at this station?"
+                          style={{
+                            width: "100%",
+                            boxSizing: "border-box",
+                            resize: "vertical",
+                            border: "1px solid #dce3dc",
+                            borderRadius: 10,
+                            padding: 10,
+                            font: "inherit",
+                            fontSize: 13,
+                            background: "#fff",
+                            color: "#26342a",
+                          }}
+                        />
+
+                        <small style={{ display: "block", textAlign: "right", marginTop: 4 }}>
+                          {reviewComment.length}/2000
+                        </small>
+
+                        {reviewError && (
+                          <p role="alert" style={{ color: "#a83232", fontSize: 12, marginTop: 8 }}>
+                            {reviewError}
+                          </p>
+                        )}
+                        {reviewNotice && (
+                          <p role="status" style={{ color: "#36543c", fontSize: 12, marginTop: 8 }}>
+                            {reviewNotice}
+                          </p>
+                        )}
+
+                        <button
+                          className="primary-button"
+                          type="submit"
+                          disabled={reviewSubmitting}
+                          style={{ marginTop: 10, opacity: reviewSubmitting ? 0.65 : 1 }}
+                        >
+                          <Star size={17} />
+                          {reviewSubmitting ? "Submitting…" : "Submit review"}
+                        </button>
+                      </form>
+
+                      <div style={{ marginTop: 14 }}>
+                        <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Recent reviews</h4>
+                        {reviewsLoading ? (
+                          <p className="details-note">Loading station reviews…</p>
+                        ) : stationReviews.length === 0 ? (
+                          <div className="empty-state">
+                            <Star size={23} />
+                            <b>No reviews yet</b>
+                            <p>Be the first to review this charging station.</p>
+                          </div>
+                        ) : (
+                          stationReviews.map((review) => (
+                            <article
+                              key={review.id}
+                              className="community-card"
+                              style={{ marginBottom: 9, alignItems: "flex-start" }}
+                            >
+                              <div className="community-avatar">
+                                <Star size={17} />
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <strong>Driver review</strong>
+                                <div
+                                  aria-label={`${review.rating} out of 5 stars`}
+                                  style={{ display: "flex", gap: 2, color: "#b88725", margin: "5px 0" }}
+                                >
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      size={13}
+                                      fill={star <= review.rating ? "currentColor" : "none"}
+                                    />
+                                  ))}
+                                </div>
+                                {review.comment && (
+                                  <p style={{ overflowWrap: "anywhere" }}>{review.comment}</p>
+                                )}
+                                <small>
+                                  {review.created_at
+                                    ? new Date(review.created_at).toLocaleDateString()
+                                    : "Date unavailable"}
+                                </small>
+                              </div>
+                            </article>
+                          ))
+                        )}
                       </div>
                     </section>
 
