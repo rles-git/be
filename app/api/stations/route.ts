@@ -4,13 +4,36 @@ import { getSql } from "../../../lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
     const sql = getSql();
 
-    
-    // Read Q001 directly for diagnostics.
+    // Diagnostic: identify the database connection used by this request.
+    const connectionInfo = await sql`
+      SELECT
+        current_database() AS database_name,
+        current_user AS database_user,
+        current_schema() AS schema_name,
+        current_setting('search_path') AS search_path,
+        inet_server_port() AS server_port,
+        pg_is_in_recovery() AS is_replica
+    `;
+
+    // Diagnostic: read Q001 directly from the deployed database connection.
+    const rowCheck = await sql`
+      SELECT
+        id,
+        name,
+        short_name,
+        xmin::text AS row_version
+      FROM public.stations
+      WHERE id = 'Q001'
+      LIMIT 1
+    `;
+
+    // Existing diagnostic query.
     const diagnostic = await sql`
       SELECT
         current_database() AS database_name,
@@ -25,7 +48,6 @@ export async function GET(request: Request) {
     `;
 
     // Fetch stations, chargers, and connectors.
-    // Select short_name without aliasing it here.
     const stations = await sql`
       SELECT
         s.id,
@@ -94,15 +116,14 @@ export async function GET(request: Request) {
       ORDER BY s.id ASC
     `;
 
-    // Normalize the database result for the frontend.
-const normalizedStations: Array<Record<string, any>> = stations.map(
-  (station: Record<string, any>) => ({
-    ...station,
-    shortName: station.short_name,
-  })
-);
+    // Map database fields to the names expected by the frontend.
+    const normalizedStations: Array<Record<string, any>> =
+      stations.map((station: Record<string, any>) => ({
+        ...station,
+        shortName: station.short_name,
+      }));
 
-    // Run a second direct query to compare the database value.
+    // Run another direct query to compare Q001's short name.
     const shortNameCheck = await sql`
       SELECT
         id,
@@ -116,25 +137,38 @@ const normalizedStations: Array<Record<string, any>> = stations.map(
       (station) => String(station.id) === "Q001"
     );
 
-    console.log("Diagnostic short_name:", diagnostic[0]?.short_name);
-    console.log(
-      "Second query short_name:",
-      shortNameCheck[0]?.short_name
-    );
-    console.log("Normalized Q001:", q001?.shortName);
-    console.log("Stations returned:", normalizedStations.length);
+    console.log("Station API diagnostics:", {
+      connectionInfo: connectionInfo[0] ?? null,
+      rowCheck: rowCheck[0] ?? null,
+      diagnostic: diagnostic[0] ?? null,
+      secondQuery: shortNameCheck[0] ?? null,
+      normalizedQ001: q001
+        ? {
+            id: q001.id,
+            name: q001.name,
+            shortName: q001.shortName,
+          }
+        : null,
+      stationCount: normalizedStations.length,
+    });
 
-    // Diagnostic mode.
+    // Return diagnostics only when explicitly requested.
     if (new URL(request.url).searchParams.get("debug") === "1") {
       return NextResponse.json(
         {
+          connectionInfo: connectionInfo[0] ?? null,
+          rowCheck: rowCheck[0] ?? null,
           diagnostic: diagnostic[0] ?? null,
           secondQuery: shortNameCheck[0] ?? null,
           normalQueryQ001: q001 ?? null,
+          stationCount: normalizedStations.length,
         },
         {
           headers: {
-            "Cache-Control": "no-store, max-age=0",
+            "Cache-Control":
+              "no-store, no-cache, must-revalidate, max-age=0",
+            Pragma: "no-cache",
+            Expires: "0",
           },
         }
       );
@@ -143,7 +177,10 @@ const normalizedStations: Array<Record<string, any>> = stations.map(
     // Normal API response.
     return NextResponse.json(normalizedStations, {
       headers: {
-        "Cache-Control": "no-store, max-age=0",
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, max-age=0",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (error) {
@@ -157,8 +194,12 @@ const normalizedStations: Array<Record<string, any>> = stations.map(
         error:
           "Failed to fetch charging stations, chargers, and connectors.",
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 }
-
