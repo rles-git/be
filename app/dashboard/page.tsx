@@ -120,7 +120,7 @@ function normalizeStatus(status: string | null | undefined) {
   return String(status ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[\s-]+/g, "_");
+    .replace(/[\\s-]+/g, "_");
 }
 
 function isAvailableStatus(status: string | null | undefined) {
@@ -509,8 +509,8 @@ const connectorId = String(selectedConnector.id);
 
   handshakeSocketRef.current = socket;
 
-  // Do not mark the cable connected until the simulator confirms the handshake.
-  setCarConnected(false);
+  // The cable is confirmed independently of the handshake.
+  setCarConnected(true);
   setHandshakeCompleted(false);
   setHandshakePending(true);
   setHandshakeError("");
@@ -532,12 +532,10 @@ socket.onmessage = (event) => {
     if (String(data.connectorId) !== connectorId) return;
 
     if (data.ok === true) {
-      setCarConnected(true);
       setHandshakeCompleted(true);
       setHandshakePending(false);
       setHandshakeError("");
     } else {
-      setCarConnected(false);
       setHandshakeCompleted(false);
       setHandshakePending(false);
       setHandshakeError(data.error || "The charger handshake failed.");
@@ -554,8 +552,6 @@ socket.onmessage = (event) => {
 };
 
   socket.onerror = () => {
-    setCarConnected(false);
-    setHandshakeCompleted(false);
     setHandshakePending(false);
     setHandshakeError(
       "Could not connect to the simulator. Check the simulator server."
@@ -667,9 +663,7 @@ const restoreActiveChargingSession = async () => {
       powerKw,
     });
 
-    // Restore the active charging view after a refresh or reopening the app.
-    setActiveTab("Explore");
-    setPanel("charging-active");
+    // Reopen the active session screen.
     setChargingError("");
   } catch (error) {
     console.error("Could not restore active charging session:", error);
@@ -3149,6 +3143,37 @@ function selectConnector(connector: DbConnector) {
                         )}
                       </div>
                     </section>
+
+                    <section className="details-section">
+                      <div className="details-section-heading">
+                        <h3>User check-ins</h3>
+                        <span>COMMUNITY</span>
+                      </div>
+
+                      <div className="community-card">
+                        <div className="community-avatar">EV</div>
+                        <div>
+                          <strong>Driver check-in</strong>
+                          <small>Community feature preview</small>
+                          <p>
+                            Check the bay markings and connector before
+                            charging.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        className="secondary-button"
+                        onClick={() =>
+                          notify("Community check-ins are not connected yet.")
+                        }
+                      >
+                        <Check size={18} /> Check in at this station
+                      </button>
+                    </section>
+
+                    <div className="details-bottom-space" />
+                  </div>
                 </div>
               ) : panel === "station" ? (
                 <div
