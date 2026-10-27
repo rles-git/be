@@ -3143,6 +3143,8 @@ function selectConnector(connector: DbConnector) {
                         )}
                       </div>
                     </section>
+                    <div className="details-bottom-space" />
+                  </div>
                 </div>
               ) : panel === "station" ? (
                 <div
