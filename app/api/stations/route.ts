@@ -18,17 +18,18 @@ export async function GET(request: Request) {
     const sql = neon(databaseUrl);
 
     // Diagnostic: read Q001 directly from the stations table.
-    const diagnostic = await sql`
-      SELECT
-        current_database() AS database_name,
-        current_schema() AS schema_name,
-        (
-          SELECT name
-          FROM public.stations
-          WHERE id = 'Q001'
-          LIMIT 1
-        ) AS q001_name
-    `;
+const diagnostic = await sql`
+  SELECT
+    current_database() AS database_name,
+    current_schema() AS schema_name,
+    id,
+    name,
+    short_name,
+    address
+  FROM public.stations
+  WHERE id = 'Q001'
+  LIMIT 1
+`;
 
     // Fetch stations and their related chargers and connectors.
     const stations = await sql`
