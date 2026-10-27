@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
@@ -17,21 +18,21 @@ export async function GET(request: Request) {
 
     const sql = neon(databaseUrl);
 
-    // Diagnostic: read Q001 directly from the stations table.
-const diagnostic = await sql`
-  SELECT
-    current_database() AS database_name,
-    current_schema() AS schema_name,
-    id,
-    name,
-    short_name,
-    address
-  FROM public.stations
-  WHERE id = 'Q001'
-  LIMIT 1
-`;
+    // 1. Read Q001 directly from the stations table.
+    const diagnostic = await sql`
+      SELECT
+        current_database() AS database_name,
+        current_schema() AS schema_name,
+        id,
+        name,
+        short_name,
+        address
+      FROM public.stations
+      WHERE id = 'Q001'
+      LIMIT 1
+    `;
 
-    // Fetch stations and their related chargers and connectors.
+    // 2. Fetch stations, chargers, and connectors.
     const stations = await sql`
       SELECT
         s.id,
@@ -100,18 +101,37 @@ const diagnostic = await sql`
       ORDER BY s.id ASC
     `;
 
+    // 3. Run another direct read after the normal query.
+    const shortNameCheck = await sql`
+      SELECT
+        id,
+        short_name
+      FROM public.stations
+      WHERE id = 'Q001'
+      LIMIT 1
+    `;
+
+    const q001 = stations.find(
+      (station) => String(station.id) === "Q001"
+    );
+
+    console.log("Diagnostic short_name:", diagnostic[0]?.short_name);
+    console.log(
+      "Second query short_name:",
+      shortNameCheck[0]?.short_name
+    );
+    console.log(
+      "Normal query shortName:",
+      q001?.shortName
+    );
     console.log("Stations returned:", stations.length);
 
-    // Diagnostic mode: compare the direct database value with
-    // the Q001 record returned by the normal stations query.
+    // 4. Diagnostic response for debugging only.
     if (new URL(request.url).searchParams.get("debug") === "1") {
-      const q001 = stations.find(
-        (station) => String(station.id) === "Q001"
-      );
-
       return NextResponse.json(
         {
-          diagnostic: diagnostic[0],
+          diagnostic: diagnostic[0] ?? null,
+          secondQuery: shortNameCheck[0] ?? null,
           normalQueryQ001: q001 ?? null,
         },
         {
@@ -122,6 +142,7 @@ const diagnostic = await sql`
       );
     }
 
+    // 5. Normal API response for the app.
     return NextResponse.json(stations, {
       headers: {
         "Cache-Control": "no-store, max-age=0",
