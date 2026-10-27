@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import { getSql } from "../../../lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET() {
       );
     }
 
-    const sql = neon(databaseUrl);
+    const sql = getSql();
 
     const stations = await sql`
       SELECT
