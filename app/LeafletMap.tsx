@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -46,8 +45,39 @@ type Props = {
   }) => void;
 };
 
+/**
+ * Use individual charger statuses as the source of truth.
+ * Keep this list consistent with the station details component.
+ */
+function isAvailableStatus(status: unknown): boolean {
+  const normalized = String(status ?? "")
+    .trim()
+    .toLowerCase();
+
+  return ["available", "online", "idle", "ready"].includes(
+    normalized
+  );
+}
+
+function getAvailableChargerCount(station: Station): number {
+  const chargers = Array.isArray(station.chargers)
+    ? station.chargers
+    : [];
+
+  // When charger records are available, never trust the station-level
+  // available count because it may be stale.
+  if (chargers.length > 0) {
+    return chargers.filter((charger) =>
+      isAvailableStatus(charger.status)
+    ).length;
+  }
+
+  // Fallback for stations whose charger records have not loaded yet.
+  return station.available ?? 0;
+}
+
 function stationIcon(station: Station, selected: boolean) {
-  const available = station.available ?? 0;
+  const available = getAvailableChargerCount(station);
 
   return L.divIcon({
     className: "leaflet-station-icon-wrap",
@@ -75,7 +105,6 @@ function MapController({
   routeMode,
   userLocation,
   roadCoordinates,
-  selectedStationId,
   onRequestLocation,
 }: {
   routeMode: boolean;
@@ -87,15 +116,16 @@ function MapController({
   const map = useMap();
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
-  const fittedRouteCoordinates = useRef<[number, number][] | null>(null);
-  const routeModeRef = useRef(routeMode);
+  const fittedRouteCoordinates = useRef<[number, number][] | null>(
+    null
+  );
 
-  // Keep event handlers in sync without forcing map movement on GPS updates.
+  // Keep the latest location available without making the map
+  // automatically recenter whenever the GPS location changes.
   userLocationRef.current = userLocation;
-  routeModeRef.current = routeMode;
 
-  // Fit the complete route once when routing starts or the destination changes.
-  // After that, the user owns the viewport: manual pan/zoom is never overridden.
+  // Fit the complete route when a new route is calculated.
+  // Do not override the user's manual pan or zoom afterward.
   useEffect(() => {
     if (!routeMode) {
       fittedRouteCoordinates.current = null;
@@ -107,9 +137,11 @@ function MapController({
     if (fittedRouteCoordinates.current === roadCoordinates) return;
 
     const bounds = L.latLngBounds(roadCoordinates);
+
     if (!bounds.isValid()) return;
 
     fittedRouteCoordinates.current = roadCoordinates;
+
     map.fitBounds(bounds, {
       padding: [44, 44],
       maxZoom: 15,
@@ -119,19 +151,20 @@ function MapController({
   }, [map, routeMode, roadCoordinates]);
 
   useEffect(() => {
-    // Initialize on the first known location only. Never recenter because GPS
-    // coordinates change, especially while the user is exploring a route.
+    // Initialize the map on the first known location only.
     if (!userLocation || routeMode) return;
 
     if (!lastGpsLocation.current) {
       map.flyTo(userLocation, 15, { duration: 0.7 });
     }
+
     lastGpsLocation.current = userLocation;
   }, [map, userLocation, routeMode]);
 
   useEffect(() => {
     const locate = () => {
       const latestLocation = userLocationRef.current;
+
       if (latestLocation) {
         map.flyTo(latestLocation, 15, {
           animate: true,
@@ -143,7 +176,11 @@ function MapController({
     };
 
     const locationUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+      const customEvent = event as CustomEvent<{
+        lat: number;
+        lng: number;
+      }>;
+
       const { lat, lng } = customEvent.detail ?? {};
 
       if (
@@ -155,8 +192,7 @@ function MapController({
         return;
       }
 
-      // This event follows an explicit Locate Me request, so recentering is
-      // intentional even if the user has previously panned the map.
+      // This event follows an explicit Locate Me request.
       map.flyTo([lat, lng], 15, {
         animate: true,
         duration: 0.7,
@@ -170,13 +206,25 @@ function MapController({
     };
 
     window.addEventListener("be-electric-locate", locate);
-    window.addEventListener("be-electric-location-updated", locationUpdated);
-    window.addEventListener("be-electric-map-visible", refreshMapSize);
+    window.addEventListener(
+      "be-electric-location-updated",
+      locationUpdated
+    );
+    window.addEventListener(
+      "be-electric-map-visible",
+      refreshMapSize
+    );
 
     return () => {
       window.removeEventListener("be-electric-locate", locate);
-      window.removeEventListener("be-electric-location-updated", locationUpdated);
-      window.removeEventListener("be-electric-map-visible", refreshMapSize);
+      window.removeEventListener(
+        "be-electric-location-updated",
+        locationUpdated
+      );
+      window.removeEventListener(
+        "be-electric-map-visible",
+        refreshMapSize
+      );
     };
   }, [map, onRequestLocation]);
 
@@ -231,8 +279,6 @@ export default function LeafletMap({
     }
 
     const controller = new AbortController();
-    // Capture the non-null GPS location so TypeScript can safely narrow it
-    // inside the asynchronous route-fetch function.
     const routeOrigin = userLocation;
 
     async function fetchDrivingRoute() {
@@ -266,8 +312,7 @@ export default function LeafletMap({
           setRoadCoordinates(latLngs);
 
           onRouteCalculatedRef.current?.({
-            distance:
-              `${(route.distance / 1000).toFixed(1)} km`,
+            distance: `${(route.distance / 1000).toFixed(1)} km`,
             minutes: Math.max(
               1,
               Math.round(route.duration / 60)
@@ -302,7 +347,13 @@ export default function LeafletMap({
       }`}
     >
       <MapContainer
-        center={userLocation ?? ([stations[0].lat, stations[0].lng] as [number, number])}
+        center={
+          userLocation ??
+          ([stations[0].lat, stations[0].lng] as [
+            number,
+            number
+          ])
+        }
         zoom={userLocation ? 15 : 12}
         zoomControl={false}
         scrollWheelZoom={true}
@@ -318,7 +369,6 @@ export default function LeafletMap({
           routeMode={routeMode}
           userLocation={userLocation}
           roadCoordinates={roadCoordinates}
-          selectedStationId={selectedStationId}
           onRequestLocation={onRequestLocation}
         />
 
@@ -334,14 +384,23 @@ export default function LeafletMap({
             }}
           >
             <Popup>
-              <strong>{isFallbackLocation ? "Default Starting Location" : "Your GPS Location"}</strong>
+              <strong>
+                {isFallbackLocation
+                  ? "Default Starting Location"
+                  : "Your GPS Location"}
+              </strong>
             </Popup>
           </CircleMarker>
         )}
 
         {stations.map((station) => {
-          const totalChargers = station.chargers.length;
-          const availableChargers = station.available ?? 0;
+          const chargers = Array.isArray(station.chargers)
+            ? station.chargers
+            : [];
+
+          const totalChargers = chargers.length;
+          const availableChargers =
+            getAvailableChargerCount(station);
 
           return (
             <Marker
@@ -375,11 +434,10 @@ export default function LeafletMap({
                     Available chargers: {availableChargers}
                   </span>
 
-                  <span>
-                    Status: {station.status}
-                  </span>
+                  <span>Status: {station.status}</span>
 
                   <button
+                    type="button"
                     onClick={() => onSelect(station.id)}
                   >
                     View station
