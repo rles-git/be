@@ -103,10 +103,12 @@ export async function GET(request: Request) {
     `;
 
     // Normalize the database result for the frontend.
-    const normalizedStations = stations.map((station) => ({
-      ...station,
-      shortName: station.short_name,
-    }));
+const normalizedStations: Array<Record<string, any>> = stations.map(
+  (station: Record<string, any>) => ({
+    ...station,
+    shortName: station.short_name,
+  })
+);
 
     // Run a second direct query to compare the database value.
     const shortNameCheck = await sql`
