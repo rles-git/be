@@ -16,6 +16,8 @@ export async function GET(request: Request) {
     }
 
     const sql = neon(databaseUrl);
+
+    // Diagnostic: read Q001 directly from the stations table.
     const diagnostic = await sql`
       SELECT
         current_database() AS database_name,
@@ -27,10 +29,8 @@ export async function GET(request: Request) {
           LIMIT 1
         ) AS q001_name
     `;
-    
-    if (new URL(request.url).searchParams.get("debug") === "1") {
-      return NextResponse.json(diagnostic[0]);
-    }
+
+    // Fetch stations and their related chargers and connectors.
     const stations = await sql`
       SELECT
         s.id,
@@ -39,7 +39,6 @@ export async function GET(request: Request) {
         s.address,
         s.lat,
         s.lng,
-        s.chargers,
         s.available,
         s.power,
         s.price,
@@ -102,16 +101,42 @@ export async function GET(request: Request) {
 
     console.log("Stations returned:", stations.length);
 
+    // Diagnostic mode: compare the direct database value with
+    // the Q001 record returned by the normal stations query.
+    if (new URL(request.url).searchParams.get("debug") === "1") {
+      const q001 = stations.find(
+        (station) => String(station.id) === "Q001"
+      );
+
+      return NextResponse.json(
+        {
+          diagnostic: diagnostic[0],
+          normalQueryQ001: q001 ?? null,
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store, max-age=0",
+          },
+        }
+      );
+    }
+
     return NextResponse.json(stations, {
       headers: {
         "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
-    console.error("Failed to fetch stations, chargers, and connectors:", error);
+    console.error(
+      "Failed to fetch stations, chargers, and connectors:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Failed to fetch charging stations, chargers, and connectors." },
+      {
+        error:
+          "Failed to fetch charging stations, chargers, and connectors.",
+      },
       { status: 500 }
     );
   }
