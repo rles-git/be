@@ -452,6 +452,7 @@ const [chargingBusy, setChargingBusy] = useState(false);
 const [chargingError, setChargingError] = useState("");
 const [chargingHistory, setChargingHistory] = useState<any[]>([]);
 const [historyLoading, setHistoryLoading] = useState(false);
+const [chargingSessionsExpanded, setChargingSessionsExpanded] = useState(false);
 
   
 const handleCableConnection = () => {
@@ -704,7 +705,6 @@ const restoreActiveChargingSession = async () => {
       setElapsedSeconds(0);
       setPanel("charging-active");
       notify("Simulation started. Charging session saved to Neon.");
-      void loadChargingHistory();
     } catch (error) {
       setChargingError(
         error instanceof Error ? error.message : "Could not start charging."
@@ -754,7 +754,6 @@ const restoreActiveChargingSession = async () => {
       setActiveSession(null);
       setPanel("details");
       notify(`Simulation ended. Total energy: ${energy.toFixed(3)} kWh.`);
-      await loadChargingHistory();
     } catch (error) {
       setChargingError(
         error instanceof Error ? error.message : "Could not stop charging."
@@ -763,12 +762,6 @@ const restoreActiveChargingSession = async () => {
       setChargingBusy(false);
     }
   };
-
-  useEffect(() => {
-    if (activeTab === "Activity") {
-      void loadChargingHistory();
-    }
-  }, [activeTab]);
 
 useEffect(() => {
   void restoreActiveChargingSession();
@@ -3123,19 +3116,44 @@ function selectConnector(connector: DbConnector) {
 
                     
 <div className="recent-routes-section" style={{ marginTop: 12 }}>
-  <div className="activity-card header-card">
+  <div
+    className="activity-card header-card"
+    role="button"
+    tabIndex={0}
+    aria-expanded={chargingSessionsExpanded}
+    onClick={() => {
+      const shouldExpand = !chargingSessionsExpanded;
+      setChargingSessionsExpanded(shouldExpand);
+      if (shouldExpand && chargingHistory.length === 0) void loadChargingHistory();
+    }}
+    onKeyDown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        const shouldExpand = !chargingSessionsExpanded;
+        setChargingSessionsExpanded(shouldExpand);
+        if (shouldExpand && chargingHistory.length === 0) void loadChargingHistory();
+      }
+    }}
+    style={{ cursor: "pointer" }}
+  >
     <span><PlugZap size={20} /></span>
     <div>
-      <b>Charging sessions ({chargingHistory.length})</b>
+      <b>Charging sessions{chargingSessionsExpanded ? ` (${chargingHistory.length})` : ""}</b>
       <small>
-        {historyLoading
-          ? "Loading saved sessions..."
-          : "Sessions retrieved from your Neon account"}
+        {chargingSessionsExpanded
+          ? historyLoading
+            ? "Loading saved sessions..."
+            : "Sessions retrieved from your Neon account"
+          : "Click to view your saved charging sessions"}
       </small>
     </div>
     <button
       type="button"
-      onClick={() => void loadChargingHistory()}
+      onClick={(event) => {
+        event.stopPropagation();
+        setChargingSessionsExpanded(true);
+        void loadChargingHistory();
+      }}
       disabled={historyLoading}
       aria-label="Refresh charging sessions"
       style={{
@@ -3151,45 +3169,34 @@ function selectConnector(connector: DbConnector) {
     </button>
   </div>
 
-  {!historyLoading && chargingHistory.length === 0 && (
-    <p style={{ color: "#687168", fontSize: 13, padding: 12 }}>
-      No charging sessions saved yet. Complete a handshake and start a
-      simulation to create your first session.
-    </p>
+  {chargingSessionsExpanded && (
+    <>
+      {!historyLoading && chargingHistory.length === 0 && (
+        <p style={{ color: "#687168", fontSize: 13, padding: 12 }}>
+          No charging sessions saved yet. Complete a handshake and start a
+          simulation to create your first session.
+        </p>
+      )}
+
+      {chargingHistory.map((session) => (
+        <div key={String(session.id)} className="saved-card" style={{ cursor: "default" }}>
+          <span className="saved-zap"><BatteryCharging size={18} /></span>
+          <span style={{ minWidth: 0, flex: 1 }}>
+            <b>Session #{session.id} · {session.status}</b>
+            <small>
+              Connector {session.connector_number ?? session.connector_id}
+              {session.connector_type ? ` · ${session.connector_type}` : ""}
+            </small>
+            <small>
+              {Number(session.energy_kwh ?? 0).toFixed(3)} kWh · Started{" "}
+              {session.started_at ? new Date(session.started_at).toLocaleString() : "—"}
+            </small>
+            {session.ended_at && <small>Ended {new Date(session.ended_at).toLocaleString()}</small>}
+          </span>
+        </div>
+      ))}
+    </>
   )}
-
-  {chargingHistory.map((session) => (
-    <div
-      key={String(session.id)}
-      className="saved-card"
-      style={{ cursor: "default" }}
-    >
-      <span className="saved-zap">
-        <BatteryCharging size={18} />
-      </span>
-
-      <span style={{ minWidth: 0, flex: 1 }}>
-        <b>
-          Session #{session.id} · {session.status}
-        </b>
-        <small>
-          Connector {session.connector_number ?? session.connector_id}
-          {session.connector_type ? ` · ${session.connector_type}` : ""}
-        </small>
-        <small>
-          {Number(session.energy_kwh ?? 0).toFixed(3)} kWh · Started{" "}
-          {session.started_at
-            ? new Date(session.started_at).toLocaleString()
-            : "—"}
-        </small>
-        {session.ended_at && (
-          <small>
-            Ended {new Date(session.ended_at).toLocaleString()}
-          </small>
-        )}
-      </span>
-    </div>
-  ))}
 </div>
 
                     <div className="stat-cards">
