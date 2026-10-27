@@ -2910,7 +2910,7 @@ function selectConnector(connector: DbConnector) {
 <div
   className="stall-grid"
   style={{
-    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${Math.max(2, columns)}, minmax(0, 1fr))`,
   }}
 >
   {chargers.map((charger) => (
