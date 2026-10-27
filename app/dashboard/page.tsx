@@ -120,7 +120,7 @@ function normalizeStatus(status: string | null | undefined) {
   return String(status ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[\\s-]+/g, "_");
+    .replace(/[\s-]+/g, "_");
 }
 
 function isAvailableStatus(status: string | null | undefined) {
@@ -509,8 +509,8 @@ const connectorId = String(selectedConnector.id);
 
   handshakeSocketRef.current = socket;
 
-  // The cable is confirmed independently of the handshake.
-  setCarConnected(true);
+  // Do not mark the cable connected until the simulator confirms the handshake.
+  setCarConnected(false);
   setHandshakeCompleted(false);
   setHandshakePending(true);
   setHandshakeError("");
@@ -532,10 +532,12 @@ socket.onmessage = (event) => {
     if (String(data.connectorId) !== connectorId) return;
 
     if (data.ok === true) {
+      setCarConnected(true);
       setHandshakeCompleted(true);
       setHandshakePending(false);
       setHandshakeError("");
     } else {
+      setCarConnected(false);
       setHandshakeCompleted(false);
       setHandshakePending(false);
       setHandshakeError(data.error || "The charger handshake failed.");
@@ -552,6 +554,8 @@ socket.onmessage = (event) => {
 };
 
   socket.onerror = () => {
+    setCarConnected(false);
+    setHandshakeCompleted(false);
     setHandshakePending(false);
     setHandshakeError(
       "Could not connect to the simulator. Check the simulator server."
@@ -663,7 +667,9 @@ const restoreActiveChargingSession = async () => {
       powerKw,
     });
 
-    // Reopen the active session screen.
+    // Restore the active charging view after a refresh or reopening the app.
+    setActiveTab("Explore");
+    setPanel("charging-active");
     setChargingError("");
   } catch (error) {
     console.error("Could not restore active charging session:", error);
