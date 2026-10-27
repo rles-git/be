@@ -4,7 +4,7 @@ import { neon } from "@neondatabase/serverless";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const databaseUrl = process.env.DATABASE_URL;
 
