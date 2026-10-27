@@ -3143,37 +3143,6 @@ function selectConnector(connector: DbConnector) {
                         )}
                       </div>
                     </section>
-
-                    <section className="details-section">
-                      <div className="details-section-heading">
-                        <h3>User check-ins</h3>
-                        <span>COMMUNITY</span>
-                      </div>
-
-                      <div className="community-card">
-                        <div className="community-avatar">EV</div>
-                        <div>
-                          <strong>Driver check-in</strong>
-                          <small>Community feature preview</small>
-                          <p>
-                            Check the bay markings and connector before
-                            charging.
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        className="secondary-button"
-                        onClick={() =>
-                          notify("Community check-ins are not connected yet.")
-                        }
-                      >
-                        <Check size={18} /> Check in at this station
-                      </button>
-                    </section>
-
-                    <div className="details-bottom-space" />
-                  </div>
                 </div>
               ) : panel === "station" ? (
                 <div
