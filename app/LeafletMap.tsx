@@ -119,33 +119,46 @@ function MapController({
   const lastGpsLocation = useRef<[number, number] | null>(null);
   const followGps = useRef(false);
   const previousRouteMode = useRef(routeMode);
+  const routeStartCentered = useRef(false);
 
   userLocationRef.current = userLocation;
 
-  // Start following when navigation begins; stop following when it ends.
+  // On route start, center on the user's current GPS position exactly once.
+  // Do not frame the whole route; this avoids competing map animations.
   useEffect(() => {
     if (routeMode && !previousRouteMode.current) {
       followGps.current = true;
+      routeStartCentered.current = false;
+      const latest = userLocationRef.current;
+      if (latest) {
+        map.stop();
+        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
+        lastGpsLocation.current = latest;
+        routeStartCentered.current = true;
+      } else {
+        onRequestLocation?.();
+      }
     } else if (!routeMode) {
       followGps.current = false;
+      routeStartCentered.current = false;
     }
     previousRouteMode.current = routeMode;
-  }, [routeMode]);
+  }, [map, routeMode, onRequestLocation]);
 
-  // A manual drag opts out of follow mode, but GPS tracking continues.
-  // The reset-location control re-enables follow mode.
+  // User interaction temporarily disables following. GPS continues updating;
+  // the map will stay where the user pans until Reset Location is pressed.
   useEffect(() => {
-    const stopFollowingOnDrag = () => {
+    const pauseFollowing = () => {
       followGps.current = false;
     };
-    map.on("dragstart", stopFollowingOnDrag);
+    map.on("dragstart", pauseFollowing);
     return () => {
-      map.off("dragstart", stopFollowingOnDrag);
+      map.off("dragstart", pauseFollowing);
     };
   }, [map]);
 
-  // Recenter only when the GPS position actually changes and follow mode
-  // is enabled. This avoids overriding the initial route fit or user panning.
+  // Follow GPS without animated pans that can repeatedly interrupt a user's
+  // gesture. A manual drag disables this until the explicit locate/reset event.
   useEffect(() => {
     if (!userLocation) return;
 
@@ -154,10 +167,11 @@ function MapController({
       previous[0] !== userLocation[0] ||
       previous[1] !== userLocation[1];
 
-    if (changed && previous && routeMode && followGps.current) {
-      map.panTo(userLocation, { animate: true, duration: 0.5 });
+    if (changed && routeMode && followGps.current) {
+      map.stop();
+      map.panTo(userLocation, { animate: false });
     } else if (!previous && !routeMode) {
-      map.flyTo(userLocation, 15, { duration: 0.7 });
+      map.setView(userLocation, 15, { animate: false });
     }
 
     lastGpsLocation.current = userLocation;
@@ -166,13 +180,11 @@ function MapController({
   useEffect(() => {
     const locate = () => {
       const latestLocation = userLocationRef.current;
-
       if (latestLocation) {
         followGps.current = true;
-        map.flyTo(latestLocation, 16, {
-          animate: true,
-          duration: 0.7,
-        });
+        lastGpsLocation.current = latestLocation;
+        map.stop();
+        map.setView(latestLocation, 16, { animate: false });
       } else {
         onRequestLocation?.();
       }
@@ -181,7 +193,6 @@ function MapController({
     const locationUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
       const { lat, lng } = customEvent.detail ?? {};
-
       if (
         typeof lat !== "number" ||
         typeof lng !== "number" ||
@@ -189,13 +200,11 @@ function MapController({
         !Number.isFinite(lng)
       ) return;
 
-      // This event is emitted after an explicit reset/locate request.
+      const latest: [number, number] = [lat, lng];
       followGps.current = true;
-      lastGpsLocation.current = [lat, lng];
-      map.flyTo([lat, lng], 16, {
-        animate: true,
-        duration: 0.7,
-      });
+      lastGpsLocation.current = latest;
+      map.stop();
+      map.setView(latest, 16, { animate: false });
     };
 
     const refreshMapSize = () => {
@@ -207,7 +216,6 @@ function MapController({
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-location-updated", locationUpdated);
     window.addEventListener("be-electric-map-visible", refreshMapSize);
-
     return () => {
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener("be-electric-location-updated", locationUpdated);
@@ -252,20 +260,33 @@ export default function LeafletMap({
   const selectedLat = selected?.lat;
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
+  const routeOriginRef = useRef<[number, number] | null>(userLocation);
+  const previousRouteForOrigin = useRef(routeMode);
+  const lastRequestedRouteKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (
-      !routeMode ||
-      !userLocation ||
-      selectedLat == null ||
-      selectedLng == null
-    ) {
+    if (routeMode && !previousRouteForOrigin.current && userLocation) {
+      routeOriginRef.current = userLocation;
+    } else if (!routeMode) {
+      routeOriginRef.current = userLocation;
+    }
+    previousRouteForOrigin.current = routeMode;
+  }, [routeMode, userLocation]);
+
+  useEffect(() => {
+    if (!routeMode) {
       setRoadCoordinates([]);
+      lastRequestedRouteKey.current = null;
       return;
     }
+    if (!userLocation || selectedLat == null || selectedLng == null) return;
+
+    const routeKey = `${selectedStationId}:${selectedLat}:${selectedLng}`;
+    if (lastRequestedRouteKey.current === routeKey) return;
+    lastRequestedRouteKey.current = routeKey;
 
     const controller = new AbortController();
-    const routeOrigin = userLocation;
+    const routeOrigin = routeOriginRef.current ?? userLocation;
 
     async function fetchDrivingRoute() {
       try {
