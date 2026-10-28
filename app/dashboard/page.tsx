@@ -622,6 +622,13 @@ socket.onmessage = (event) => {
     }
   };
 
+  // Load charging history automatically whenever the Activity tab is opened.
+  useEffect(() => {
+    if (activeTab === "Activity") {
+      void loadChargingHistory();
+    }
+  }, [activeTab]);
+
 
 const restoreActiveChargingSession = async () => {
   try {
@@ -777,6 +784,7 @@ const restoreActiveChargingSession = async () => {
       setElapsedSeconds(elapsed);
       setActiveSession(null);
       setPanel("details");
+      void loadChargingHistory();
       notify(`Simulation ended. Total energy: ${energy.toFixed(3)} kWh.`);
     } catch (error) {
       setChargingError(
@@ -3475,9 +3483,9 @@ function selectConnector(connector: DbConnector) {
                 <div className="stat-cards">
                   <div>
                     <b>
-                      {historyLoading ? "—" : totalEnergyKwh.toFixed(3)}kW
+                      {historyLoading ? "—" : totalEnergyKwh.toFixed(3)}
                     </b>
-                    <small>Total kW charged</small>
+                    <small>Total kWh charged</small>
                   </div>
                 
                   <div>
