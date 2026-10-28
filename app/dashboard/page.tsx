@@ -454,23 +454,28 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
 
-const [activeSession, setActiveSession] =
-  useState<ActiveChargingSession | null>(null);
-const [elapsedSeconds, setElapsedSeconds] = useState(0);
-const [chargingBusy, setChargingBusy] = useState(false);
-const [chargingError, setChargingError] = useState("");
-const [chargingHistory, setChargingHistory] = useState<any[]>([]);
-const [historyLoading, setHistoryLoading] = useState(false);
-const [chargingSessionsExpanded, setChargingSessionsExpanded] = useState(false);
-const [stationReviews, setStationReviews] = useState<StationReview[]>([]);
-const [reviewsAverageRating, setReviewsAverageRating] = useState(0);
-const [reviewsTotal, setReviewsTotal] = useState(0);
-const [reviewsLoading, setReviewsLoading] = useState(false);
-const [reviewRating, setReviewRating] = useState(5);
-const [reviewComment, setReviewComment] = useState("");
-const [reviewSubmitting, setReviewSubmitting] = useState(false);
-const [reviewError, setReviewError] = useState("");
-const [reviewNotice, setReviewNotice] = useState("");
+  const [activeSession, setActiveSession] =
+    useState<ActiveChargingSession | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [chargingBusy, setChargingBusy] = useState(false);
+  const [chargingError, setChargingError] = useState("");
+  const [chargingHistory, setChargingHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [chargingSessionsExpanded, setChargingSessionsExpanded] = useState(false);
+  const [stationReviews, setStationReviews] = useState<StationReview[]>([]);
+  const [reviewsAverageRating, setReviewsAverageRating] = useState(0);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewNotice, setReviewNotice] = useState("");
+  const totalEnergyKwh = chargingHistory.reduce(
+  (total, session) =>
+    total + Math.max(0, Number(session.energy_kwh) || 0),
+  0
+  );
 
 
   
@@ -3467,20 +3472,24 @@ function selectConnector(connector: DbConnector) {
   )}
 </div>
 
-                    <div className="stat-cards">
-                      <div>
-                        <b>{saved.length}</b>
-                        <small>Saved stations</small>
-                      </div>
-                      <div>
-                        <b>{recentRoutes.length}</b>
-                        <small>Completed trips</small>
-                      </div>
-                      <div>
-                        <b>{nearbyStations.length}</b>
-                        <small>Nearby stations</small>
-                      </div>
-                    </div>
+                <div className="stat-cards">
+                  <div>
+                    <b>
+                      {historyLoading ? "—" : totalEnergyKwh.toFixed(3)}
+                    </b>
+                    <small>Total kWh charged</small>
+                  </div>
+                
+                  <div>
+                    <b>{recentRoutes.length}</b>
+                    <small>Completed trips</small>
+                  </div>
+                
+                  <div>
+                    <b>{nearbyStations.length}</b>
+                    <small>Nearby stations</small>
+                  </div>
+                </div>
                   </>
                 )}
 
