@@ -3475,9 +3475,9 @@ function selectConnector(connector: DbConnector) {
                 <div className="stat-cards">
                   <div>
                     <b>
-                      {historyLoading ? "—" : totalEnergyKwh.toFixed(3)}
+                      {historyLoading ? "—" : totalEnergyKwh.toFixed(3)}kW
                     </b>
-                    <small>Total kWh charged</small>
+                    <small>Total kW charged</small>
                   </div>
                 
                   <div>
