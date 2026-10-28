@@ -96,6 +96,7 @@ function stationIcon(station: Station, selected: boolean) {
  * GPS updates, route calculations, and route-mode changes
  * do not automatically move or zoom the map.
  */
+
 function MapController({
   userLocation,
   onRequestLocation,
@@ -106,7 +107,6 @@ function MapController({
   const map = useMap();
   const userLocationRef = useRef(userLocation);
 
-  // Keep the latest location for an explicit Locate Me request.
   userLocationRef.current = userLocation;
 
   useEffect(() => {
@@ -124,12 +124,10 @@ function MapController({
     };
 
     const refreshMapSize = () => {
-      window.setTimeout(() => {
-        map.invalidateSize({
-          pan: false,
-          animate: false,
-        });
-      }, 100);
+      map.invalidateSize({
+        pan: false,
+        animate: false,
+      });
     };
 
     window.addEventListener("be-electric-locate", locate);
@@ -149,6 +147,7 @@ function MapController({
 
   return null;
 }
+
 
 export default function LeafletMap({
   stations,
