@@ -206,10 +206,15 @@ function MapController({
       ) return;
 
       const latest: [number, number] = [lat, lng];
-      followGps.current = true;
+      // A location update is not a request to recenter. If the driver has
+      // panned/zoomed away, never override that choice with background GPS
+      // updates. The explicit `be-electric-locate` event below resumes follow.
+      userLocationRef.current = latest;
       lastGpsLocation.current = latest;
-      map.stop();
-      map.setView(latest, 16, { animate: false });
+      if (followGps.current) {
+        map.stop();
+        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
+      }
     };
 
     const refreshMapSize = () => {
