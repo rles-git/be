@@ -3487,15 +3487,22 @@ function selectConnector(connector: DbConnector) {
                     </b>
                     <small>Total kWh charged</small>
                   </div>
-                
+
                   <div>
-                    <b>{recentRoutes.length}</b>
-                    <small>Completed trips</small>
+                    <b>{historyLoading ? "—" : chargingHistory.length}</b>
+                    <small>Total charging sessions</small>
                   </div>
-                
+
                   <div>
-                    <b>{nearbyStations.length}</b>
-                    <small>Nearby stations</small>
+                    <b>
+                      {historyLoading
+                        ? "—"
+                        : (chargingHistory.length > 0
+                            ? totalEnergyKwh / chargingHistory.length
+                            : 0
+                          ).toFixed(3)}
+                    </b>
+                    <small>Avg kWh per session</small>
                   </div>
                 </div>
                   </>
