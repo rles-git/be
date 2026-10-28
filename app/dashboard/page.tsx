@@ -472,10 +472,14 @@ export default function Home() {
   const [reviewError, setReviewError] = useState("");
   const [reviewNotice, setReviewNotice] = useState("");
   const totalEnergyKwh = chargingHistory.reduce(
-  (total, session) =>
-    total + Math.max(0, Number(session.energy_kwh) || 0),
-  0
+    (total, session) =>
+      total + Math.max(0, Number(session.energy_kwh) || 0),
+    0
   );
+
+  // Illustrative estimate: 0.5 kg CO₂ avoided per kWh delivered.
+  // Replace this factor with a Qatar-specific lifecycle emissions factor if available.
+  const estimatedCo2AvoidedKg = totalEnergyKwh * 0.5;
 
 
   
@@ -3503,6 +3507,15 @@ function selectConnector(connector: DbConnector) {
                           ).toFixed(3)}
                     </b>
                     <small>Avg kWh per session</small>
+                  </div>
+
+                  <div>
+                    <b>
+                      {historyLoading
+                        ? "—"
+                        : estimatedCo2AvoidedKg.toFixed(2)}
+                    </b>
+                    <small>Estimated CO₂ Avoided (kg)</small>
                   </div>
                 </div>
                   </>
