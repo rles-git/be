@@ -104,66 +104,64 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeMode,
   userLocation,
-  roadCoordinates,
-  selectedStationId,
   onRequestLocation,
 }: {
   routeMode: boolean;
   userLocation: [number, number] | null;
-  roadCoordinates: [number, number][];
-  selectedStationId?: string;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
   const followGps = useRef(false);
-  const previousRouteMode = useRef(routeMode);
-  const routeStartCentered = useRef(false);
+  // Start false so a map mounted with an active route is handled too.
+  const previousRouteMode = useRef(false);
 
   userLocationRef.current = userLocation;
 
-  // On route start, center on the user's current GPS position exactly once.
-  // Do not frame the whole route; this avoids competing map animations.
+  // Starting a route centers on the driver only. Never fit the route bounds.
   useEffect(() => {
-    if (routeMode && !previousRouteMode.current) {
+    const routeJustStarted = routeMode && !previousRouteMode.current;
+
+    if (routeJustStarted) {
       followGps.current = true;
-      routeStartCentered.current = false;
       const latest = userLocationRef.current;
+
       if (latest) {
         map.stop();
         map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
         lastGpsLocation.current = latest;
-        routeStartCentered.current = true;
       } else {
         onRequestLocation?.();
       }
     } else if (!routeMode) {
       followGps.current = false;
-      routeStartCentered.current = false;
     }
+
     previousRouteMode.current = routeMode;
   }, [map, routeMode, onRequestLocation]);
 
-  // User interaction temporarily disables following. GPS continues updating;
-  // the map will stay where the user pans until Reset Location is pressed.
+  // Manual map movement disables follow mode. GPS keeps updating in the app,
+  // but it will not move the map again until the user presses Locate/Reset.
   useEffect(() => {
     const pauseFollowing = () => {
       followGps.current = false;
     };
+
     map.on("dragstart", pauseFollowing);
     return () => {
       map.off("dragstart", pauseFollowing);
     };
   }, [map]);
 
-  // Follow GPS without animated pans that can repeatedly interrupt a user's
-  // gesture. A manual drag disables this until the explicit locate/reset event.
+  // While following, move the map to the latest GPS fix without an animation.
+  // This avoids competing animations and never recenters on the route geometry.
   useEffect(() => {
     if (!userLocation) return;
 
     const previous = lastGpsLocation.current;
-    const changed = !previous ||
+    const changed =
+      !previous ||
       previous[0] !== userLocation[0] ||
       previous[1] !== userLocation[1];
 
@@ -375,8 +373,6 @@ export default function LeafletMap({
         <MapController
           routeMode={routeMode}
           userLocation={userLocation}
-          roadCoordinates={roadCoordinates}
-          selectedStationId={selectedStationId}
           onRequestLocation={onRequestLocation}
         />
 
