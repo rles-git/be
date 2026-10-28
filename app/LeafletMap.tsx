@@ -91,40 +91,30 @@ function stationIcon(station: Station, selected: boolean) {
   });
 }
 
+/**
+ * Map movement is limited to an explicit Locate Me action.
+ * GPS updates, route calculations, and route-mode changes
+ * do not automatically move or zoom the map.
+ */
 function MapController({
-  routeMode,
   userLocation,
   onRequestLocation,
 }: {
-  routeMode: boolean;
   userLocation: [number, number] | null;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
   const userLocationRef = useRef(userLocation);
-  const lastGpsLocation = useRef<[number, number] | null>(null);
 
-  // Keep the latest location available to the Locate Me action.
+  // Keep the latest location for an explicit Locate Me request.
   userLocationRef.current = userLocation;
-
-  // Initialize on the first known GPS location only.
-  // Subsequent GPS updates do not automatically move the map.
-  useEffect(() => {
-    if (!userLocation || routeMode) return;
-
-    if (!lastGpsLocation.current) {
-      map.flyTo(userLocation, 15, { duration: 0.7 });
-    }
-
-    lastGpsLocation.current = userLocation;
-  }, [map, userLocation, routeMode]);
 
   useEffect(() => {
     const locate = () => {
-      const latestLocation = userLocationRef.current;
+      const location = userLocationRef.current;
 
-      if (latestLocation) {
-        map.flyTo(latestLocation, 15, {
+      if (location) {
+        map.flyTo(location, 15, {
           animate: true,
           duration: 0.7,
         });
@@ -135,7 +125,10 @@ function MapController({
 
     const refreshMapSize = () => {
       window.setTimeout(() => {
-        map.invalidateSize({ pan: false, animate: false });
+        map.invalidateSize({
+          pan: false,
+          animate: false,
+        });
       }, 100);
     };
 
@@ -153,15 +146,6 @@ function MapController({
       );
     };
   }, [map, onRequestLocation]);
-
-  // Refresh map dimensions without changing its center or zoom.
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      map.invalidateSize({ pan: false, animate: false });
-    }, 250);
-
-    return () => window.clearTimeout(timer);
-  }, [map, routeMode]);
 
   return null;
 }
@@ -194,7 +178,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Fetch the driving route. No automatic map fitting or recentering.
+  // Fetch and draw the driving route without moving the map.
   useEffect(() => {
     if (
       !routeMode ||
@@ -294,7 +278,6 @@ export default function LeafletMap({
         />
 
         <MapController
-          routeMode={routeMode}
           userLocation={userLocation}
           onRequestLocation={onRequestLocation}
         />
