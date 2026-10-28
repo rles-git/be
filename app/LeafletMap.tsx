@@ -139,14 +139,14 @@ function MapController({
   useEffect(() => {
     if (!userLocation) return;
 
+    // Do not follow GPS on the Explore map. The user can browse stations
+    // without the camera being pulled back to their current location.
+    // GPS-follow is enabled only after route/navigation mode starts.
     if (routeMode) {
       map.stop();
       map.setView(userLocation, Math.max(map.getZoom(), 16), {
         animate: false,
       });
-    } else if (map.getCenter().distanceTo(L.latLng(userLocation)) > 1000) {
-      // On the normal Explore map, only correct a very distant initial view.
-      map.setView(userLocation, 15, { animate: false });
     }
   }, [map, userLocation, routeMode]);
 
