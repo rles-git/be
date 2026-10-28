@@ -1498,7 +1498,8 @@ function selectConnector(connector: DbConnector) {
         <div className="phone-frame">
           <div className="phone-screen">
             
-{activeSession && (
+{activeSession &&
+  !(activeTab === "Explore" && panel === "charging-active") && (
   <div
     style={{
       position: "absolute",
