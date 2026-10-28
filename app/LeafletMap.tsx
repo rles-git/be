@@ -141,16 +141,23 @@ function MapController({
     previousRouteMode.current = routeMode;
   }, [map, routeMode, onRequestLocation]);
 
-  // Manual map movement disables follow mode. GPS keeps updating in the app,
-  // but it will not move the map again until the user presses Locate/Reset.
+  // Any deliberate map navigation pauses GPS-follow. In particular, zooming
+  // with the wheel or a touch gesture must not cause the map to snap back to
+  // the driver's GPS position on the next location update.
   useEffect(() => {
     const pauseFollowing = () => {
       followGps.current = false;
     };
 
+    const container = map.getContainer();
     map.on("dragstart", pauseFollowing);
+    container.addEventListener("wheel", pauseFollowing, { passive: true });
+    container.addEventListener("touchstart", pauseFollowing, { passive: true });
+
     return () => {
       map.off("dragstart", pauseFollowing);
+      container.removeEventListener("wheel", pauseFollowing);
+      container.removeEventListener("touchstart", pauseFollowing);
     };
   }, [map]);
 
