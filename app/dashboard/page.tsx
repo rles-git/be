@@ -477,9 +477,11 @@ export default function Home() {
     0
   );
 
-  // Illustrative estimate: 0.5 kg CO₂ avoided per kWh delivered.
-  // Replace this factor with a Qatar-specific lifecycle emissions factor if available.
-  const estimatedCo2AvoidedKg = totalEnergyKwh * 0.5;
+  // Qatar electricity grid average for 2025: 0.582 kg CO₂e per kWh.
+  // This estimates emissions associated with charging, not emissions avoided.
+  const QATAR_GRID_EMISSIONS_KG_PER_KWH = 0.582;
+  const estimatedChargingCo2Kg =
+    totalEnergyKwh * QATAR_GRID_EMISSIONS_KG_PER_KWH;
 
 
   
@@ -3511,11 +3513,9 @@ function selectConnector(connector: DbConnector) {
 
                   <div>
                     <b>
-                      {historyLoading
-                        ? "—"
-                        : estimatedCo2AvoidedKg.toFixed(2)}
+                      {historyLoading ? "—" : estimatedChargingCo2Kg.toFixed(2)}
                     </b>
-                    <small>Estimated CO₂ Avoided (kg)</small>
+                    <small>Estimated CO₂ from charging (kg)</small>
                   </div>
                 </div>
                   </>
