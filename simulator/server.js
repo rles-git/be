@@ -1438,10 +1438,53 @@ if (
   }
 });
 
-wss = new WebSocketServer({
-  server,
-  path: "/ws",
+
+wss = new WebSocketServer({ noServer: true });
+
+const ocppWss = new WebSocketServer({
+  noServer: true,
+  handleProtocols(protocols) {
+    return protocols.has("ocpp1.6") ? "ocpp1.6" : false;
+  },
 });
+
+server.on("upgrade", (request, socket, head) => {
+  const pathname = new URL(
+    request.url,
+    "http://" + (request.headers.host || "localhost")
+  ).pathname;
+
+  if (pathname === "/ws") {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+    return;
+  }
+
+  if (/^\/ocpp\/[^/]+$/.test(pathname)) {
+    const protocols = String(
+      request.headers["sec-websocket-protocol"] || ""
+    )
+      .split(",")
+      .map((p) => p.trim());
+
+    if (!protocols.includes("ocpp1.6")) {
+      socket.write(
+        "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n"
+      );
+      socket.destroy();
+      return;
+    }
+
+    ocppWss.handleUpgrade(request, socket, head, (ws) => {
+      ocppWss.emit("connection", ws, request);
+    });
+    return;
+  }
+
+  socket.destroy();
+});
+
   
 wss.on("connection", (socket, request) => {
   const url = new URL(request.url, "http://localhost");
