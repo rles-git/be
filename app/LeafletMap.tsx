@@ -105,6 +105,7 @@ function MapController({
   routeMode,
   userLocation,
   roadCoordinates,
+  selectedStationId,
   onRequestLocation,
 }: {
   routeMode: boolean;
@@ -116,8 +117,12 @@ function MapController({
   const map = useMap();
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
-  const fittedRouteCoordinates = useRef<[number, number][] | null>(null);
+  // Track the route destination we have already fitted, not the coordinates
+  // array: GPS updates can recalculate the route and create a new array.
+  const fittedRouteKey = useRef<string | null>(null);
   const followGps = useRef(false);
+  // Prevent route-fit animation and GPS-follow animation from fighting each other.
+  const skipNextGpsPan = useRef(false);
   const previousRouteMode = useRef(routeMode);
 
   userLocationRef.current = userLocation;
@@ -126,10 +131,12 @@ function MapController({
   useEffect(() => {
     if (routeMode && !previousRouteMode.current) {
       followGps.current = true;
-      fittedRouteCoordinates.current = null;
+      fittedRouteKey.current = null;
+      skipNextGpsPan.current = false;
     } else if (!routeMode) {
       followGps.current = false;
-      fittedRouteCoordinates.current = null;
+      fittedRouteKey.current = null;
+      skipNextGpsPan.current = false;
     }
     previousRouteMode.current = routeMode;
   }, [routeMode]);
@@ -146,23 +153,28 @@ function MapController({
     };
   }, [map]);
 
-  // Fit the full route once when a new route is calculated.
+  // Fit the route once when navigation starts or the destination changes.
+  // Do not refit when a fresh GPS fix recalculates the road geometry; that
+  // would fight the user's pan/zoom and pull the map back to the route middle.
   useEffect(() => {
-    if (!routeMode) return;
-    if (roadCoordinates.length < 2) return;
-    if (fittedRouteCoordinates.current === roadCoordinates) return;
+    if (!routeMode || roadCoordinates.length < 2) return;
+
+    const routeKey = `${selectedStationId ?? "destination"}`;
+    if (fittedRouteKey.current === routeKey) return;
 
     const bounds = L.latLngBounds(roadCoordinates);
     if (!bounds.isValid()) return;
 
-    fittedRouteCoordinates.current = roadCoordinates;
+    fittedRouteKey.current = routeKey;
+    // Let the initial route framing finish without an overlapping GPS pan.
+    skipNextGpsPan.current = true;
     map.fitBounds(bounds, {
       padding: [44, 44],
       maxZoom: 15,
       animate: true,
       duration: 0.7,
     });
-  }, [map, routeMode, roadCoordinates]);
+  }, [map, routeMode, roadCoordinates, selectedStationId]);
 
   // Recenter only when the GPS position actually changes and follow mode
   // is enabled. This avoids overriding the initial route fit or user panning.
@@ -175,7 +187,11 @@ function MapController({
       previous[1] !== userLocation[1];
 
     if (changed && previous && routeMode && followGps.current) {
-      map.panTo(userLocation, { animate: true, duration: 0.5 });
+      if (skipNextGpsPan.current) {
+        skipNextGpsPan.current = false;
+      } else {
+        map.panTo(userLocation, { animate: true, duration: 0.5 });
+      }
     } else if (!previous && !routeMode) {
       map.flyTo(userLocation, 15, { duration: 0.7 });
     }
@@ -375,6 +391,7 @@ export default function LeafletMap({
           routeMode={routeMode}
           userLocation={userLocation}
           roadCoordinates={roadCoordinates}
+          selectedStationId={selectedStationId}
           onRequestLocation={onRequestLocation}
         />
 
