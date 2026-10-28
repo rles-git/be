@@ -1347,7 +1347,7 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
     const origin = `${effectiveLocation[0]},${effectiveLocation[1]}`;
 
     const urls: Record<string, string> = {
-      "Google Maps": `https://www.google.com/maps/dir/?api=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}&destination=${destination}`,
+        "Google Maps": `https://www.google.com/maps/dir/?api=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}&destination=${destination}&travelmode=driving&dir_action=navigate`,
       "Apple Maps": `https://maps.apple.com/?${origin ? `saddr=${encodeURIComponent(origin)}&` : ""}daddr=${destination}`,
       Waze: `https://waze.com/ul?ll=${encodeURIComponent(`${selected.lat},${selected.lng}`)}&navigate=yes`,
     };
