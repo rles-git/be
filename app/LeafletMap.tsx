@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -46,8 +47,7 @@ type Props = {
 };
 
 /**
- * Use individual charger statuses as the source of truth.
- * Keep this list consistent with the station details component.
+ * Determine availability using individual charger statuses.
  */
 function isAvailableStatus(status: unknown): boolean {
   const normalized = String(status ?? "")
@@ -64,15 +64,14 @@ function getAvailableChargerCount(station: Station): number {
     ? station.chargers
     : [];
 
-  // When charger records are available, never trust the station-level
-  // available count because it may be stale.
+  // Use charger records as the source of truth when available.
   if (chargers.length > 0) {
     return chargers.filter((charger) =>
       isAvailableStatus(charger.status)
     ).length;
   }
 
-  // Fallback for stations whose charger records have not loaded yet.
+  // Fallback while charger records have not loaded.
   return station.available ?? 0;
 }
 
@@ -104,54 +103,22 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeMode,
   userLocation,
-  roadCoordinates,
   onRequestLocation,
 }: {
   routeMode: boolean;
   userLocation: [number, number] | null;
-  roadCoordinates: [number, number][];
-  selectedStationId?: string;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
-  const fittedRouteCoordinates = useRef<[number, number][] | null>(
-    null
-  );
 
-  // Keep the latest location available without making the map
-  // automatically recenter whenever the GPS location changes.
+  // Keep the latest location without automatically recentering
+  // whenever the GPS position changes.
   userLocationRef.current = userLocation;
 
-  // Fit the complete route when a new route is calculated.
-  // Do not override the user's manual pan or zoom afterward.
+  // Initialize the map on the first known GPS location only.
   useEffect(() => {
-    if (!routeMode) {
-      fittedRouteCoordinates.current = null;
-      return;
-    }
-
-    if (roadCoordinates.length < 2) return;
-
-    if (fittedRouteCoordinates.current === roadCoordinates) return;
-
-    const bounds = L.latLngBounds(roadCoordinates);
-
-    if (!bounds.isValid()) return;
-
-    fittedRouteCoordinates.current = roadCoordinates;
-
-    map.fitBounds(bounds, {
-      padding: [44, 44],
-      maxZoom: 15,
-      animate: true,
-      duration: 0.7,
-    });
-  }, [map, routeMode, roadCoordinates]);
-
-  useEffect(() => {
-    // Initialize the map on the first known location only.
     if (!userLocation || routeMode) return;
 
     if (!lastGpsLocation.current) {
@@ -192,7 +159,7 @@ function MapController({
         return;
       }
 
-      // This event follows an explicit Locate Me request.
+      // Recenter only after an explicit location update.
       map.flyTo([lat, lng], 15, {
         animate: true,
         duration: 0.7,
@@ -228,6 +195,8 @@ function MapController({
     };
   }, [map, onRequestLocation]);
 
+  // Refresh the map dimensions when the route mode changes.
+  // This does not change the map's center or zoom.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       map.invalidateSize({ pan: false, animate: false });
@@ -267,6 +236,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
+  // Fetch the driving route without automatically fitting the map.
   useEffect(() => {
     if (
       !routeMode ||
@@ -329,7 +299,7 @@ export default function LeafletMap({
       }
     }
 
-    fetchDrivingRoute();
+    void fetchDrivingRoute();
 
     return () => controller.abort();
   }, [
@@ -349,10 +319,15 @@ export default function LeafletMap({
       <MapContainer
         center={
           userLocation ??
-          ([stations[0].lat, stations[0].lng] as [
-            number,
-            number
-          ])
+          (stations.length > 0
+            ? ([stations[0].lat, stations[0].lng] as [
+                number,
+                number
+              ])
+            : ([25.254483277668196, 51.47912950286491] as [
+                number,
+                number
+              ]))
         }
         zoom={userLocation ? 15 : 12}
         zoomControl={false}
@@ -368,7 +343,6 @@ export default function LeafletMap({
         <MapController
           routeMode={routeMode}
           userLocation={userLocation}
-          roadCoordinates={roadCoordinates}
           onRequestLocation={onRequestLocation}
         />
 
