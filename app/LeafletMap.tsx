@@ -112,84 +112,50 @@ function MapController({
 }) {
   const map = useMap();
   const userLocationRef = useRef(userLocation);
-  const lastGpsLocation = useRef<[number, number] | null>(null);
-  const followGps = useRef(false);
-  // Start false so a map mounted with an active route is handled too.
   const previousRouteMode = useRef(false);
 
   userLocationRef.current = userLocation;
 
-  // Starting a route centers on the driver only. Never fit the route bounds.
+  // Navigation camera is GPS-driven only. Route geometry is never used to
+  // calculate the map center or bounds.
   useEffect(() => {
     const routeJustStarted = routeMode && !previousRouteMode.current;
 
     if (routeJustStarted) {
-      followGps.current = true;
       const latest = userLocationRef.current;
-
       if (latest) {
         map.stop();
         map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
-        lastGpsLocation.current = latest;
       } else {
         onRequestLocation?.();
       }
-    } else if (!routeMode) {
-      followGps.current = false;
     }
 
     previousRouteMode.current = routeMode;
   }, [map, routeMode, onRequestLocation]);
 
-  // Any deliberate map navigation pauses GPS-follow. In particular, zooming
-  // with the wheel or a touch gesture must not cause the map to snap back to
-  // the driver's GPS position on the next location update.
-  useEffect(() => {
-    const pauseFollowing = () => {
-      followGps.current = false;
-    };
-
-    const container = map.getContainer();
-    map.on("dragstart", pauseFollowing);
-    container.addEventListener("wheel", pauseFollowing, { passive: true });
-    container.addEventListener("touchstart", pauseFollowing, { passive: true });
-
-    return () => {
-      map.off("dragstart", pauseFollowing);
-      container.removeEventListener("wheel", pauseFollowing);
-      container.removeEventListener("touchstart", pauseFollowing);
-    };
-  }, [map]);
-
-  // While following, move the map to the latest GPS fix without an animation.
-  // This avoids competing animations and never recenters on the route geometry.
+  // When navigation is active, keep the current GPS position centered.
+  // This effect intentionally does not read roadCoordinates or route bounds.
   useEffect(() => {
     if (!userLocation) return;
 
-    const previous = lastGpsLocation.current;
-    const changed =
-      !previous ||
-      previous[0] !== userLocation[0] ||
-      previous[1] !== userLocation[1];
-
-    if (changed && routeMode && followGps.current) {
+    if (routeMode) {
       map.stop();
-      map.panTo(userLocation, { animate: false });
-    } else if (!previous && !routeMode) {
+      map.setView(userLocation, Math.max(map.getZoom(), 16), {
+        animate: false,
+      });
+    } else if (map.getCenter().distanceTo(L.latLng(userLocation)) > 1000) {
+      // On the normal Explore map, only correct a very distant initial view.
       map.setView(userLocation, 15, { animate: false });
     }
-
-    lastGpsLocation.current = userLocation;
   }, [map, userLocation, routeMode]);
 
   useEffect(() => {
     const locate = () => {
-      const latestLocation = userLocationRef.current;
-      if (latestLocation) {
-        followGps.current = true;
-        lastGpsLocation.current = latestLocation;
+      const latest = userLocationRef.current;
+      if (latest) {
         map.stop();
-        map.setView(latestLocation, 16, { animate: false });
+        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
       } else {
         onRequestLocation?.();
       }
@@ -198,20 +164,22 @@ function MapController({
     const locationUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
       const { lat, lng } = customEvent.detail ?? {};
+
       if (
         typeof lat !== "number" ||
         typeof lng !== "number" ||
         !Number.isFinite(lat) ||
         !Number.isFinite(lng)
-      ) return;
+      ) {
+        return;
+      }
 
       const latest: [number, number] = [lat, lng];
-      // A location update is not a request to recenter. If the driver has
-      // panned/zoomed away, never override that choice with background GPS
-      // updates. The explicit `be-electric-locate` event below resumes follow.
       userLocationRef.current = latest;
-      lastGpsLocation.current = latest;
-      if (followGps.current) {
+
+      // Only recenter from an explicit GPS update while navigation is active.
+      // The route line itself never moves the camera.
+      if (routeMode) {
         map.stop();
         map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
       }
@@ -226,12 +194,13 @@ function MapController({
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener("be-electric-location-updated", locationUpdated);
     window.addEventListener("be-electric-map-visible", refreshMapSize);
+
     return () => {
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener("be-electric-location-updated", locationUpdated);
       window.removeEventListener("be-electric-map-visible", refreshMapSize);
     };
-  }, [map, onRequestLocation]);
+  }, [map, onRequestLocation, routeMode]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
