@@ -46,9 +46,6 @@ type Props = {
   }) => void;
 };
 
-/**
- * Determine availability using individual charger statuses.
- */
 function isAvailableStatus(status: unknown): boolean {
   const normalized = String(status ?? "")
     .trim()
@@ -64,14 +61,12 @@ function getAvailableChargerCount(station: Station): number {
     ? station.chargers
     : [];
 
-  // Use charger records as the source of truth when available.
   if (chargers.length > 0) {
     return chargers.filter((charger) =>
       isAvailableStatus(charger.status)
     ).length;
   }
 
-  // Fallback while charger records have not loaded.
   return station.available ?? 0;
 }
 
@@ -88,11 +83,7 @@ function stationIcon(station: Station, selected: boolean) {
       }">
         <span class="bolt">ϟ</span>
         <span class="count">${available}</span>
-        ${
-          selected
-            ? "<small>SELECTED</small>"
-            : ""
-        }
+        ${selected ? "<small>SELECTED</small>" : ""}
       </div>
     `,
     iconSize: selected ? [64, 62] : [50, 48],
@@ -113,11 +104,11 @@ function MapController({
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
 
-  // Keep the latest location without automatically recentering
-  // whenever the GPS position changes.
+  // Keep the latest location available to the Locate Me action.
   userLocationRef.current = userLocation;
 
-  // Initialize the map on the first known GPS location only.
+  // Initialize on the first known GPS location only.
+  // Subsequent GPS updates do not automatically move the map.
   useEffect(() => {
     if (!userLocation || routeMode) return;
 
@@ -142,30 +133,6 @@ function MapController({
       }
     };
 
-    const locationUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        lat: number;
-        lng: number;
-      }>;
-
-      const { lat, lng } = customEvent.detail ?? {};
-
-      if (
-        typeof lat !== "number" ||
-        typeof lng !== "number" ||
-        !Number.isFinite(lat) ||
-        !Number.isFinite(lng)
-      ) {
-        return;
-      }
-
-      // Recenter only after an explicit location update.
-      map.flyTo([lat, lng], 15, {
-        animate: true,
-        duration: 0.7,
-      });
-    };
-
     const refreshMapSize = () => {
       window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
@@ -174,10 +141,6 @@ function MapController({
 
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener(
-      "be-electric-location-updated",
-      locationUpdated
-    );
-    window.addEventListener(
       "be-electric-map-visible",
       refreshMapSize
     );
@@ -185,18 +148,13 @@ function MapController({
     return () => {
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener(
-        "be-electric-location-updated",
-        locationUpdated
-      );
-      window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
       );
     };
   }, [map, onRequestLocation]);
 
-  // Refresh the map dimensions when the route mode changes.
-  // This does not change the map's center or zoom.
+  // Refresh map dimensions without changing its center or zoom.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       map.invalidateSize({ pan: false, animate: false });
@@ -236,7 +194,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Fetch the driving route without automatically fitting the map.
+  // Fetch the driving route. No automatic map fitting or recentering.
   useEffect(() => {
     if (
       !routeMode ||
@@ -310,6 +268,12 @@ export default function LeafletMap({
     userLocation,
   ]);
 
+  const initialCenter: [number, number] =
+    userLocation ??
+    (stations.length > 0
+      ? [stations[0].lat, stations[0].lng]
+      : [25.254483277668196, 51.47912950286491]);
+
   return (
     <div
       className={`leaflet-map-root ${
@@ -317,18 +281,7 @@ export default function LeafletMap({
       }`}
     >
       <MapContainer
-        center={
-          userLocation ??
-          (stations.length > 0
-            ? ([stations[0].lat, stations[0].lng] as [
-                number,
-                number
-              ])
-            : ([25.254483277668196, 51.47912950286491] as [
-                number,
-                number
-              ]))
-        }
+        center={initialCenter}
         zoom={userLocation ? 15 : 12}
         zoomControl={false}
         scrollWheelZoom={true}
