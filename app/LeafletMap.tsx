@@ -116,32 +116,46 @@ function MapController({
   const map = useMap();
   const userLocationRef = useRef(userLocation);
   const lastGpsLocation = useRef<[number, number] | null>(null);
-  const fittedRouteCoordinates = useRef<[number, number][] | null>(
-    null
-  );
+  const fittedRouteCoordinates = useRef<[number, number][] | null>(null);
+  const followGps = useRef(false);
+  const previousRouteMode = useRef(routeMode);
 
-  // Keep the latest location available without making the map
-  // automatically recenter whenever the GPS location changes.
   userLocationRef.current = userLocation;
 
-  // Fit the complete route when a new route is calculated.
-  // Do not override the user's manual pan or zoom afterward.
+  // Start following when navigation begins; stop following when it ends.
   useEffect(() => {
-    if (!routeMode) {
+    if (routeMode && !previousRouteMode.current) {
+      followGps.current = true;
       fittedRouteCoordinates.current = null;
-      return;
+    } else if (!routeMode) {
+      followGps.current = false;
+      fittedRouteCoordinates.current = null;
     }
+    previousRouteMode.current = routeMode;
+  }, [routeMode]);
 
+  // A manual drag opts out of follow mode, but GPS tracking continues.
+  // The reset-location control re-enables follow mode.
+  useEffect(() => {
+    const stopFollowingOnDrag = () => {
+      followGps.current = false;
+    };
+    map.on("dragstart", stopFollowingOnDrag);
+    return () => {
+      map.off("dragstart", stopFollowingOnDrag);
+    };
+  }, [map]);
+
+  // Fit the full route once when a new route is calculated.
+  useEffect(() => {
+    if (!routeMode) return;
     if (roadCoordinates.length < 2) return;
-
     if (fittedRouteCoordinates.current === roadCoordinates) return;
 
     const bounds = L.latLngBounds(roadCoordinates);
-
     if (!bounds.isValid()) return;
 
     fittedRouteCoordinates.current = roadCoordinates;
-
     map.fitBounds(bounds, {
       padding: [44, 44],
       maxZoom: 15,
@@ -150,11 +164,19 @@ function MapController({
     });
   }, [map, routeMode, roadCoordinates]);
 
+  // Recenter only when the GPS position actually changes and follow mode
+  // is enabled. This avoids overriding the initial route fit or user panning.
   useEffect(() => {
-    // Initialize the map on the first known location only.
-    if (!userLocation || routeMode) return;
+    if (!userLocation) return;
 
-    if (!lastGpsLocation.current) {
+    const previous = lastGpsLocation.current;
+    const changed = !previous ||
+      previous[0] !== userLocation[0] ||
+      previous[1] !== userLocation[1];
+
+    if (changed && previous && routeMode && followGps.current) {
+      map.panTo(userLocation, { animate: true, duration: 0.5 });
+    } else if (!previous && !routeMode) {
       map.flyTo(userLocation, 15, { duration: 0.7 });
     }
 
@@ -166,7 +188,8 @@ function MapController({
       const latestLocation = userLocationRef.current;
 
       if (latestLocation) {
-        map.flyTo(latestLocation, 15, {
+        followGps.current = true;
+        map.flyTo(latestLocation, 16, {
           animate: true,
           duration: 0.7,
         });
@@ -176,11 +199,7 @@ function MapController({
     };
 
     const locationUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        lat: number;
-        lng: number;
-      }>;
-
+      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
       const { lat, lng } = customEvent.detail ?? {};
 
       if (
@@ -188,12 +207,12 @@ function MapController({
         typeof lng !== "number" ||
         !Number.isFinite(lat) ||
         !Number.isFinite(lng)
-      ) {
-        return;
-      }
+      ) return;
 
-      // This event follows an explicit Locate Me request.
-      map.flyTo([lat, lng], 15, {
+      // This event is emitted after an explicit reset/locate request.
+      followGps.current = true;
+      lastGpsLocation.current = [lat, lng];
+      map.flyTo([lat, lng], 16, {
         animate: true,
         duration: 0.7,
       });
@@ -206,25 +225,13 @@ function MapController({
     };
 
     window.addEventListener("be-electric-locate", locate);
-    window.addEventListener(
-      "be-electric-location-updated",
-      locationUpdated
-    );
-    window.addEventListener(
-      "be-electric-map-visible",
-      refreshMapSize
-    );
+    window.addEventListener("be-electric-location-updated", locationUpdated);
+    window.addEventListener("be-electric-map-visible", refreshMapSize);
 
     return () => {
       window.removeEventListener("be-electric-locate", locate);
-      window.removeEventListener(
-        "be-electric-location-updated",
-        locationUpdated
-      );
-      window.removeEventListener(
-        "be-electric-map-visible",
-        refreshMapSize
-      );
+      window.removeEventListener("be-electric-location-updated", locationUpdated);
+      window.removeEventListener("be-electric-map-visible", refreshMapSize);
     };
   }, [map, onRequestLocation]);
 
@@ -232,7 +239,6 @@ function MapController({
     const timer = window.setTimeout(() => {
       map.invalidateSize({ pan: false, animate: false });
     }, 250);
-
     return () => window.clearTimeout(timer);
   }, [map, routeMode]);
 
