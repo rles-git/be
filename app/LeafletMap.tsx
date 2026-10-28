@@ -134,21 +134,10 @@ function MapController({
     previousRouteMode.current = routeMode;
   }, [map, routeMode, onRequestLocation]);
 
-  // When navigation is active, keep the current GPS position centered.
-  // This effect intentionally does not read roadCoordinates or route bounds.
-  useEffect(() => {
-    if (!userLocation) return;
-
-    // Do not follow GPS on the Explore map. The user can browse stations
-    // without the camera being pulled back to their current location.
-    // GPS-follow is enabled only after route/navigation mode starts.
-    if (routeMode) {
-      map.stop();
-      map.setView(userLocation, Math.max(map.getZoom(), 16), {
-        animate: false,
-      });
-    }
-  }, [map, userLocation, routeMode]);
+  // Do not recenter from the React `userLocation` prop on every render/update.
+  // Some location providers emit frequent/stale fixes while the route is drawn,
+  // which can make the camera appear to jump. The explicit location event below
+  // is the single source of truth for GPS-follow updates during navigation.
 
   useEffect(() => {
     const locate = () => {
@@ -323,7 +312,6 @@ export default function LeafletMap({
     selectedStationId,
     selectedLat,
     selectedLng,
-    userLocation,
   ]);
 
   return (
