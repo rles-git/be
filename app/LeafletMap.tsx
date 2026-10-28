@@ -104,54 +104,83 @@ function stationIcon(station: Station, selected: boolean) {
 function MapController({
   routeMode,
   userLocation,
+  roadCoordinates,
   onRequestLocation,
 }: {
   routeMode: boolean;
   userLocation: [number, number] | null;
+  roadCoordinates: [number, number][];
+  selectedStationId?: string;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
   const userLocationRef = useRef(userLocation);
-  const previousRouteMode = useRef(false);
+  const lastGpsLocation = useRef<[number, number] | null>(null);
+  const fittedRouteCoordinates = useRef<[number, number][] | null>(
+    null
+  );
 
+  // Keep the latest location available without making the map
+  // automatically recenter whenever the GPS location changes.
   userLocationRef.current = userLocation;
 
-  // Navigation camera is GPS-driven only. Route geometry is never used to
-  // calculate the map center or bounds.
+  // Fit the complete route when a new route is calculated.
+  // Do not override the user's manual pan or zoom afterward.
   useEffect(() => {
-    const routeJustStarted = routeMode && !previousRouteMode.current;
-
-    if (routeJustStarted) {
-      const latest = userLocationRef.current;
-      if (latest) {
-        map.stop();
-        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
-      } else {
-        onRequestLocation?.();
-      }
+    if (!routeMode) {
+      fittedRouteCoordinates.current = null;
+      return;
     }
 
-    previousRouteMode.current = routeMode;
-  }, [map, routeMode, onRequestLocation]);
+    if (roadCoordinates.length < 2) return;
 
-  // Do not recenter from the React `userLocation` prop on every render/update.
-  // Some location providers emit frequent/stale fixes while the route is drawn,
-  // which can make the camera appear to jump. The explicit location event below
-  // is the single source of truth for GPS-follow updates during navigation.
+    if (fittedRouteCoordinates.current === roadCoordinates) return;
+
+    const bounds = L.latLngBounds(roadCoordinates);
+
+    if (!bounds.isValid()) return;
+
+    fittedRouteCoordinates.current = roadCoordinates;
+
+    map.fitBounds(bounds, {
+      padding: [44, 44],
+      maxZoom: 15,
+      animate: true,
+      duration: 0.7,
+    });
+  }, [map, routeMode, roadCoordinates]);
+
+  useEffect(() => {
+    // Initialize the map on the first known location only.
+    if (!userLocation || routeMode) return;
+
+    if (!lastGpsLocation.current) {
+      map.flyTo(userLocation, 15, { duration: 0.7 });
+    }
+
+    lastGpsLocation.current = userLocation;
+  }, [map, userLocation, routeMode]);
 
   useEffect(() => {
     const locate = () => {
-      const latest = userLocationRef.current;
-      if (latest) {
-        map.stop();
-        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
+      const latestLocation = userLocationRef.current;
+
+      if (latestLocation) {
+        map.flyTo(latestLocation, 15, {
+          animate: true,
+          duration: 0.7,
+        });
       } else {
         onRequestLocation?.();
       }
     };
 
     const locationUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ lat: number; lng: number }>;
+      const customEvent = event as CustomEvent<{
+        lat: number;
+        lng: number;
+      }>;
+
       const { lat, lng } = customEvent.detail ?? {};
 
       if (
@@ -163,15 +192,11 @@ function MapController({
         return;
       }
 
-      const latest: [number, number] = [lat, lng];
-      userLocationRef.current = latest;
-
-      // Only recenter from an explicit GPS update while navigation is active.
-      // The route line itself never moves the camera.
-      if (routeMode) {
-        map.stop();
-        map.setView(latest, Math.max(map.getZoom(), 16), { animate: false });
-      }
+      // This event follows an explicit Locate Me request.
+      map.flyTo([lat, lng], 15, {
+        animate: true,
+        duration: 0.7,
+      });
     };
 
     const refreshMapSize = () => {
@@ -181,20 +206,33 @@ function MapController({
     };
 
     window.addEventListener("be-electric-locate", locate);
-    window.addEventListener("be-electric-location-updated", locationUpdated);
-    window.addEventListener("be-electric-map-visible", refreshMapSize);
+    window.addEventListener(
+      "be-electric-location-updated",
+      locationUpdated
+    );
+    window.addEventListener(
+      "be-electric-map-visible",
+      refreshMapSize
+    );
 
     return () => {
       window.removeEventListener("be-electric-locate", locate);
-      window.removeEventListener("be-electric-location-updated", locationUpdated);
-      window.removeEventListener("be-electric-map-visible", refreshMapSize);
+      window.removeEventListener(
+        "be-electric-location-updated",
+        locationUpdated
+      );
+      window.removeEventListener(
+        "be-electric-map-visible",
+        refreshMapSize
+      );
     };
-  }, [map, onRequestLocation, routeMode]);
+  }, [map, onRequestLocation]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       map.invalidateSize({ pan: false, animate: false });
     }, 250);
+
     return () => window.clearTimeout(timer);
   }, [map, routeMode]);
 
@@ -228,33 +266,20 @@ export default function LeafletMap({
   const selectedLat = selected?.lat;
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
-  const routeOriginRef = useRef<[number, number] | null>(userLocation);
-  const previousRouteForOrigin = useRef(routeMode);
-  const lastRequestedRouteKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (routeMode && !previousRouteForOrigin.current && userLocation) {
-      routeOriginRef.current = userLocation;
-    } else if (!routeMode) {
-      routeOriginRef.current = userLocation;
-    }
-    previousRouteForOrigin.current = routeMode;
-  }, [routeMode, userLocation]);
-
-  useEffect(() => {
-    if (!routeMode) {
+    if (
+      !routeMode ||
+      !userLocation ||
+      selectedLat == null ||
+      selectedLng == null
+    ) {
       setRoadCoordinates([]);
-      lastRequestedRouteKey.current = null;
       return;
     }
-    if (!userLocation || selectedLat == null || selectedLng == null) return;
-
-    const routeKey = `${selectedStationId}:${selectedLat}:${selectedLng}`;
-    if (lastRequestedRouteKey.current === routeKey) return;
-    lastRequestedRouteKey.current = routeKey;
 
     const controller = new AbortController();
-    const routeOrigin = routeOriginRef.current ?? userLocation;
+    const routeOrigin = userLocation;
 
     async function fetchDrivingRoute() {
       try {
@@ -312,6 +337,7 @@ export default function LeafletMap({
     selectedStationId,
     selectedLat,
     selectedLng,
+    userLocation,
   ]);
 
   return (
@@ -342,6 +368,7 @@ export default function LeafletMap({
         <MapController
           routeMode={routeMode}
           userLocation={userLocation}
+          roadCoordinates={roadCoordinates}
           onRequestLocation={onRequestLocation}
         />
 
