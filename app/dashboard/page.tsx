@@ -1633,6 +1633,16 @@ function selectConnector(connector: DbConnector) {
                             setCalculatedRoute(null);
                             setSheetDragY(0);
                             setSearch("");
+
+                            // Pan the map to the station chosen from search.
+                            window.dispatchEvent(
+                              new CustomEvent("be-electric-pan-to-station", {
+                                detail: {
+                                  lat: Number(station.lat),
+                                  lng: Number(station.lng),
+                                },
+                              })
+                            );
                           }}
                         >
                           <span className="search-suggestion-icon">
