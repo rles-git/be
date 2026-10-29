@@ -98,21 +98,55 @@ function stationIcon(station: Station, selected: boolean) {
  */
 
 
+
 function MapController({
   userLocation,
+  routeMode,
   onRequestLocation,
 }: {
   userLocation: [number, number] | null;
+  routeMode: boolean;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
-  const userLocationRef = useRef(userLocation);
 
+  const userLocationRef = useRef(userLocation);
+  const resumeTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+
+  const [isFollowing, setIsFollowing] = useState(true);
+
+  const latitude = userLocation?.[0] ?? null;
+  const longitude = userLocation?.[1] ?? null;
+
+  // Keep the latest GPS coordinates available to event handlers.
   useEffect(() => {
     userLocationRef.current = userLocation;
-  }, [userLocation]);
+  }, [latitude, longitude]);
 
+  // Cancel any pending follow-resume timer.
+  const clearResumeTimer = () => {
+    if (resumeTimerRef.current !== null) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  };
+
+  // Pause following after manual map interaction.
   useEffect(() => {
+    const pauseFollowing = () => {
+      if (!routeMode) return;
+
+      setIsFollowing(false);
+      clearResumeTimer();
+
+      resumeTimerRef.current = setTimeout(() => {
+        resumeTimerRef.current = null;
+        setIsFollowing(true);
+      }, 10000);
+    };
+
     const locate = (event: Event) => {
       const customEvent = event as CustomEvent<{
         location?: [number, number];
@@ -129,7 +163,7 @@ function MapController({
       ) {
         map.flyTo(location, 16, {
           animate: true,
-          duration: 0.8,
+          duration: 0.7,
         });
       } else {
         onRequestLocation?.();
@@ -143,6 +177,9 @@ function MapController({
       });
     };
 
+    map.on("dragstart", pauseFollowing);
+    map.on("zoomstart", pauseFollowing);
+
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener(
       "be-electric-map-visible",
@@ -150,13 +187,56 @@ function MapController({
     );
 
     return () => {
+      map.off("dragstart", pauseFollowing);
+      map.off("zoomstart", pauseFollowing);
+
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
       );
+
+      clearResumeTimer();
     };
-  }, [map, onRequestLocation]);
+  }, [map, routeMode, onRequestLocation]);
+
+  // Enable following when a route starts, and stop it when
+  // the route ends.
+  useEffect(() => {
+    clearResumeTimer();
+
+    if (routeMode) {
+      setIsFollowing(true);
+    } else {
+      setIsFollowing(false);
+    }
+
+    return clearResumeTimer;
+  }, [routeMode]);
+
+  // Follow GPS updates only when a route is active and
+  // the user has not temporarily paused following.
+  useEffect(() => {
+    if (
+      !routeMode ||
+      !isFollowing ||
+      latitude === null ||
+      longitude === null
+    ) {
+      return;
+    }
+
+    map.panTo([latitude, longitude], {
+      animate: true,
+      duration: 0.5,
+    });
+  }, [
+    map,
+    routeMode,
+    isFollowing,
+    latitude,
+    longitude,
+  ]);
 
   return null;
 }
@@ -295,6 +375,7 @@ export default function LeafletMap({
 
         <MapController
           userLocation={userLocation}
+          routeMode={routeMode}
           onRequestLocation={onRequestLocation}
         />
 
