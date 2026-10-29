@@ -161,10 +161,20 @@ function MapController({
         Number.isFinite(location[0]) &&
         Number.isFinite(location[1])
       ) {
-        map.flyTo(location, 16, {
-          animate: true,
-          duration: 0.7,
-        });
+
+      const targetPoint = map.project(location, 16);
+      
+      // Shift the target point upward on screen so the
+      // user's GPS marker sits above the bottom panels.
+      targetPoint.y += map.getSize().y * 0.20;
+      
+      const adjustedCenter = map.unproject(targetPoint, 16);
+      
+      map.flyTo(adjustedCenter, 16, {
+        animate: true,
+        duration: 0.7,
+      });
+
       } else {
         onRequestLocation?.();
       }
