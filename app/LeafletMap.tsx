@@ -91,12 +91,13 @@ function stationIcon(station: Station, selected: boolean) {
 
 /**
  * GPS follow behavior:
- * - Follow the user during an active route.
- * - Keep the map zoomed in instead of fitting the route.
- * - Offset the user upward to account for bottom panels.
- * - Pause following for 10 seconds after manual map movement.
- * - Recenter explicitly when the Locate button is pressed.
- * - Never automatically fit the entire route.
+ * - Start following when a route becomes active.
+ * - Follow GPS updates without fitting the entire route.
+ * - Keep the GPS marker above center to account for bottom panels.
+ * - Pause following when the user manually pans or zooms.
+ * - Never automatically resume after manual interaction.
+ * - Resume following when the user explicitly presses Locate.
+ * - Never pan to the route midpoint.
  */
 function MapController({
   userLocation,
@@ -111,8 +112,7 @@ function MapController({
 
   const userLocationRef = useRef(userLocation);
   const programmaticMoveRef = useRef(false);
-
-  const resumeTimerRef = useRef<ReturnType<
+  const moveGuardTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
 
@@ -121,21 +121,14 @@ function MapController({
   const latitude = userLocation?.[0] ?? null;
   const longitude = userLocation?.[1] ?? null;
 
-  // Always keep the latest GPS coordinates available.
+  // Keep the latest GPS coordinates available to event handlers.
   useEffect(() => {
     userLocationRef.current = userLocation;
   }, [latitude, longitude]);
 
-  function clearResumeTimer() {
-    if (resumeTimerRef.current !== null) {
-      clearTimeout(resumeTimerRef.current);
-      resumeTimerRef.current = null;
-    }
-  }
-
   /**
-   * Calculate a map center that places the user's GPS marker
-   * above the center of the screen, clear of bottom panels.
+   * Calculate a map center that places the GPS marker above
+   * the center of the screen, allowing room for bottom panels.
    */
   function getOffsetCenter(
     location: [number, number],
@@ -143,43 +136,54 @@ function MapController({
   ): L.LatLng {
     const targetPoint = map.project(location, zoom);
 
-    // Raise the GPS marker by 20% of the map height.
     targetPoint.y += map.getSize().y * 0.2;
 
     return map.unproject(targetPoint, zoom);
   }
 
   /**
-   * Programmatic movements should not count as manual panning
-   * or zooming and should not pause GPS following.
+   * Move the map programmatically without treating the movement
+   * as a manual gesture that pauses following.
    */
   function moveToUser(
     location: [number, number],
     zoom: number,
     animated: boolean
   ) {
+    if (
+      !Number.isFinite(location[0]) ||
+      !Number.isFinite(location[1])
+    ) {
+      return;
+    }
+
     const adjustedCenter = getOffsetCenter(location, zoom);
+
+    if (moveGuardTimerRef.current !== null) {
+      clearTimeout(moveGuardTimerRef.current);
+      moveGuardTimerRef.current = null;
+    }
 
     programmaticMoveRef.current = true;
 
     map.stop();
-
-    map.once("moveend", () => {
-      programmaticMoveRef.current = false;
-    });
 
     map.setView(adjustedCenter, zoom, {
       animate: animated,
       duration: 0.7,
     });
 
-    // Also clear the guard if the map does not emit moveend.
-    window.setTimeout(() => {
+    // Release the programmatic movement guard after the animation.
+    moveGuardTimerRef.current = setTimeout(() => {
       programmaticMoveRef.current = false;
-    }, animated ? 1200 : 100);
+      moveGuardTimerRef.current = null;
+    }, animated ? 900 : 100);
   }
 
-  // Pause following when the user manually moves the map.
+  /**
+   * Manual pan/zoom pauses following indefinitely.
+   * There is deliberately no automatic resume timer.
+   */
   useEffect(() => {
     const pauseFollowing = () => {
       if (!routeMode || programmaticMoveRef.current) {
@@ -187,39 +191,41 @@ function MapController({
       }
 
       setIsFollowing(false);
-      clearResumeTimer();
-
-      resumeTimerRef.current = setTimeout(() => {
-        resumeTimerRef.current = null;
-        setIsFollowing(true);
-      }, 10000);
     };
 
+    /**
+     * The page dispatches:
+     * new CustomEvent("be-electric-locate", {
+     *   detail: { lat, lng }
+     * })
+     *
+     * Also support the { location: [lat, lng] } format.
+     */
     const locate = (event: Event) => {
       const customEvent = event as CustomEvent<{
         location?: [number, number];
+        lat?: number;
+        lng?: number;
       }>;
 
-      const location =
-        customEvent.detail?.location ??
-        userLocationRef.current;
+      const detail = customEvent.detail;
+
+      const location: [number, number] | null =
+        detail?.location ??
+        (typeof detail?.lat === "number" &&
+        typeof detail?.lng === "number"
+          ? [detail.lat, detail.lng]
+          : userLocationRef.current);
 
       if (
         location &&
         Number.isFinite(location[0]) &&
         Number.isFinite(location[1])
       ) {
-        // Explicit recenter: keep the user in view and avoid
-        // zooming out to show the entire route.
+        // Only resume GPS following if a route is active.
         setIsFollowing(routeMode);
 
-        clearResumeTimer();
-
-        moveToUser(
-          location,
-          16,
-          true
-        );
+        moveToUser(location, Math.max(map.getZoom(), 16), true);
       } else {
         onRequestLocation?.();
       }
@@ -251,24 +257,20 @@ function MapController({
         refreshMapSize
       );
 
-      clearResumeTimer();
+      if (moveGuardTimerRef.current !== null) {
+        clearTimeout(moveGuardTimerRef.current);
+        moveGuardTimerRef.current = null;
+      }
     };
   }, [map, routeMode, onRequestLocation]);
 
   // Start following when a route becomes active.
+  // Stop following when the route is no longer active.
   useEffect(() => {
-    clearResumeTimer();
-
-    if (routeMode) {
-      setIsFollowing(true);
-    } else {
-      setIsFollowing(false);
-    }
-
-    return clearResumeTimer;
+    setIsFollowing(routeMode);
   }, [routeMode]);
 
-  // Follow new GPS positions without fitting the route.
+  // Follow GPS updates only while route mode and following are active.
   useEffect(() => {
     if (
       !routeMode ||
@@ -280,9 +282,6 @@ function MapController({
     }
 
     const currentZoom = map.getZoom();
-
-    // Preserve the current zoom when already close enough;
-    // otherwise use 16. Never zoom out to fit the route.
     const zoom = Math.max(currentZoom, 16);
 
     moveToUser([latitude, longitude], zoom, true);
@@ -443,7 +442,7 @@ export default function LeafletMap({
               fillOpacity: 1,
             }}
           >
-            <Popup>
+            <Popup autoPan={false}>
               <strong>
                 {isFallbackLocation
                   ? "Default Starting Location"
