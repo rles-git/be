@@ -3235,7 +3235,14 @@ function selectConnector(connector: DbConnector) {
   </span>
 
   <small>
-    {selected.distance || "Distance not calculated"}
+    {Number.isFinite(Number(selected.lat)) && Number.isFinite(Number(selected.lng))
+      ? `${getDistanceKm(
+          effectiveLocation[0],
+          effectiveLocation[1],
+          Number(selected.lat),
+          Number(selected.lng)
+        ).toFixed(1)} km away`
+      : "Distance unavailable"}
   </small>
 </div>
 
