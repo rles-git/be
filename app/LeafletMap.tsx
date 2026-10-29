@@ -97,23 +97,97 @@ function stationIcon(station: Station, selected: boolean) {
  * do not automatically move or zoom the map.
  */
 
+
 function MapController({
   userLocation,
+  routeMode,
   onRequestLocation,
 }: {
   userLocation: [number, number] | null;
+  routeMode: boolean;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
-  const userLocationRef = useRef(userLocation);
 
+  const userLocationRef = useRef(userLocation);
+  const routeModeRef = useRef(routeMode);
+  const followEnabledRef = useRef(true);
+  const inactivityTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+
+  // Always keep the latest GPS coordinates available to the timer.
   userLocationRef.current = userLocation;
+  routeModeRef.current = routeMode;
 
   useEffect(() => {
+    const clearFollowTimer = () => {
+      if (inactivityTimerRef.current !== null) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+
+    const centerOnLatestGPS = (animate = true) => {
+      const location = userLocationRef.current;
+
+      if (!location) return;
+
+      if (animate) {
+        map.panTo(location, {
+          animate: true,
+          duration: 0.5,
+        });
+      } else {
+        map.panTo(location, {
+          animate: false,
+        });
+      }
+    };
+
+    // Called whenever the user moves, zooms, or touches the map.
+    const pauseFollowing = () => {
+      if (!routeModeRef.current) return;
+
+      followEnabledRef.current = false;
+      clearFollowTimer();
+
+      inactivityTimerRef.current = setTimeout(() => {
+        inactivityTimerRef.current = null;
+
+        // Routing may have ended while the timer was running.
+        if (!routeModeRef.current) return;
+
+        // Resume following and use the newest GPS position,
+        // not the coordinates from when the timer was started.
+        followEnabledRef.current = true;
+        centerOnLatestGPS(true);
+      }, 5000);
+    };
+
+    const container = map.getContainer();
+
+    container.addEventListener("wheel", pauseFollowing, {
+      passive: true,
+    });
+    container.addEventListener("touchstart", pauseFollowing, {
+      passive: true,
+    });
+    container.addEventListener("touchmove", pauseFollowing, {
+      passive: true,
+    });
+    container.addEventListener("dblclick", pauseFollowing);
+
+    map.on("dragstart", pauseFollowing);
+    map.on("drag", pauseFollowing);
+
     const locate = () => {
       const location = userLocationRef.current;
 
       if (location) {
+        clearFollowTimer();
+        followEnabledRef.current = true;
+
         map.flyTo(location, 15, {
           animate: true,
           duration: 0.7,
@@ -121,6 +195,25 @@ function MapController({
       } else {
         onRequestLocation?.();
       }
+    };
+
+    const panToStation = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        lat: number;
+        lng: number;
+      }>;
+
+      const lat = Number(customEvent.detail?.lat);
+      const lng = Number(customEvent.detail?.lng);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return;
+      }
+
+      map.flyTo([lat, lng], Math.max(map.getZoom(), 15), {
+        animate: true,
+        duration: 0.7,
+      });
     };
 
     const refreshMapSize = () => {
@@ -132,18 +225,82 @@ function MapController({
 
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener(
+      "be-electric-pan-to-station",
+      panToStation
+    );
+    window.addEventListener(
       "be-electric-map-visible",
       refreshMapSize
     );
 
     return () => {
+      clearFollowTimer();
+
+      container.removeEventListener("wheel", pauseFollowing);
+      container.removeEventListener(
+        "touchstart",
+        pauseFollowing
+      );
+      container.removeEventListener(
+        "touchmove",
+        pauseFollowing
+      );
+      container.removeEventListener(
+        "dblclick",
+        pauseFollowing
+      );
+
+      map.off("dragstart", pauseFollowing);
+      map.off("drag", pauseFollowing);
+
       window.removeEventListener("be-electric-locate", locate);
+      window.removeEventListener(
+        "be-electric-pan-to-station",
+        panToStation
+      );
       window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
       );
     };
   }, [map, onRequestLocation]);
+
+  // Start following when routing is activated.
+  useEffect(() => {
+    if (!routeMode) {
+      followEnabledRef.current = true;
+
+      if (inactivityTimerRef.current !== null) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+
+      return;
+    }
+
+    followEnabledRef.current = true;
+
+    if (userLocationRef.current) {
+      map.panTo(userLocationRef.current, {
+        animate: false,
+      });
+    }
+  }, [map, routeMode]);
+
+  // GPS updates move the map only when auto-follow is enabled.
+  useEffect(() => {
+    if (
+      !routeMode ||
+      !userLocation ||
+      !followEnabledRef.current
+    ) {
+      return;
+    }
+
+    map.panTo(userLocation, {
+      animate: false,
+    });
+  }, [map, routeMode, userLocation]);
 
   return null;
 }
