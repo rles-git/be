@@ -474,7 +474,7 @@ export default function LeafletMap({
                 click: () => onSelect(station.id),
               }}
             >
-              <Popup>
+              <Popup autoPan={false}>
                 <div className="station-popup">
                   <strong>{station.name}</strong>
 
