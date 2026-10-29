@@ -97,6 +97,7 @@ function stationIcon(station: Station, selected: boolean) {
  * do not automatically move or zoom the map.
  */
 
+
 function MapController({
   userLocation,
   onRequestLocation,
@@ -107,16 +108,28 @@ function MapController({
   const map = useMap();
   const userLocationRef = useRef(userLocation);
 
-  userLocationRef.current = userLocation;
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
 
   useEffect(() => {
-    const locate = () => {
-      const location = userLocationRef.current;
+    const locate = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        location?: [number, number];
+      }>;
 
-      if (location) {
-        map.flyTo(location, 15, {
+      const location =
+        customEvent.detail?.location ??
+        userLocationRef.current;
+
+      if (
+        location &&
+        Number.isFinite(location[0]) &&
+        Number.isFinite(location[1])
+      ) {
+        map.flyTo(location, 16, {
           animate: true,
-          duration: 0.7,
+          duration: 0.8,
         });
       } else {
         onRequestLocation?.();
@@ -147,6 +160,7 @@ function MapController({
 
   return null;
 }
+
 
 
 export default function LeafletMap({
