@@ -78,9 +78,7 @@ function stationIcon(station: Station, selected: boolean) {
     html: `
       <div class="leaflet-station-icon ${
         selected ? "is-selected" : ""
-      } ${
-        available === 0 ? "is-offline" : ""
-      }">
+      } ${available === 0 ? "is-offline" : ""}">
         <span class="bolt">ϟ</span>
         <span class="count">${available}</span>
         ${selected ? "<small>SELECTED</small>" : ""}
@@ -92,13 +90,14 @@ function stationIcon(station: Station, selected: boolean) {
 }
 
 /**
- * Map movement is limited to an explicit Locate Me action.
- * GPS updates, route calculations, and route-mode changes
- * do not automatically move or zoom the map.
+ * GPS follow behavior:
+ * - Follow the user during an active route.
+ * - Keep the map zoomed in instead of fitting the route.
+ * - Offset the user upward to account for bottom panels.
+ * - Pause following for 10 seconds after manual map movement.
+ * - Recenter explicitly when the Locate button is pressed.
+ * - Never automatically fit the entire route.
  */
-
-
-
 function MapController({
   userLocation,
   routeMode,
@@ -111,32 +110,81 @@ function MapController({
   const map = useMap();
 
   const userLocationRef = useRef(userLocation);
+  const programmaticMoveRef = useRef(false);
+
   const resumeTimerRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
 
-  const [isFollowing, setIsFollowing] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const latitude = userLocation?.[0] ?? null;
   const longitude = userLocation?.[1] ?? null;
 
-  // Keep the latest GPS coordinates available to event handlers.
+  // Always keep the latest GPS coordinates available.
   useEffect(() => {
     userLocationRef.current = userLocation;
   }, [latitude, longitude]);
 
-  // Cancel any pending follow-resume timer.
-  const clearResumeTimer = () => {
+  function clearResumeTimer() {
     if (resumeTimerRef.current !== null) {
       clearTimeout(resumeTimerRef.current);
       resumeTimerRef.current = null;
     }
-  };
+  }
 
-  // Pause following after manual map interaction.
+  /**
+   * Calculate a map center that places the user's GPS marker
+   * above the center of the screen, clear of bottom panels.
+   */
+  function getOffsetCenter(
+    location: [number, number],
+    zoom: number
+  ): L.LatLng {
+    const targetPoint = map.project(location, zoom);
+
+    // Raise the GPS marker by 20% of the map height.
+    targetPoint.y += map.getSize().y * 0.2;
+
+    return map.unproject(targetPoint, zoom);
+  }
+
+  /**
+   * Programmatic movements should not count as manual panning
+   * or zooming and should not pause GPS following.
+   */
+  function moveToUser(
+    location: [number, number],
+    zoom: number,
+    animated: boolean
+  ) {
+    const adjustedCenter = getOffsetCenter(location, zoom);
+
+    programmaticMoveRef.current = true;
+
+    map.stop();
+
+    map.once("moveend", () => {
+      programmaticMoveRef.current = false;
+    });
+
+    map.setView(adjustedCenter, zoom, {
+      animate: animated,
+      duration: 0.7,
+    });
+
+    // Also clear the guard if the map does not emit moveend.
+    window.setTimeout(() => {
+      programmaticMoveRef.current = false;
+    }, animated ? 1200 : 100);
+  }
+
+  // Pause following when the user manually moves the map.
   useEffect(() => {
     const pauseFollowing = () => {
-      if (!routeMode) return;
+      if (!routeMode || programmaticMoveRef.current) {
+        return;
+      }
 
       setIsFollowing(false);
       clearResumeTimer();
@@ -161,20 +209,17 @@ function MapController({
         Number.isFinite(location[0]) &&
         Number.isFinite(location[1])
       ) {
+        // Explicit recenter: keep the user in view and avoid
+        // zooming out to show the entire route.
+        setIsFollowing(routeMode);
 
-      const targetPoint = map.project(location, 16);
-      
-      // Shift the target point upward on screen so the
-      // user's GPS marker sits above the bottom panels.
-      targetPoint.y += map.getSize().y * 0.20;
-      
-      const adjustedCenter = map.unproject(targetPoint, 16);
-      
-      map.flyTo(adjustedCenter, 16, {
-        animate: true,
-        duration: 0.7,
-      });
+        clearResumeTimer();
 
+        moveToUser(
+          location,
+          16,
+          true
+        );
       } else {
         onRequestLocation?.();
       }
@@ -210,8 +255,7 @@ function MapController({
     };
   }, [map, routeMode, onRequestLocation]);
 
-  // Enable following when a route starts, and stop it when
-  // the route ends.
+  // Start following when a route becomes active.
   useEffect(() => {
     clearResumeTimer();
 
@@ -224,8 +268,7 @@ function MapController({
     return clearResumeTimer;
   }, [routeMode]);
 
-  // Follow GPS updates only when a route is active and
-  // the user has not temporarily paused following.
+  // Follow new GPS positions without fitting the route.
   useEffect(() => {
     if (
       !routeMode ||
@@ -236,10 +279,13 @@ function MapController({
       return;
     }
 
-    map.panTo([latitude, longitude], {
-      animate: true,
-      duration: 0.5,
-    });
+    const currentZoom = map.getZoom();
+
+    // Preserve the current zoom when already close enough;
+    // otherwise use 16. Never zoom out to fit the route.
+    const zoom = Math.max(currentZoom, 16);
+
+    moveToUser([latitude, longitude], zoom, true);
   }, [
     map,
     routeMode,
@@ -250,8 +296,6 @@ function MapController({
 
   return null;
 }
-
-
 
 export default function LeafletMap({
   stations,
@@ -281,7 +325,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Fetch and draw the driving route without moving the map.
+  // Calculate the driving route without fitting or moving the map.
   useEffect(() => {
     if (
       !routeMode ||
@@ -327,7 +371,9 @@ export default function LeafletMap({
           setRoadCoordinates(latLngs);
 
           onRouteCalculatedRef.current?.({
-            distance: `${(route.distance / 1000).toFixed(1)} km`,
+            distance: `${(
+              route.distance / 1000
+            ).toFixed(1)} km`,
             minutes: Math.max(
               1,
               Math.round(route.duration / 60)
@@ -374,14 +420,11 @@ export default function LeafletMap({
         scrollWheelZoom={true}
         attributionControl={true}
       >
-
-
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-
 
         <MapController
           userLocation={userLocation}
