@@ -270,12 +270,13 @@ export default function LeafletMap({
         scrollWheelZoom={true}
         attributionControl={true}
       >
-          <TileLayer
-            attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            subdomains="abcd"
-            maxZoom={20}
-          />
+
+    <TileLayer
+      attribution='&copy; OpenStreetMap contributors &copy; Wikimedia'
+      url="https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png"
+      maxZoom={19}
+    />
+
 
         <MapController
           userLocation={userLocation}
