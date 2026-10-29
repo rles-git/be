@@ -78,9 +78,7 @@ function stationIcon(station: Station, selected: boolean) {
     html: `
       <div class="leaflet-station-icon ${
         selected ? "is-selected" : ""
-      } ${
-        available === 0 ? "is-offline" : ""
-      }">
+      } ${available === 0 ? "is-offline" : ""}">
         <span class="bolt">ϟ</span>
         <span class="count">${available}</span>
         ${selected ? "<small>SELECTED</small>" : ""}
@@ -104,7 +102,7 @@ function MapController({
 
   const userLocationRef = useRef(userLocation);
   const routeModeRef = useRef(routeMode);
-  const followEnabledRef = useRef(true);
+  const followEnabledRef = useRef(false);
   const isProgrammaticMoveRef = useRef(false);
 
   const inactivityTimerRef = useRef<
@@ -115,7 +113,6 @@ function MapController({
     ReturnType<typeof setTimeout> | null
   >(null);
 
-  // Always read the latest GPS location, including when a timer fires.
   userLocationRef.current = userLocation;
   routeModeRef.current = routeMode;
 
@@ -134,8 +131,6 @@ function MapController({
       }
     };
 
-    // Mark camera movement initiated by the app so it isn't
-    // mistaken for the user manually moving the map.
     const markProgrammaticMove = () => {
       isProgrammaticMoveRef.current = true;
       clearProgrammaticTimer();
@@ -146,23 +141,36 @@ function MapController({
       }, 1000);
     };
 
-    const panToGPS = (animate = true) => {
+    /**
+     * Recenter and zoom in on GPS.
+     * Positive pixel Y offset places the GPS marker higher
+     * on screen because the geographic map center moves down.
+     */
+    const recenterOnGPS = (animate = true) => {
       const location = userLocationRef.current;
-
       if (!location) return;
+
+      const targetZoom = 17;
+      const screenOffsetY = 100;
+
+      const gpsPoint = map.project(
+        L.latLng(location[0], location[1]),
+        targetZoom
+      );
+
+      gpsPoint.y += screenOffsetY;
+
+      const offsetCenter = map.unproject(
+        gpsPoint,
+        targetZoom
+      );
 
       markProgrammaticMove();
 
-      if (animate) {
-        map.panTo(location, {
-          animate: true,
-          duration: 0.5,
-        });
-      } else {
-        map.panTo(location, {
-          animate: false,
-        });
-      }
+      map.flyTo(offsetCenter, targetZoom, {
+        animate,
+        duration: animate ? 0.8 : 0,
+      });
     };
 
     const resumeFollowing = () => {
@@ -171,9 +179,7 @@ function MapController({
       if (!routeModeRef.current) return;
 
       followEnabledRef.current = true;
-
-      // Center on the most recent GPS coordinates.
-      panToGPS(true);
+      recenterOnGPS(true);
     };
 
     const scheduleResume = () => {
@@ -193,7 +199,6 @@ function MapController({
       );
     };
 
-    // Mouse drag and touch movement.
     const handleDragStart = () => {
       if (isProgrammaticMoveRef.current) return;
       scheduleResume();
@@ -204,13 +209,16 @@ function MapController({
       scheduleResume();
     };
 
-    // Zooming also counts as map interaction.
+    const handleZoomStart = () => {
+      if (isProgrammaticMoveRef.current) return;
+      scheduleResume();
+    };
+
+    const container = map.getContainer();
+
     const handleWheel = () => scheduleResume();
     const handleTouch = () => scheduleResume();
     const handleDoubleClick = () => scheduleResume();
-    const handleZoomStart = () => scheduleResume();
-
-    const container = map.getContainer();
 
     container.addEventListener("wheel", handleWheel, {
       passive: true,
@@ -233,27 +241,17 @@ function MapController({
     map.on("drag", handleDrag);
     map.on("zoomstart", handleZoomStart);
 
-    // Existing Locate button event.
     const locate = () => {
-      const location = userLocationRef.current;
-
-      if (!location) {
+      if (!userLocationRef.current) {
         onRequestLocation?.();
         return;
       }
 
       clearInactivityTimer();
       followEnabledRef.current = true;
-
-      markProgrammaticMove();
-
-      map.flyTo(location, 15, {
-        animate: true,
-        duration: 0.7,
-      });
+      recenterOnGPS(true);
     };
 
-    // Center on a station selected from search results.
     const panToStation = (event: Event) => {
       const customEvent = event as CustomEvent<{
         lat: number;
@@ -340,10 +338,10 @@ function MapController({
     };
   }, [map, onRequestLocation]);
 
-  // Start GPS following when routing becomes active.
+  // Enable following when routing starts.
   useEffect(() => {
     if (!routeMode) {
-      followEnabledRef.current = true;
+      followEnabledRef.current = false;
 
       if (inactivityTimerRef.current !== null) {
         clearTimeout(inactivityTimerRef.current);
@@ -355,23 +353,36 @@ function MapController({
 
     followEnabledRef.current = true;
 
-    if (userLocationRef.current) {
-      isProgrammaticMoveRef.current = true;
+    const location = userLocationRef.current;
+    if (!location) return;
 
-      map.panTo(userLocationRef.current, {
-        animate: false,
-      });
+    const targetZoom = 17;
+    const screenOffsetY = 100;
 
-      const timer = setTimeout(() => {
-        isProgrammaticMoveRef.current = false;
-      }, 150);
+    const point = map.project(
+      L.latLng(location[0], location[1]),
+      targetZoom
+    );
 
-      return () => clearTimeout(timer);
-    }
+    point.y += screenOffsetY;
+
+    const offsetCenter = map.unproject(point, targetZoom);
+
+    isProgrammaticMoveRef.current = true;
+
+    map.flyTo(offsetCenter, targetZoom, {
+      animate: true,
+      duration: 0.8,
+    });
+
+    const timer = setTimeout(() => {
+      isProgrammaticMoveRef.current = false;
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [map, routeMode]);
 
-  // GPS updates recenter the map only when auto-follow is enabled.
-  // When paused, the GPS marker still updates but the camera stays put.
+  // Follow fresh GPS updates only when the user hasn't paused following.
   useEffect(() => {
     if (
       !routeMode ||
@@ -381,9 +392,21 @@ function MapController({
       return;
     }
 
+    const targetZoom = 17;
+    const screenOffsetY = 100;
+
+    const point = map.project(
+      L.latLng(userLocation[0], userLocation[1]),
+      targetZoom
+    );
+
+    point.y += screenOffsetY;
+
+    const offsetCenter = map.unproject(point, targetZoom);
+
     isProgrammaticMoveRef.current = true;
 
-    map.panTo(userLocation, {
+    map.setView(offsetCenter, targetZoom, {
       animate: false,
     });
 
@@ -425,7 +448,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Fetch and draw the road route without fitting the map to it.
+  // Fetch the driving route without fitting the map to the route.
   useEffect(() => {
     if (
       !routeMode ||
@@ -577,7 +600,6 @@ export default function LeafletMap({
               <Popup autoPan={false}>
                 <div className="station-popup">
                   <strong>{station.name}</strong>
-
                   <span>{station.address}</span>
 
                   <span>
