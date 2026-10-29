@@ -404,11 +404,11 @@ export default function Home() {
         setUserLocation(nextLocation);
         setLocationStatus("ready");
         window.dispatchEvent(
-          new CustomEvent("be-electric-location-updated", {
+          new CustomEvent("be-electric-locate", {
             detail: { lat: nextLocation[0], lng: nextLocation[1] },
           })
         );
-        notify("Your current GPS location has been updated.");
+        notify("Recentered Successfully!.");
       },
       (error) => {
         setLocationStatus(
