@@ -1633,15 +1633,6 @@ function selectConnector(connector: DbConnector) {
                             setCalculatedRoute(null);
                             setSheetDragY(0);
                             setSearch("");
-                
-                            window.dispatchEvent(
-                              new CustomEvent("be-electric-pan-to-station", {
-                                detail: {
-                                  lat: Number(station.lat),
-                                  lng: Number(station.lng),
-                                },
-                              })
-                            );
                           }}
                         >
                           <span className="search-suggestion-icon">
@@ -1939,14 +1930,6 @@ function selectConnector(connector: DbConnector) {
                             setCalculatedRoute(null);
                             setSheetDragY(0);
                             setPanel("station");
-                            window.dispatchEvent(
-                              new CustomEvent("be-electric-pan-to-station", {
-                                detail: {
-                                  lat: station.lat,
-                                  lng: station.lng,
-                                },
-                              })
-                            );
                           }}
                         >
                           <span className="saved-zap">
