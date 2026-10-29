@@ -78,7 +78,9 @@ function stationIcon(station: Station, selected: boolean) {
     html: `
       <div class="leaflet-station-icon ${
         selected ? "is-selected" : ""
-      } ${available === 0 ? "is-offline" : ""}">
+      } ${
+        available === 0 ? "is-offline" : ""
+      }">
         <span class="bolt">ϟ</span>
         <span class="count">${available}</span>
         ${selected ? "<small>SELECTED</small>" : ""}
@@ -90,142 +92,32 @@ function stationIcon(station: Station, selected: boolean) {
 }
 
 /**
- * GPS follow behavior:
- * - Start following when a route becomes active.
- * - Follow GPS updates without fitting the entire route.
- * - Keep the GPS marker above center to account for bottom panels.
- * - Pause following when the user manually pans or zooms.
- * - Never automatically resume after manual interaction.
- * - Resume following when the user explicitly presses Locate.
- * - Never pan to the route midpoint.
+ * Map movement is limited to an explicit Locate Me action.
+ * GPS updates, route calculations, and route-mode changes
+ * do not automatically move or zoom the map.
  */
+
 function MapController({
   userLocation,
-  routeMode,
   onRequestLocation,
 }: {
   userLocation: [number, number] | null;
-  routeMode: boolean;
   onRequestLocation?: () => void;
 }) {
   const map = useMap();
-
   const userLocationRef = useRef(userLocation);
-  const programmaticMoveRef = useRef(false);
-  const moveGuardTimerRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
 
-  const [isFollowing, setIsFollowing] = useState(false);
+  userLocationRef.current = userLocation;
 
-  const latitude = userLocation?.[0] ?? null;
-  const longitude = userLocation?.[1] ?? null;
-
-  // Keep the latest GPS coordinates available to event handlers.
   useEffect(() => {
-    userLocationRef.current = userLocation;
-  }, [latitude, longitude]);
+    const locate = () => {
+      const location = userLocationRef.current;
 
-  /**
-   * Calculate a map center that places the GPS marker above
-   * the center of the screen, allowing room for bottom panels.
-   */
-  function getOffsetCenter(
-    location: [number, number],
-    zoom: number
-  ): L.LatLng {
-    const targetPoint = map.project(location, zoom);
-
-    targetPoint.y += map.getSize().y * 0.2;
-
-    return map.unproject(targetPoint, zoom);
-  }
-
-  /**
-   * Move the map programmatically without treating the movement
-   * as a manual gesture that pauses following.
-   */
-  function moveToUser(
-    location: [number, number],
-    zoom: number,
-    animated: boolean
-  ) {
-    if (
-      !Number.isFinite(location[0]) ||
-      !Number.isFinite(location[1])
-    ) {
-      return;
-    }
-
-    const adjustedCenter = getOffsetCenter(location, zoom);
-
-    if (moveGuardTimerRef.current !== null) {
-      clearTimeout(moveGuardTimerRef.current);
-      moveGuardTimerRef.current = null;
-    }
-
-    programmaticMoveRef.current = true;
-
-    map.stop();
-
-    map.setView(adjustedCenter, zoom, {
-      animate: animated,
-      duration: 0.7,
-    });
-
-    // Release the programmatic movement guard after the animation.
-    moveGuardTimerRef.current = setTimeout(() => {
-      programmaticMoveRef.current = false;
-      moveGuardTimerRef.current = null;
-    }, animated ? 900 : 100);
-  }
-
-  /**
-   * Manual pan/zoom pauses following indefinitely.
-   * There is deliberately no automatic resume timer.
-   */
-  useEffect(() => {
-    const pauseFollowing = () => {
-      if (!routeMode || programmaticMoveRef.current) {
-        return;
-      }
-
-      setIsFollowing(false);
-    };
-
-    /**
-     * The page dispatches:
-     * new CustomEvent("be-electric-locate", {
-     *   detail: { lat, lng }
-     * })
-     *
-     * Also support the { location: [lat, lng] } format.
-     */
-    const locate = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        location?: [number, number];
-        lat?: number;
-        lng?: number;
-      }>;
-
-      const detail = customEvent.detail;
-
-      const location: [number, number] | null =
-        detail?.location ??
-        (typeof detail?.lat === "number" &&
-        typeof detail?.lng === "number"
-          ? [detail.lat, detail.lng]
-          : userLocationRef.current);
-
-      if (
-        location &&
-        Number.isFinite(location[0]) &&
-        Number.isFinite(location[1])
-      ) {
-        // Only resume GPS following if a route is active.
-        setIsFollowing(routeMode);
-
-        moveToUser(location, Math.max(map.getZoom(), 16), true);
+      if (location) {
+        map.flyTo(location, 15, {
+          animate: true,
+          duration: 0.7,
+        });
       } else {
         onRequestLocation?.();
       }
@@ -238,9 +130,6 @@ function MapController({
       });
     };
 
-    map.on("dragstart", pauseFollowing);
-    map.on("zoomstart", pauseFollowing);
-
     window.addEventListener("be-electric-locate", locate);
     window.addEventListener(
       "be-electric-map-visible",
@@ -248,53 +137,17 @@ function MapController({
     );
 
     return () => {
-      map.off("dragstart", pauseFollowing);
-      map.off("zoomstart", pauseFollowing);
-
       window.removeEventListener("be-electric-locate", locate);
       window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
       );
-
-      if (moveGuardTimerRef.current !== null) {
-        clearTimeout(moveGuardTimerRef.current);
-        moveGuardTimerRef.current = null;
-      }
     };
-  }, [map, routeMode, onRequestLocation]);
-
-  // Start following when a route becomes active.
-  // Stop following when the route is no longer active.
-  useEffect(() => {
-    setIsFollowing(routeMode);
-  }, [routeMode]);
-
-  // Follow GPS updates only while route mode and following are active.
-  useEffect(() => {
-    if (
-      !routeMode ||
-      !isFollowing ||
-      latitude === null ||
-      longitude === null
-    ) {
-      return;
-    }
-
-    const currentZoom = map.getZoom();
-    const zoom = Math.max(currentZoom, 16);
-
-    moveToUser([latitude, longitude], zoom, true);
-  }, [
-    map,
-    routeMode,
-    isFollowing,
-    latitude,
-    longitude,
-  ]);
+  }, [map, onRequestLocation]);
 
   return null;
 }
+
 
 export default function LeafletMap({
   stations,
@@ -324,7 +177,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Calculate the driving route without fitting or moving the map.
+  // Fetch and draw the driving route without moving the map.
   useEffect(() => {
     if (
       !routeMode ||
@@ -370,9 +223,7 @@ export default function LeafletMap({
           setRoadCoordinates(latLngs);
 
           onRouteCalculatedRef.current?.({
-            distance: `${(
-              route.distance / 1000
-            ).toFixed(1)} km`,
+            distance: `${(route.distance / 1000).toFixed(1)} km`,
             minutes: Math.max(
               1,
               Math.round(route.duration / 60)
@@ -420,14 +271,13 @@ export default function LeafletMap({
         attributionControl={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
 
         <MapController
           userLocation={userLocation}
-          routeMode={routeMode}
           onRequestLocation={onRequestLocation}
         />
 
@@ -442,7 +292,7 @@ export default function LeafletMap({
               fillOpacity: 1,
             }}
           >
-            <Popup autoPan={false}>
+            <Popup>
               <strong>
                 {isFallbackLocation
                   ? "Default Starting Location"
@@ -473,7 +323,7 @@ export default function LeafletMap({
                 click: () => onSelect(station.id),
               }}
             >
-              <Popup autoPan={false}>
+              <Popup>
                 <div className="station-popup">
                   <strong>{station.name}</strong>
 
