@@ -91,13 +91,6 @@ function stationIcon(station: Station, selected: boolean) {
   });
 }
 
-/**
- * Map movement is limited to an explicit Locate Me action.
- * GPS updates, route calculations, and route-mode changes
- * do not automatically move or zoom the map.
- */
-
-
 function MapController({
   userLocation,
   routeMode,
@@ -112,26 +105,53 @@ function MapController({
   const userLocationRef = useRef(userLocation);
   const routeModeRef = useRef(routeMode);
   const followEnabledRef = useRef(true);
-  const inactivityTimerRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const isProgrammaticMoveRef = useRef(false);
 
-  // Always keep the latest GPS coordinates available to the timer.
+  const inactivityTimerRef = useRef<
+    ReturnType<typeof setTimeout> | null
+  >(null);
+
+  const programmaticTimerRef = useRef<
+    ReturnType<typeof setTimeout> | null
+  >(null);
+
+  // Always read the latest GPS location, including when a timer fires.
   userLocationRef.current = userLocation;
   routeModeRef.current = routeMode;
 
   useEffect(() => {
-    const clearFollowTimer = () => {
+    const clearInactivityTimer = () => {
       if (inactivityTimerRef.current !== null) {
         clearTimeout(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
       }
     };
 
-    const centerOnLatestGPS = (animate = true) => {
+    const clearProgrammaticTimer = () => {
+      if (programmaticTimerRef.current !== null) {
+        clearTimeout(programmaticTimerRef.current);
+        programmaticTimerRef.current = null;
+      }
+    };
+
+    // Mark camera movement initiated by the app so it isn't
+    // mistaken for the user manually moving the map.
+    const markProgrammaticMove = () => {
+      isProgrammaticMoveRef.current = true;
+      clearProgrammaticTimer();
+
+      programmaticTimerRef.current = setTimeout(() => {
+        isProgrammaticMoveRef.current = false;
+        programmaticTimerRef.current = null;
+      }, 1000);
+    };
+
+    const panToGPS = (animate = true) => {
       const location = userLocationRef.current;
 
       if (!location) return;
+
+      markProgrammaticMove();
 
       if (animate) {
         map.panTo(location, {
@@ -145,58 +165,95 @@ function MapController({
       }
     };
 
-    // Called whenever the user moves, zooms, or touches the map.
-    const pauseFollowing = () => {
+    const resumeFollowing = () => {
+      inactivityTimerRef.current = null;
+
       if (!routeModeRef.current) return;
 
-      followEnabledRef.current = false;
-      clearFollowTimer();
+      followEnabledRef.current = true;
 
-      inactivityTimerRef.current = setTimeout(() => {
-        inactivityTimerRef.current = null;
-
-        // Routing may have ended while the timer was running.
-        if (!routeModeRef.current) return;
-
-        // Resume following and use the newest GPS position,
-        // not the coordinates from when the timer was started.
-        followEnabledRef.current = true;
-        centerOnLatestGPS(true);
-      }, 5000);
+      // Center on the most recent GPS coordinates.
+      panToGPS(true);
     };
+
+    const scheduleResume = () => {
+      if (
+        !routeModeRef.current ||
+        isProgrammaticMoveRef.current
+      ) {
+        return;
+      }
+
+      followEnabledRef.current = false;
+      clearInactivityTimer();
+
+      inactivityTimerRef.current = setTimeout(
+        resumeFollowing,
+        5000
+      );
+    };
+
+    // Mouse drag and touch movement.
+    const handleDragStart = () => {
+      if (isProgrammaticMoveRef.current) return;
+      scheduleResume();
+    };
+
+    const handleDrag = () => {
+      if (isProgrammaticMoveRef.current) return;
+      scheduleResume();
+    };
+
+    // Zooming also counts as map interaction.
+    const handleWheel = () => scheduleResume();
+    const handleTouch = () => scheduleResume();
+    const handleDoubleClick = () => scheduleResume();
+    const handleZoomStart = () => scheduleResume();
 
     const container = map.getContainer();
 
-    container.addEventListener("wheel", pauseFollowing, {
+    container.addEventListener("wheel", handleWheel, {
       passive: true,
     });
-    container.addEventListener("touchstart", pauseFollowing, {
-      passive: true,
-    });
-    container.addEventListener("touchmove", pauseFollowing, {
-      passive: true,
-    });
-    container.addEventListener("dblclick", pauseFollowing);
 
-    map.on("dragstart", pauseFollowing);
-    map.on("drag", pauseFollowing);
+    container.addEventListener("touchstart", handleTouch, {
+      passive: true,
+    });
 
+    container.addEventListener("touchmove", handleTouch, {
+      passive: true,
+    });
+
+    container.addEventListener(
+      "dblclick",
+      handleDoubleClick
+    );
+
+    map.on("dragstart", handleDragStart);
+    map.on("drag", handleDrag);
+    map.on("zoomstart", handleZoomStart);
+
+    // Existing Locate button event.
     const locate = () => {
       const location = userLocationRef.current;
 
-      if (location) {
-        clearFollowTimer();
-        followEnabledRef.current = true;
-
-        map.flyTo(location, 15, {
-          animate: true,
-          duration: 0.7,
-        });
-      } else {
+      if (!location) {
         onRequestLocation?.();
+        return;
       }
+
+      clearInactivityTimer();
+      followEnabledRef.current = true;
+
+      markProgrammaticMove();
+
+      map.flyTo(location, 15, {
+        animate: true,
+        duration: 0.7,
+      });
     };
 
+    // Center on a station selected from search results.
     const panToStation = (event: Event) => {
       const customEvent = event as CustomEvent<{
         lat: number;
@@ -206,14 +263,23 @@ function MapController({
       const lat = Number(customEvent.detail?.lat);
       const lng = Number(customEvent.detail?.lng);
 
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      if (
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng)
+      ) {
         return;
       }
 
-      map.flyTo([lat, lng], Math.max(map.getZoom(), 15), {
-        animate: true,
-        duration: 0.7,
-      });
+      markProgrammaticMove();
+
+      map.flyTo(
+        [lat, lng],
+        Math.max(map.getZoom(), 15),
+        {
+          animate: true,
+          duration: 0.7,
+        }
+      );
     };
 
     const refreshMapSize = () => {
@@ -224,40 +290,49 @@ function MapController({
     };
 
     window.addEventListener("be-electric-locate", locate);
+
     window.addEventListener(
       "be-electric-pan-to-station",
       panToStation
     );
+
     window.addEventListener(
       "be-electric-map-visible",
       refreshMapSize
     );
 
     return () => {
-      clearFollowTimer();
+      clearInactivityTimer();
+      clearProgrammaticTimer();
 
-      container.removeEventListener("wheel", pauseFollowing);
+      container.removeEventListener("wheel", handleWheel);
       container.removeEventListener(
         "touchstart",
-        pauseFollowing
+        handleTouch
       );
       container.removeEventListener(
         "touchmove",
-        pauseFollowing
+        handleTouch
       );
       container.removeEventListener(
         "dblclick",
-        pauseFollowing
+        handleDoubleClick
       );
 
-      map.off("dragstart", pauseFollowing);
-      map.off("drag", pauseFollowing);
+      map.off("dragstart", handleDragStart);
+      map.off("drag", handleDrag);
+      map.off("zoomstart", handleZoomStart);
 
-      window.removeEventListener("be-electric-locate", locate);
+      window.removeEventListener(
+        "be-electric-locate",
+        locate
+      );
+
       window.removeEventListener(
         "be-electric-pan-to-station",
         panToStation
       );
+
       window.removeEventListener(
         "be-electric-map-visible",
         refreshMapSize
@@ -265,7 +340,7 @@ function MapController({
     };
   }, [map, onRequestLocation]);
 
-  // Start following when routing is activated.
+  // Start GPS following when routing becomes active.
   useEffect(() => {
     if (!routeMode) {
       followEnabledRef.current = true;
@@ -281,13 +356,22 @@ function MapController({
     followEnabledRef.current = true;
 
     if (userLocationRef.current) {
+      isProgrammaticMoveRef.current = true;
+
       map.panTo(userLocationRef.current, {
         animate: false,
       });
+
+      const timer = setTimeout(() => {
+        isProgrammaticMoveRef.current = false;
+      }, 150);
+
+      return () => clearTimeout(timer);
     }
   }, [map, routeMode]);
 
-  // GPS updates move the map only when auto-follow is enabled.
+  // GPS updates recenter the map only when auto-follow is enabled.
+  // When paused, the GPS marker still updates but the camera stays put.
   useEffect(() => {
     if (
       !routeMode ||
@@ -297,14 +381,21 @@ function MapController({
       return;
     }
 
+    isProgrammaticMoveRef.current = true;
+
     map.panTo(userLocation, {
       animate: false,
     });
+
+    const timer = setTimeout(() => {
+      isProgrammaticMoveRef.current = false;
+    }, 150);
+
+    return () => clearTimeout(timer);
   }, [map, routeMode, userLocation]);
 
   return null;
 }
-
 
 export default function LeafletMap({
   stations,
@@ -334,7 +425,7 @@ export default function LeafletMap({
   const selectedLng = selected?.lng;
   const selectedStationId = selected?.id;
 
-  // Fetch and draw the driving route without moving the map.
+  // Fetch and draw the road route without fitting the map to it.
   useEffect(() => {
     if (
       !routeMode ||
@@ -380,7 +471,9 @@ export default function LeafletMap({
           setRoadCoordinates(latLngs);
 
           onRouteCalculatedRef.current?.({
-            distance: `${(route.distance / 1000).toFixed(1)} km`,
+            distance: `${(
+              route.distance / 1000
+            ).toFixed(1)} km`,
             minutes: Math.max(
               1,
               Math.round(route.duration / 60)
@@ -435,6 +528,7 @@ export default function LeafletMap({
 
         <MapController
           userLocation={userLocation}
+          routeMode={routeMode}
           onRequestLocation={onRequestLocation}
         />
 
@@ -449,7 +543,7 @@ export default function LeafletMap({
               fillOpacity: 1,
             }}
           >
-            <Popup>
+            <Popup autoPan={false}>
               <strong>
                 {isFallbackLocation
                   ? "Default Starting Location"
@@ -480,7 +574,7 @@ export default function LeafletMap({
                 click: () => onSelect(station.id),
               }}
             >
-              <Popup>
+              <Popup autoPan={false}>
                 <div className="station-popup">
                   <strong>{station.name}</strong>
 
