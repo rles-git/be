@@ -2600,7 +2600,7 @@ body {
 
 .chooser-sheet {
   width: min(100%, 620px);
-  max-width: calc(100% - 32px);
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
