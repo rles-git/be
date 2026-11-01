@@ -2613,10 +2613,6 @@ body {
   max-height: min(58%, 520px);
 }
 
-.chooser-sheet {
-  max-width: min(620px, calc(100% - 32px));
-}
-
 .tab-content,
 .activity-content,
 .profile-content {
