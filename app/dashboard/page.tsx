@@ -495,6 +495,9 @@ export default function Home() {
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [walletStatus, setWalletStatus] = useState("active");
+  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsError, setTransactionsError] = useState("");
   
   useEffect(() => {
   if (activeTab !== "Profile" || !walletOpen) return;
@@ -545,6 +548,46 @@ export default function Home() {
   return () => {
     cancelled = true;
   };
+}, [activeTab, walletOpen]);
+
+async function loadWalletTransactions() {
+  setTransactionsLoading(true);
+  setTransactionsError("");
+
+  try {
+    const response = await fetch(
+      "/api/wallet/transactions?limit=20&offset=0",
+      {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Unable to load transaction history."
+      );
+    }
+
+    setWalletTransactions(data.transactions || []);
+  } catch (error) {
+    setTransactionsError(
+      error instanceof Error
+        ? error.message
+        : "Unable to load transaction history."
+    );
+  } finally {
+    setTransactionsLoading(false);
+  }
+}
+
+  useEffect(() => {
+  if (activeTab !== "Profile" || !walletOpen) return;
+
+  loadWalletTransactions();
 }, [activeTab, walletOpen]);
   
 const handleCableConnection = () => {
@@ -3593,25 +3636,137 @@ function selectConnector(connector: DbConnector) {
             </button>
           </div>
         </section>
-        <section>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 1px 9px" }}>
-            <h3 style={{ margin: 0, fontSize: 14 }}>Recent activity</h3>
-            <button type="button" onClick={() => notify("Your full wallet history will appear here.")} style={{ border: 0, background: "transparent", color: "#71866e", fontSize: 11, cursor: "pointer", padding: 3 }}>View all</button>
+        <section className="wallet-activity">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 14,
+            }}
+          >
+            <h3 style={{ margin: 0 }}>Recent Activity</h3>
+        
+            <span style={{ fontSize: 11, color: "#71866e" }}>
+              Latest transactions
+            </span>
           </div>
-          <div style={{ background: "#fff", borderRadius: 15, padding: "2px 12px" }}>
-            {[
-              { title: "sent to Edgar Nicholas Millan Dizon", detail: "Nov 1", amount: "−QAR1000.00", positive: false, icon: <Zap size={14} /> },
-              { title: "Marina Charging", detail: "Oct 29 · 20.0 kWh", amount: "−QAR8.40", positive: false, icon: <Zap size={14} /> },
-              { title: "Wallet top-up", detail: "Oct 28 · Visa •••• 4242", amount: "+QAR100.00", positive: true, icon: <Plus size={14} /> },
-            ].map((item, index) => (
-              <div key={item.title} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 0", borderBottom: index < 2 ? "1px solid #edf0eb" : 0 }}>
-                <span style={{ width: 25, height: 25, borderRadius: 8, background: "#f0f3ee", color: "#788d75", display: "grid", placeItems: "center" }}>{item.icon}</span>
-                <span style={{ minWidth: 0, flex: 1 }}><b style={{ display: "block", fontSize: 10, fontWeight: 600 }}>{item.title}</b><small style={{ display: "block", color: "#858c83", fontSize: 9, marginTop: 2 }}>{item.detail}</small></span>
-                <b style={{ fontSize: 10, color: item.positive ? "#71896d" : "#303a32", whiteSpace: "nowrap" }}>{item.amount}</b>
-              </div>
-            ))}
-          </div>
+        
+          {transactionsLoading ? (
+            <p style={{ fontSize: 12, color: "#858983" }}>
+              Loading transactions...
+            </p>
+          ) : transactionsError ? (
+            <p style={{ fontSize: 12, color: "#a94442" }}>
+              {transactionsError}
+            </p>
+          ) : walletTransactions.length === 0 ? (
+            <div
+              style={{
+                padding: "25px 10px",
+                textAlign: "center",
+                color: "#858983",
+                fontSize: 12,
+              }}
+            >
+              <p>No transactions yet.</p>
+              <p>Your wallet activity will appear here.</p>
+            </div>
+          ) : (
+            <div>
+              {walletTransactions.map((transaction) => {
+                const isCredit = [
+                  "top_up",
+                  "refund",
+                ].includes(transaction.type);
+        
+                const title =
+                  transaction.description ||
+                  ({
+                    top_up: "Wallet Top-up",
+                    charging_payment: "Charging Payment",
+                    refund: "Refund",
+                    adjustment: "Wallet Adjustment",
+                  }[transaction.type] || "Wallet Transaction");
+        
+                const amount = Number(transaction.amount);
+        
+                return (
+                  <div
+                    key={transaction.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: "13px 0",
+                      borderBottom: "1px solid #e7e8e4",
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#303a32",
+                          marginBottom: 5,
+                        }}
+                      >
+                        {title}
+                      </div>
+        
+                      <div style={{ fontSize: 10, color: "#858983" }}>
+                        {new Date(transaction.createdAt).toLocaleString(
+                          "en-GB",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </div>
+        
+                      <div
+                        style={{
+                          fontSize: 10,
+                          marginTop: 4,
+                          color:
+                            transaction.status === "completed"
+                              ? "#58715d"
+                              : transaction.status === "failed"
+                              ? "#b54747"
+                              : "#858983",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {transaction.status}
+                      </div>
+                    </div>
+        
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: isCredit ? "#58715d" : "#303a32",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {isCredit ? "+" : "-"}
+                      {transaction.currency}{" "}
+                      {amount.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
+
         <p style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 5, color: "#92988f", fontSize: 9, margin: "13px 0 2px" }}><ShieldCheck size={11} /> Secure payments. Ready for your next charge.</p>
       </div>
     ) : (
