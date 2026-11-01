@@ -3520,68 +3520,6 @@ function selectConnector(connector: DbConnector) {
 
         <section className="details-section">
           <div className="details-section-heading">
-            <h3>Personal information</h3>
-            <span>ACCOUNT</span>
-          </div>
-
-          <div className="operating-card">
-            <span className="operating-icon">
-              <UserRound size={20} />
-            </span>
-            <div>
-              <strong>Full name</strong>
-              <p>
-                {userProfile.fullName ||
-                  userProfile.name ||
-                  "Not provided"}
-              </p>
-            </div>
-          </div>
-
-          <div className="operating-card">
-            <span className="operating-icon">
-              <Activity size={20} />
-            </span>
-            <div>
-              <strong>Email address</strong>
-              <p>{userProfile.email || "Not provided"}</p>
-            </div>
-          </div>
-
-          <div className="operating-card">
-            <span className="operating-icon">
-              <CircleDot size={20} />
-            </span>
-            <div>
-              <strong>Phone number</strong>
-              <p>{userProfile.phone || "Not provided"}</p>
-            </div>
-          </div>
-
-          {userProfile.createdAt && (
-            <div className="operating-card">
-              <span className="operating-icon">
-                <History size={20} />
-              </span>
-              <div>
-                <strong>Member since</strong>
-                <p>
-                  {new Date(userProfile.createdAt).toLocaleDateString(
-                    undefined,
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="details-section">
-          <div className="details-section-heading">
             <h3>Preferences</h3>
             <span>SETTINGS</span>
           </div>
