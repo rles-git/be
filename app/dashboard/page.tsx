@@ -3595,7 +3595,7 @@ function selectConnector(connector: DbConnector) {
           </span>
           <span style={{ minWidth: 0, flex: 1 }}>
             <b style={{ display: "block", fontSize: 13, fontWeight: 650 }}>Wallet</b>
-            <small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>QAR0.00</small>
+            <small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>QAR **.**</small>
           </span>
           <ChevronRight size={17} color="#71866e" />
         </button>
