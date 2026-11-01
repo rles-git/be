@@ -3581,7 +3581,7 @@ function selectConnector(connector: DbConnector) {
             alignItems: "center",
             gap: 11,
             padding: "16px 16px",
-            margin: "8px 0 16px",
+            margin: "4px 0 16px",
             border: 0,
             borderRadius: 15,
             background: "#e7ede5",
