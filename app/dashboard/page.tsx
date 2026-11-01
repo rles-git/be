@@ -490,6 +490,62 @@ export default function Home() {
     totalEnergyKwh * QATAR_GRID_EMISSIONS_KG_PER_KWH;
 
 
+  const [walletBalance, setWalletBalance] = useState("0.00");
+  const [walletCurrency, setWalletCurrency] = useState("QAR");
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState("");
+  const [walletStatus, setWalletStatus] = useState("active");
+  
+  useEffect(() => {
+  if (activeTab !== "Profile" || !walletOpen) return;
+
+  let cancelled = false;
+
+  async function loadWallet() {
+    setWalletLoading(true);
+    setWalletError("");
+
+    try {
+      const response = await fetch("/api/wallet", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Unable to retrieve wallet."
+        );
+      }
+
+      if (!cancelled) {
+        setWalletBalance(data.wallet.balance);
+        setWalletCurrency(data.wallet.currency);
+        setWalletStatus(data.wallet.status);
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setWalletError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load wallet."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setWalletLoading(false);
+      }
+    }
+  }
+
+  loadWallet();
+
+  return () => {
+    cancelled = true;
+  };
+}, [activeTab, walletOpen]);
   
 const handleCableConnection = () => {
   if (handshakePending || handshakeCompleted) return;
@@ -3478,7 +3534,43 @@ function selectConnector(connector: DbConnector) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <small style={{ color: "#687967" }}>Available balance</small><small style={{ color: "#687967", fontSize: 9 }}>QAR</small>
           </div>
-          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>QAR 123,167</div>
+          <div
+  style={{
+    fontSize: 29,
+    fontWeight: 700,
+    letterSpacing: "-1.2px",
+    margin: "5px 0 9px",
+  }}
+>
+  {walletLoading
+    ? "Loading..."
+    : `${walletCurrency} ${Number(walletBalance).toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}`}
+</div>
+
+{walletError && (
+  <p
+    style={{
+      color: "#a94442",
+      fontSize: 10,
+      margin: "0 0 8px",
+    }}
+  >
+    {walletError}
+  </p>
+)}
+
+{walletStatus !== "active" && (
+  <p style={{ color: "#a94442", fontSize: 10 }}>
+    Your wallet is {walletStatus}.
+  </p>
+)}
+          
           <button type="button" onClick={() => notify("Wallet top-ups are not connected yet.")} style={{ width: "100%", border: 0, borderRadius: 11, padding: "10px 12px", background: "#96a893", color: "#26362a", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}>
             <Plus size={15} /> Top up wallet
           </button>
