@@ -3313,18 +3313,6 @@ function selectConnector(connector: DbConnector) {
                     </p>
 
                     <div className="recent-routes-section">
-                      <div className="activity-card header-card">
-                        <span><History size={20} /></span>
-                        <div>
-                          <b>Recent routes ({recentRoutes.length})</b>
-                          <small>
-                            {recentRoutes.length
-                              ? "Recently completed trips"
-                              : "No recent routes in this session."}
-                          </small>
-                        </div>
-                      </div>
-
                       {recentRoutes.slice(0, 3).map((route) => (
                         <button
                           key={route.id}
