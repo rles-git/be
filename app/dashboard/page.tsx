@@ -3600,7 +3600,7 @@ function selectConnector(connector: DbConnector) {
           </div>
           <div style={{ background: "#fff", borderRadius: 15, padding: "2px 12px" }}>
             {[
-              { title: "Embarcadero Hub", detail: "Oct 31 · 28.0 kWh", amount: "−QAR12.60", positive: false, icon: <Zap size={14} /> },
+              { title: "sent to Allison Vinuya", detail: "Nov 1", amount: "−QAR1000.00", positive: false, icon: <Zap size={14} /> },
               { title: "Marina Charging", detail: "Oct 29 · 20.0 kWh", amount: "−QAR8.40", positive: false, icon: <Zap size={14} /> },
               { title: "Wallet top-up", detail: "Oct 28 · Visa •••• 4242", amount: "+QAR100.00", positive: true, icon: <Plus size={14} /> },
             ].map((item, index) => (
