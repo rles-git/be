@@ -3478,7 +3478,7 @@ function selectConnector(connector: DbConnector) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <small style={{ color: "#687967" }}>Available balance</small><small style={{ color: "#687967", fontSize: 9 }}>QAR</small>
           </div>
-          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>QAR0.00</div>
+          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>QAR 123,167</div>
           <button type="button" onClick={() => notify("Wallet top-ups are not connected yet.")} style={{ width: "100%", border: 0, borderRadius: 11, padding: "10px 12px", background: "#96a893", color: "#26362a", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}>
             <Plus size={15} /> Top up wallet
           </button>
