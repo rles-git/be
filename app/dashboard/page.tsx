@@ -1428,7 +1428,7 @@ function selectConnector(connector: DbConnector) {
 
   if (loading) {
     return (
-      <main className="desktop-shell">
+      <main className="app-shell">
         <div className="leaflet-loading">
           Loading charging stations from Neon…
         </div>
@@ -1438,7 +1438,7 @@ function selectConnector(connector: DbConnector) {
 
   if (error) {
     return (
-      <main className="desktop-shell">
+      <main className="app-shell">
         <div className="leaflet-loading">
           <p>{error}</p>
           <button onClick={() => window.location.reload()}>Try again</button>
@@ -1449,7 +1449,7 @@ function selectConnector(connector: DbConnector) {
 
   if (stations.length === 0 || !selected) {
     return (
-      <main className="desktop-shell">
+      <main className="app-shell">
         <div className="leaflet-loading">
           No charging stations found. Add station records in Neon and check
           your API endpoint.
@@ -1459,63 +1459,11 @@ function selectConnector(connector: DbConnector) {
   }
 
   return (
-    <main className="desktop-shell">
-      <aside className="desktop-intro">
-        <div className="brand-lockup">
-          <span className="brand-icon">
-            <Zap size={22} />
-          </span>
-          <span>be-electric</span>
-        </div>
+    <main className="app-shell">
 
-        <span className="eyebrow">EV CHARGING, SIMPLIFIED</span>
-
-        <h1>
-          Find your charge.
-          <br />
-          <em>Keep moving.</em>
-        </h1>
-
-        <p>
-          Explore charging stations, preview routes, and find charging
-          locations using data loaded from your station database.
-        </p>
-
-        <div className="intro-points">
-          <div>
-            <span><MapPin size={17} /></span>
-            <div>
-              <b>Explore stations</b>
-              <small>Search charging locations around Qatar.</small>
-            </div>
-          </div>
-
-          <div>
-            <span><Route size={17} /></span>
-            <div>
-              <b>Preview your route</b>
-              <small>See a road route before navigating.</small>
-            </div>
-          </div>
-
-          <div>
-            <span><BatteryCharging size={17} /></span>
-            <div>
-              <b>Check station details</b>
-              <small>View stored power and reported status.</small>
-            </div>
-          </div>
-        </div>
-
-        <div className="desktop-hint">
-          <span className="hint-dot" /> Neon database
-          <span className="hint-divider">·</span> Station data
-        </div>
-      </aside>
-
-      <section className="emulator-column">
-        <div className="phone-frame">
-          <div className="phone-screen">
+      <section className="app-viewport">
+        
+          <div className="app-screen">
             
 {activeSession &&
   !(activeTab === "Explore" && panel === "charging-active") && (
@@ -3750,35 +3698,6 @@ function selectConnector(connector: DbConnector) {
 
             {message && <div className="toast">{message}</div>}
           </div>
-        </div>
-
-        <div className="emulator-footer">
-          <span>
-            <span className="footer-dot" /> Connected to station database
-          </span>
-
-          <button
-            onClick={() => {
-              setActiveTab("Explore");
-              setPanel(null);
-              setRouteMode(false);
-              setSearch("");
-              setFastOnly(true);
-              setAcOnly(false);
-              setAvailableOnly(false);
-              setRecentRoutes([]);
-              setCalculatedRoute(null);
-              setSheetDragY(0);
-              setSaved([]);
-              setSelectedCharger(null);
-              setChargeTarget("80");
-              setCustomTarget("");
-              setCarConnected(false);
-            }}
-          >
-            Reset demo <History size={13} />
-          </button>
-        </div>
       </section>
     </main>
   );
