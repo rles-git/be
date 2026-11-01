@@ -2699,27 +2699,3 @@ body {
     bottom: 28px;
   }
 }
-
-/* Keep small-screen behavior edge-to-edge; the viewport itself is no
-   longer wrapped in a simulated handset. */
-@media (max-width: 520px) {
-  .station-sheet,
-  .route-bottom-sheet {
-    width: 100%;
-    left: 0;
-    right: 0;
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .station-sheet {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .route-bottom-sheet {
-    max-height: min(48%, 360px);
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
