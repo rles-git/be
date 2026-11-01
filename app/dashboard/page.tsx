@@ -3476,9 +3476,9 @@ function selectConnector(connector: DbConnector) {
         </div>
         <section style={{ background: "#e7ede5", borderRadius: 17, padding: 16, marginBottom: 18, color: "#303a32" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <small style={{ color: "#687967" }}>Available balance</small><small style={{ color: "#687967", fontSize: 9 }}>USD</small>
+            <small style={{ color: "#687967" }}>Available balance</small><small style={{ color: "#687967", fontSize: 9 }}>QAR</small>
           </div>
-          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>$79.00</div>
+          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>QAR0.00</div>
           <button type="button" onClick={() => notify("Wallet top-ups are not connected yet.")} style={{ width: "100%", border: 0, borderRadius: 11, padding: "10px 12px", background: "#96a893", color: "#26362a", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}>
             <Plus size={15} /> Top up wallet
           </button>
@@ -3595,7 +3595,7 @@ function selectConnector(connector: DbConnector) {
           </span>
           <span style={{ minWidth: 0, flex: 1 }}>
             <b style={{ display: "block", fontSize: 13, fontWeight: 650 }}>Wallet</b>
-            <small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>$79.00 demo balance</small>
+            <small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>QAR0.00</small>
           </span>
           <ChevronRight size={17} color="#71866e" />
         </button>
