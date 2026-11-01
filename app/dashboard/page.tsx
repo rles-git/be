@@ -5,6 +5,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Activity,
+  ArrowLeft,
+  CreditCard,
   BookOpenText,
   Bookmark,
   BookmarkCheck,
@@ -23,11 +25,14 @@ import {
   MapPin,
   Navigation,
   PlugZap,
+  Plus,
   Route,
   Search,
   Settings2,
   Star,
   UserRound,
+  Wallet,
+  ShieldCheck,
   X,
   Zap,
 } from "lucide-react";
@@ -453,6 +458,7 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
+  const [walletOpen, setWalletOpen] = useState(false);
 
   const [activeSession, setActiveSession] =
     useState<ActiveChargingSession | null>(null);
@@ -3459,6 +3465,65 @@ function selectConnector(connector: DbConnector) {
 
                 {activeTab === "Profile" && (
   <>
+    {walletOpen ? (
+      <div className="wallet-screen" style={{ paddingBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <button type="button" aria-label="Back to profile" onClick={() => setWalletOpen(false)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #e2e6df", background: "#fff", color: "#344238", display: "grid", placeItems: "center", cursor: "pointer" }}>
+            <ArrowLeft size={19} />
+          </button>
+          <h2 style={{ margin: 0 }}>Wallet</h2>
+          <Wallet size={19} style={{ marginLeft: "auto", color: "#788b77" }} />
+        </div>
+        <section style={{ background: "#e7ede5", borderRadius: 17, padding: 16, marginBottom: 18, color: "#303a32" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <small style={{ color: "#687967" }}>Available balance</small><small style={{ color: "#687967", fontSize: 9 }}>USD</small>
+          </div>
+          <div style={{ fontSize: 29, fontWeight: 700, letterSpacing: "-1.2px", margin: "5px 0 9px" }}>$79.00</div>
+          <button type="button" onClick={() => notify("Wallet top-ups are not connected yet.")} style={{ width: "100%", border: 0, borderRadius: 11, padding: "10px 12px", background: "#96a893", color: "#26362a", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}>
+            <Plus size={15} /> Top up wallet
+          </button>
+        </section>
+        <section style={{ marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 1px 9px" }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>Payment methods</h3>
+            <button type="button" onClick={() => notify("Adding payment methods will be available when payments are connected.")} style={{ border: 0, background: "transparent", color: "#71866e", fontSize: 11, cursor: "pointer", padding: 3 }}>+ Add new</button>
+          </div>
+          <div style={{ background: "#fff", borderRadius: 15, padding: "2px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #edf0eb" }}>
+              <span style={{ width: 28, height: 28, borderRadius: 8, background: "#f1f3ef", display: "grid", placeItems: "center", color: "#364238", fontSize: 8, fontWeight: 800 }}>VISA</span>
+              <span style={{ minWidth: 0, flex: 1 }}><b style={{ display: "block", fontSize: 11, fontWeight: 600 }}>Visa •••• 4242</b><small style={{ display: "block", color: "#858c83", fontSize: 9, marginTop: 2 }}>Expires 08/28</small></span>
+              <span style={{ background: "#e8eee6", color: "#687e67", borderRadius: 20, padding: "3px 8px", fontSize: 8 }}>Default</span>
+            </div>
+            <button type="button" onClick={() => notify("Apple Pay is not connected yet.")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 0", border: 0, background: "transparent", textAlign: "left", cursor: "pointer", color: "#303a32" }}>
+              <span style={{ width: 28, height: 28, borderRadius: 8, background: "#f1f3ef", display: "grid", placeItems: "center" }}><CreditCard size={15} /></span>
+              <span style={{ minWidth: 0, flex: 1 }}><b style={{ display: "block", fontSize: 11, fontWeight: 600 }}>Apple Pay</b><small style={{ display: "block", color: "#858c83", fontSize: 9, marginTop: 2 }}>Ready to use</small></span>
+              <ChevronRight size={15} color="#879184" />
+            </button>
+          </div>
+        </section>
+        <section>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 1px 9px" }}>
+            <h3 style={{ margin: 0, fontSize: 14 }}>Recent activity</h3>
+            <button type="button" onClick={() => notify("Your full wallet history will appear here.")} style={{ border: 0, background: "transparent", color: "#71866e", fontSize: 11, cursor: "pointer", padding: 3 }}>View all</button>
+          </div>
+          <div style={{ background: "#fff", borderRadius: 15, padding: "2px 12px" }}>
+            {[
+              { title: "Embarcadero Hub", detail: "Oct 31 · 28.0 kWh", amount: "−$12.60", positive: false, icon: <Zap size={14} /> },
+              { title: "Marina Charging", detail: "Oct 29 · 20.0 kWh", amount: "−$8.40", positive: false, icon: <Zap size={14} /> },
+              { title: "Wallet top-up", detail: "Oct 28 · Visa •••• 4242", amount: "+$100.00", positive: true, icon: <Plus size={14} /> },
+            ].map((item, index) => (
+              <div key={item.title} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 0", borderBottom: index < 2 ? "1px solid #edf0eb" : 0 }}>
+                <span style={{ width: 25, height: 25, borderRadius: 8, background: "#f0f3ee", color: "#788d75", display: "grid", placeItems: "center" }}>{item.icon}</span>
+                <span style={{ minWidth: 0, flex: 1 }}><b style={{ display: "block", fontSize: 10, fontWeight: 600 }}>{item.title}</b><small style={{ display: "block", color: "#858c83", fontSize: 9, marginTop: 2 }}>{item.detail}</small></span>
+                <b style={{ fontSize: 10, color: item.positive ? "#71896d" : "#303a32", whiteSpace: "nowrap" }}>{item.amount}</b>
+              </div>
+            ))}
+          </div>
+        </section>
+        <p style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 5, color: "#92988f", fontSize: 9, margin: "13px 0 2px" }}><ShieldCheck size={11} /> Secure payments. Ready for your next charge.</p>
+      </div>
+    ) : (
+      <>
     <h2>Your profile</h2>
     <p className="tab-subtitle">
       Manage your account and Be-Electric preferences.
@@ -3505,6 +3570,35 @@ function selectConnector(connector: DbConnector) {
 
           <span className="demo-tag">ACCOUNT</span>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setWalletOpen(true)}
+          aria-label="Open wallet"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 11,
+            padding: "13px 14px",
+            margin: "12px 0 17px",
+            border: 0,
+            borderRadius: 15,
+            background: "#e7ede5",
+            color: "#344238",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ width: 34, height: 34, borderRadius: 10, background: "#fff", display: "grid", placeItems: "center", color: "#71866e" }}>
+            <Wallet size={18} />
+          </span>
+          <span style={{ minWidth: 0, flex: 1 }}>
+            <b style={{ display: "block", fontSize: 13, fontWeight: 650 }}>Wallet</b>
+            <small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>$79.00 demo balance</small>
+          </span>
+          <ChevronRight size={17} color="#71866e" />
+        </button>
 
         <section className="details-section">
           <div className="details-section-heading">
@@ -3590,6 +3684,8 @@ function selectConnector(connector: DbConnector) {
           Go to login
         </button>
       </div>
+    )}
+      </>
     )}
   </>
 )}
