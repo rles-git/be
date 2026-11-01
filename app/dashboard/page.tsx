@@ -351,7 +351,7 @@ const FALLBACK_LOCATION: [number, number] = [25.254483277668196, 51.479129502864
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-  
+
   // Use device GPS when available; otherwise fall back to the original starting location.
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const effectiveLocation = userLocation ?? FALLBACK_LOCATION;
@@ -507,7 +507,7 @@ if (!selectedChargerData || !selectedConnector) {
 
 const chargerId = String(selectedChargerData.chargerId);
 const connectorId = String(selectedConnector.id);
-const [walletOpen, setWalletOpen] = useState(false);
+
   const wsUrl =
     process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
     "wss://be-electric-simulator.onrender.com/ws";
@@ -3457,8 +3457,8 @@ function selectConnector(connector: DbConnector) {
                   </>
                 )}
 
-                (
-      <>
+                {activeTab === "Profile" && (
+  <>
     <h2>Your profile</h2>
     <p className="tab-subtitle">
       Manage your account and Be-Electric preferences.
@@ -3505,12 +3505,6 @@ function selectConnector(connector: DbConnector) {
 
           <span className="demo-tag">ACCOUNT</span>
         </div>
-
-        <button type="button" onClick={() => setWalletOpen(true)} aria-label="Open wallet" style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, padding: "13px 14px", margin: "12px 0 17px", border: 0, borderRadius: 15, background: "#e7ede5", color: "#344238", textAlign: "left", cursor: "pointer" }}>
-          <span style={{ width: 34, height: 34, borderRadius: 10, background: "#fff", display: "grid", placeItems: "center", color: "#71866e" }}><Wallet size={18} /></span>
-          <span style={{ minWidth: 0, flex: 1 }}><b style={{ display: "block", fontSize: 13, fontWeight: 650 }}>Wallet</b><small style={{ display: "block", fontSize: 10, color: "#71836d", marginTop: 3 }}>$79.00 available</small></span>
-          <ChevronRight size={17} color="#71866e" />
-        </button>
 
         <section className="details-section">
           <div className="details-section-heading">
