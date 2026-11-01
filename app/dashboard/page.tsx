@@ -3680,14 +3680,17 @@ function selectConnector(connector: DbConnector) {
                   "refund",
                 ].includes(transaction.type);
         
+                const transactionTitles: Record<string, string> = {
+                  top_up: "Wallet Top-up",
+                  charging_payment: "Charging Payment",
+                  refund: "Refund",
+                  adjustment: "Wallet Adjustment",
+                };
+
                 const title =
                   transaction.description ||
-                  ({
-                    top_up: "Wallet Top-up",
-                    charging_payment: "Charging Payment",
-                    refund: "Refund",
-                    adjustment: "Wallet Adjustment",
-                  }[transaction.type] || "Wallet Transaction");
+                  transactionTitles[String(transaction.type)] ||
+                  "Wallet Transaction";
         
                 const amount = Number(transaction.amount);
         
