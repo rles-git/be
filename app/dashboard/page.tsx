@@ -351,7 +351,7 @@ const FALLBACK_LOCATION: [number, number] = [25.254483277668196, 51.479129502864
 
 export default function Home() {
   const { stations, loading, error } = useStations();
-
+  
   // Use device GPS when available; otherwise fall back to the original starting location.
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const effectiveLocation = userLocation ?? FALLBACK_LOCATION;
@@ -507,7 +507,7 @@ if (!selectedChargerData || !selectedConnector) {
 
 const chargerId = String(selectedChargerData.chargerId);
 const connectorId = String(selectedConnector.id);
-
+const [walletOpen, setWalletOpen] = useState(false);
   const wsUrl =
     process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
     "wss://be-electric-simulator.onrender.com/ws";
