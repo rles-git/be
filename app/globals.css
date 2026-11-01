@@ -2533,3 +2533,193 @@ nearby-stations-sheet{
   font-size: 10px;
   color: #858983;
 }
+
+
+/* =========================================================
+   15. Responsive app canvas — no desktop phone emulator
+   ========================================================= */
+html,
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: #f5f5f2;
+}
+
+.app-shell {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+  background: #f5f5f2;
+}
+
+.app-viewport {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  display: block;
+}
+
+.app-screen {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #f5f5f2;
+  box-shadow: none;
+}
+
+/* App controls use the full viewport while keeping sheets readable
+   on tablets, infotainment displays and wider laptop screens. */
+.station-sheet,
+.route-bottom-sheet {
+  width: min(100%, 620px);
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chooser-sheet {
+  width: min(100%, 620px);
+  max-width: calc(100% - 32px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.station-sheet {
+  max-height: calc(100% - 72px);
+}
+
+.route-bottom-sheet {
+  max-height: min(58%, 520px);
+}
+
+.chooser-sheet {
+  max-width: min(620px, calc(100% - 32px));
+}
+
+.tab-content,
+.activity-content,
+.profile-content {
+  min-width: 0;
+}
+
+@media (min-width: 700px) {
+  .search-wrap {
+    left: 24px;
+    right: 24px;
+    max-width: 560px;
+  }
+
+  .filter-row {
+    left: 12px;
+    right: 12px;
+    max-width: 720px;
+  }
+
+  .map-tools {
+    right: 24px;
+  }
+
+  .map-bottom-content {
+    left: 24px;
+    right: 24px;
+    max-width: 420px;
+  }
+
+  .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: min(100%, 720px);
+    transform: translateX(-50%);
+    border-left: 1px solid #eff0ed;
+    border-right: 1px solid #eff0ed;
+  }
+
+  .station-sheet,
+  .route-bottom-sheet {
+    bottom: 0;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -8px 30px #252a2514;
+  }
+
+  .station-sheet {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .route-bottom-sheet {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .station-sheet,
+  .route-bottom-sheet,
+  .chooser-sheet {
+    width: min(100%, 680px);
+  }
+
+  .search-wrap {
+    top: 28px;
+    left: 32px;
+  }
+
+  .filter-row {
+    top: 84px;
+    left: 20px;
+  }
+
+  .map-tools {
+    right: 32px;
+  }
+
+  .map-bottom-content {
+    left: 32px;
+    bottom: 28px;
+  }
+}
+
+/* Keep small-screen behavior edge-to-edge; the viewport itself is no
+   longer wrapped in a simulated handset. */
+@media (max-width: 520px) {
+  .station-sheet,
+  .route-bottom-sheet {
+    width: 100%;
+    left: 0;
+    right: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .station-sheet {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .route-bottom-sheet {
+    max-height: min(48%, 360px);
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
