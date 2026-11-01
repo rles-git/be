@@ -2723,3 +2723,40 @@ body {
     padding-right: 16px;
   }
 }
+
+/* =========================================================
+   FIX: Bottom navigation and phone safe area
+   ========================================================= */
+
+.bottom-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
+
+  padding: 3px 8px env(safe-area-inset-bottom, 0px);
+
+  box-sizing: border-box;
+  z-index: 1201;
+
+  background: #fff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  border-top: 1px solid #eff0ed;
+}
+
+/* Keep the navigation buttons above the system navigation area */
+.bottom-nav button {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* Keep map content above the bottom navigation */
+.map-bottom-content {
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
