@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { createIcons, UserStar } from 'lucide';
 import {
   Activity,
   ArrowLeft,
