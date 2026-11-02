@@ -2627,23 +2627,6 @@ function selectConnector(connector: DbConnector) {
                         <Check size={24} color="#58715d" />
                       </div>
                     </div>
-
-                    <div
-                      style={{
-                        background: "#fff5e6",
-                        color: "#805b23",
-                        borderRadius: 13,
-                        padding: 13,
-                        fontSize: 12,
-                        lineHeight: 1.6,
-                        marginBottom: 20,
-                      }}
-                    >
-                      <strong>Demo mode:</strong> Confirming these settings
-                      does not activate a physical charger or guarantee
-                      automatic stopping.
-                    </div>
-
                                         
                     <button
                       type="button"
