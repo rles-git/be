@@ -32,7 +32,6 @@ import {
   Settings2,
   Star,
   UserRound,
-  UserStar,
   Wallet,
   ShieldCheck,
   X,
