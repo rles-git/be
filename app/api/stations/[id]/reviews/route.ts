@@ -155,6 +155,94 @@ export async function POST(
         updated_at
     `;
 
+    // PATCH /api/stations/[id]/reviews
+export async function PATCH(
+  request: NextRequest,
+  { params }: RouteContext
+) {
+  try {
+    const accountId = await getAuthenticatedAccountId();
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "Please sign in to edit your review." },
+        { status: 401 }
+      );
+    }
+
+    const stationId = params.id;
+    const body = await request.json();
+
+    const reviewId = Number(body.reviewId);
+    const rating = Number(body.rating);
+    const comment =
+      typeof body.comment === "string"
+        ? body.comment.trim()
+        : "";
+
+    if (!Number.isInteger(reviewId) || reviewId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid review ID." },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { error: "Rating must be between 1 and 5." },
+        { status: 400 }
+      );
+    }
+
+    if (comment.length > 2000) {
+      return NextResponse.json(
+        { error: "Comment cannot exceed 2000 characters." },
+        { status: 400 }
+      );
+    }
+
+    const sql = getSql();
+
+    const updated = await sql`
+      UPDATE public.reviews
+      SET
+        rating = ${rating},
+        comment = ${comment || null},
+        updated_at = NOW()
+      WHERE id = ${reviewId}
+        AND station_id = ${stationId}
+        AND user_id = ${String(accountId)}
+      RETURNING
+        id,
+        station_id,
+        rating,
+        comment,
+        created_at,
+        updated_at
+    `;
+
+    if (updated.length === 0) {
+      return NextResponse.json(
+        { error: "Review not found or you do not have permission to edit it." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Review updated successfully.",
+      review: updated[0],
+    });
+  } catch (error) {
+    console.error("Failed to update station review:", error);
+
+    return NextResponse.json(
+      { error: "Failed to update review." },
+      { status: 500 }
+    );
+  }
+}
+    
+    
     return NextResponse.json(
       {
         message: "Review submitted successfully.",
