@@ -171,7 +171,7 @@ function getChargerDisplayStatus(charger: DbCharger) {
   }
 
   if (connectors.every((connector) => isInUseStatus(connector.status))) {
-    return "In Use";
+    return "Occupied";
   }
 
   return "Unavailable";
@@ -184,7 +184,7 @@ function getConnectorStatusLabel(status: string | null | undefined) {
     .replace(/[\s-]+/g, "_");
 
   if (["charging", "occupied", "in_use", "inuse"].includes(normalized)) {
-    return "In Use";
+    return "Occupied";
   }
 
   if (["available", "online", "idle", "ready"].includes(normalized)) {
