@@ -3749,7 +3749,7 @@ function selectConnector(connector: DbConnector) {
         )}
       </div>
     ) : walletOpen ? (
-      <div className="wallet-screen" style={{ paddingBottom: 16, paddingTop:16 }}>
+      <div className="wallet-screen" style={{ paddingBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <button type="button" aria-label="Back to profile" onClick={() => setWalletOpen(false)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #e2e6df", background: "#fff", color: "#344238", display: "grid", placeItems: "center", cursor: "pointer" }}>
             <ArrowLeft size={19} />
