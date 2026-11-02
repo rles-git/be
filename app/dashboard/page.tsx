@@ -3855,6 +3855,10 @@ function selectConnector(connector: DbConnector) {
               icon: <Activity size={18} />,
             },
             {
+              label: "Reviews",
+              icon: <Activity size={18} />,
+            },
+            {
               label: "Charging preferences",
               icon: <Settings2 size={18} />,
             },
