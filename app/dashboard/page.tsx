@@ -153,11 +153,6 @@ function isUnavailableStatus(status: string | null | undefined) {
   ].includes(normalizeStatus(status));
 }
 
-/**
- * A charger with multiple connectors is available while at least one
- * connector can be used. If every connector is occupied, show "In Use".
- * Fault/offline/maintenance charger states always take priority.
- */
 function getChargerDisplayStatus(charger: DbCharger) {
   const chargerStatus = normalizeStatus(charger.status);
   const connectors = Array.isArray(charger.connectors) ? charger.connectors : [];
@@ -167,7 +162,7 @@ function getChargerDisplayStatus(charger: DbCharger) {
   }
 
   if (connectors.length === 0) {
-    if (isInUseStatus(chargerStatus)) return "In Use";
+    if (isInUseStatus(chargerStatus)) return "Occupied";
     return isAvailableStatus(chargerStatus) ? "Available" : "Unavailable";
   }
 
