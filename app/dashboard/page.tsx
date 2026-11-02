@@ -3506,23 +3506,39 @@ function selectConnector(connector: DbConnector) {
         </p>
       )}
 
-      {chargingHistory.map((session) => (
-        <div key={String(session.id)} className="saved-card" style={{ cursor: "default" }}>
-          <span className="saved-zap"><BatteryCharging size={18} /></span>
-          <span style={{ minWidth: 0, flex: 1 }}>
-            <b>Session #{session.id} · {session.status}</b>
-            <small>
-              Connector {session.connector_number ?? session.connector_id}
-              {session.connector_type ? ` · ${session.connector_type}` : ""}
-            </small>
-            <small>
-              {Number(session.energy_kwh ?? 0).toFixed(3)} kWh · Started{" "}
-              {session.started_at ? new Date(session.started_at).toLocaleString() : "—"}
-            </small>
-            {session.ended_at && <small>Ended {new Date(session.ended_at).toLocaleString()}</small>}
-          </span>
-        </div>
-      ))}
+{chargingHistory.map((session, index) => (
+  <div
+    key={String(session.id)}
+    className="saved-card"
+    style={{ cursor: "default" }}
+  >
+    <span className="saved-zap">
+      <BatteryCharging size={18} />
+    </span>
+
+    <span style={{ minWidth: 0, flex: 1 }}>
+      <b>Session #{chargingHistory.length - index} · {session.status}</b>
+
+      <small>
+        Connector {session.connector_number ?? session.connector_id}
+        {session.connector_type ? ` · ${session.connector_type}` : ""}
+      </small>
+
+      <small>
+        {Number(session.energy_kwh ?? 0).toFixed(3)} kWh · Started{" "}
+        {session.started_at
+          ? new Date(session.started_at).toLocaleString()
+          : "—"}
+      </small>
+
+      {session.ended_at && (
+        <small>
+          Ended {new Date(session.ended_at).toLocaleString()}
+        </small>
+      )}
+    </span>
+  </div>
+))}
     </>
   )}
 </div>
@@ -3537,7 +3553,7 @@ function selectConnector(connector: DbConnector) {
 
                   <div>
                     <b>{historyLoading ? "—" : chargingHistory.length}</b>
-                    <small>Total charging sessions</small>
+                    <small>Your charging sessions</small>
                   </div>
 
                   <div>
