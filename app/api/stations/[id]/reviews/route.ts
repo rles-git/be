@@ -82,11 +82,7 @@ export async function POST(
         ? body.comment.trim()
         : "";
 
-    if (
-      !Number.isInteger(rating) ||
-      rating < 1 ||
-      rating > 5
-    ) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(
         { error: "Rating must be between 1 and 5." },
         { status: 400 }
@@ -155,7 +151,24 @@ export async function POST(
         updated_at
     `;
 
-    // PATCH /api/stations/[id]/reviews
+    return NextResponse.json(
+      {
+        message: "Review submitted successfully.",
+        review: inserted[0],
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Failed to submit station review:", error);
+
+    return NextResponse.json(
+      { error: "Failed to submit review." },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/stations/[id]/reviews
 export async function PATCH(
   request: NextRequest,
   { params }: RouteContext
@@ -223,7 +236,10 @@ export async function PATCH(
 
     if (updated.length === 0) {
       return NextResponse.json(
-        { error: "Review not found or you do not have permission to edit it." },
+        {
+          error:
+            "Review not found or you do not have permission to edit it.",
+        },
         { status: 404 }
       );
     }
@@ -237,24 +253,6 @@ export async function PATCH(
 
     return NextResponse.json(
       { error: "Failed to update review." },
-      { status: 500 }
-    );
-  }
-}
-    
-    
-    return NextResponse.json(
-      {
-        message: "Review submitted successfully.",
-        review: inserted[0],
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Failed to submit station review:", error);
-
-    return NextResponse.json(
-      { error: "Failed to submit review." },
       { status: 500 }
     );
   }
