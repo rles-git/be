@@ -2899,11 +2899,6 @@ function selectConnector(connector: DbConnector) {
                         </div>
                       )}
                     </div>
-
-                    <div className="connector-note">
-                      <CircleDot size={17} />
-                      <p>Connector types and statuses are loaded from the database.</p>
-                    </div>
                   </div>
                 </div>
               ) : panel === "details" ? (
