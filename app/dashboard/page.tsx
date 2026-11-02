@@ -3,7 +3,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { createIcons, UserStar } from 'lucide';
 import {
   Activity,
   ArrowLeft,
@@ -3857,7 +3856,7 @@ function selectConnector(connector: DbConnector) {
             },
             {
               label: "Reviews",
-              icon: <UserStar size={18} />,
+              icon: <Activity size={18} />,
             },
             {
               label: "Charging preferences",
