@@ -3956,7 +3956,6 @@ function selectConnector(connector: DbConnector) {
                   className={activeTab === item.name ? "active" : ""}
                   onClick={() => {
                     setActiveTab(item.name);
-                    }
                   }}
                 >
                   {item.icon}
