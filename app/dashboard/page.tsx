@@ -342,6 +342,17 @@ type StationReview = {
   updated_at?: string;
 };
 
+type MyReview = {
+  id: string | number;
+  station_id: string | number;
+  station_name: string;
+  station_address: string | null;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at?: string;
+};
+
 type ActiveChargingSession = {
   id: string | number;
   startedAt: string;
@@ -455,6 +466,14 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [walletOpen, setWalletOpen] = useState(false);
+  const [showMyReviews, setShowMyReviews] = useState(false);
+  const [myReviews, setMyReviews] = useState<MyReview[]>([]);
+  const [myReviewsLoading, setMyReviewsLoading] = useState(false);
+  const [myReviewsError, setMyReviewsError] = useState("");
+  const [editingReviewId, setEditingReviewId] = useState<string | number | null>(null);
+  const [editingReviewRating, setEditingReviewRating] = useState(5);
+  const [editingReviewComment, setEditingReviewComment] = useState("");
+  const [editingReviewSaving, setEditingReviewSaving] = useState(false);
 
   const [activeSession, setActiveSession] =
     useState<ActiveChargingSession | null>(null);
@@ -1048,6 +1067,83 @@ async function submitStationReview(event: React.FormEvent<HTMLFormElement>) {
     );
   } finally {
     setReviewSubmitting(false);
+  }
+}
+
+async function loadMyReviews() {
+  setMyReviewsLoading(true);
+  setMyReviewsError("");
+
+  try {
+    const response = await fetch("/api/my-reviews", {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not load your reviews.");
+    }
+
+    setMyReviews(Array.isArray(data.reviews) ? data.reviews : []);
+  } catch (error) {
+    setMyReviewsError(
+      error instanceof Error ? error.message : "Could not load your reviews."
+    );
+  } finally {
+    setMyReviewsLoading(false);
+  }
+}
+
+async function saveEditedReview(review: MyReview) {
+  setEditingReviewSaving(true);
+  setMyReviewsError("");
+
+  try {
+    const response = await fetch(
+      `/api/stations/${encodeURIComponent(String(review.station_id))}/reviews`,
+      {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reviewId: review.id,
+          rating: editingReviewRating,
+          comment: editingReviewComment.trim(),
+        }),
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not update your review.");
+    }
+
+    setEditingReviewId(null);
+    await loadMyReviews();
+
+    // If this station's detail panel is open, refresh its review list and rating.
+    if (String(selectedId) === String(review.station_id)) {
+      const refreshed = await fetch(
+        `/api/stations/${encodeURIComponent(String(review.station_id))}/reviews`,
+        { credentials: "include", cache: "no-store" }
+      );
+      const refreshedData = await refreshed.json();
+      if (refreshed.ok) {
+        setStationReviews(Array.isArray(refreshedData.reviews) ? refreshedData.reviews : []);
+        setReviewsAverageRating(Number(refreshedData.averageRating) || 0);
+        setReviewsTotal(Number(refreshedData.totalReviews) || 0);
+      }
+    }
+
+    notify("Your review has been updated.");
+  } catch (error) {
+    setMyReviewsError(
+      error instanceof Error ? error.message : "Could not update your review."
+    );
+  } finally {
+    setEditingReviewSaving(false);
   }
 }
 
@@ -3554,7 +3650,105 @@ function selectConnector(connector: DbConnector) {
 
                 {activeTab === "Profile" && (
   <>
-    {walletOpen ? (
+    {showMyReviews ? (
+      <div className="my-reviews-screen" style={{ paddingBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <button
+            type="button"
+            aria-label="Back to profile"
+            onClick={() => {
+              setShowMyReviews(false);
+              setEditingReviewId(null);
+              setMyReviewsError("");
+            }}
+            style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #e2e6df", background: "#fff", color: "#344238", display: "grid", placeItems: "center", cursor: "pointer" }}
+          >
+            <ArrowLeft size={19} />
+          </button>
+          <h2 style={{ margin: 0 }}>My Reviews</h2>
+          <span style={{ marginLeft: "auto", color: "#788b77", fontSize: 11 }}>{myReviews.length} total</span>
+        </div>
+        <p className="tab-subtitle">Reviews you've written for charging stations.</p>
+
+        {myReviewsLoading ? (
+          <div className="empty-state"><Star size={25} /><b>Loading your reviews...</b><p>Retrieving your review history.</p></div>
+        ) : myReviewsError ? (
+          <div className="empty-state">
+            <b>Unable to load your reviews</b>
+            <p>{myReviewsError}</p>
+            <button type="button" onClick={() => void loadMyReviews()}>Try again</button>
+          </div>
+        ) : myReviews.length === 0 ? (
+          <div className="empty-state"><Star size={26} /><b>No reviews yet</b><p>Your station reviews will appear here.</p></div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {myReviews.map((review) => (
+              <article key={review.id} className="saved-card" style={{ alignItems: "flex-start", cursor: "default" }}>
+                <span className="saved-zap"><Star size={18} /></span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ display: "block" }}>{review.station_name}</b>
+                  {review.station_address && <small style={{ display: "block", marginTop: 3 }}>{review.station_address}</small>}
+                  <div aria-label={`${review.rating} out of 5 stars`} style={{ color: "#d49a36", letterSpacing: 1, margin: "7px 0 5px" }}>
+                    {"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}{"☆".repeat(5 - Math.max(0, Math.min(5, Number(review.rating) || 0)))}
+                  </div>
+
+                  {editingReviewId === review.id ? (
+                    <div style={{ display: "grid", gap: 9, marginTop: 8 }}>
+                      <div>
+                        <small style={{ color: "#71836d", fontWeight: 700 }}>YOUR RATING</small>
+                        <div style={{ display: "flex", gap: 5, marginTop: 4 }}>
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button key={rating} type="button" aria-label={`${rating} stars`} onClick={() => setEditingReviewRating(rating)} style={{ border: 0, background: "transparent", color: rating <= editingReviewRating ? "#d49a36" : "#c5c5c5", fontSize: 25, cursor: "pointer", padding: 0 }}>★</button>
+                          ))}
+                        </div>
+                      </div>
+                      <textarea
+                        value={editingReviewComment}
+                        onChange={(event) => setEditingReviewComment(event.target.value)}
+                        maxLength={2000}
+                        placeholder="Write your review..."
+                        rows={4}
+                        style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #dce2dc", borderRadius: 10, resize: "vertical", font: "inherit" }}
+                      />
+                      <small style={{ textAlign: "right", color: "#858c83" }}>{editingReviewComment.length}/2000</small>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <button type="button" className="primary-button" disabled={editingReviewSaving} onClick={() => void saveEditedReview(review)}>{editingReviewSaving ? "Saving..." : "Save changes"}</button>
+                        <button type="button" className="secondary-button" disabled={editingReviewSaving} onClick={() => setEditingReviewId(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ margin: "4px 0 7px", fontSize: 13, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{review.comment || "No written comment."}</p>
+                      <small style={{ color: "#858c83" }}>Reviewed {new Date(review.created_at).toLocaleDateString()}</small>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 11 }}>
+                        <button type="button" className="secondary-button" onClick={() => {
+                          const stationExists = stations.some((station) => String(station.id) === String(review.station_id));
+                          if (!stationExists) {
+                            notify("This station is currently unavailable.");
+                            return;
+                          }
+                          setSelectedId(String(review.station_id));
+                          setActiveTab("Explore");
+                          setPanel("station");
+                          setShowMyReviews(false);
+                          setEditingReviewId(null);
+                        }}>View station</button>
+                        <button type="button" className="secondary-button" onClick={() => {
+                          setEditingReviewId(review.id);
+                          setEditingReviewRating(Number(review.rating) || 5);
+                          setEditingReviewComment(review.comment ?? "");
+                          setMyReviewsError("");
+                        }}>Edit review</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    ) : walletOpen ? (
       <div className="wallet-screen" style={{ paddingBottom: 16, paddingTop:16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <button type="button" aria-label="Back to profile" onClick={() => setWalletOpen(false)} style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #e2e6df", background: "#fff", color: "#344238", display: "grid", placeItems: "center", cursor: "pointer" }}>
@@ -3872,9 +4066,14 @@ function selectConnector(connector: DbConnector) {
               key={item.label}
               type="button"
               className="settings-row"
-              onClick={() =>
-                notify(`${item.label} settings are not connected yet.`)
-              }
+              onClick={() => {
+                if (item.label === "Reviews") {
+                  setShowMyReviews(true);
+                  void loadMyReviews();
+                  return;
+                }
+                notify(`${item.label} settings are not connected yet.`);
+              }}
             >
               <span>{item.icon}</span>
               {item.label}
