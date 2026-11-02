@@ -3,6 +3,7 @@
 /* =========================================================
    1. Design tokens and global styles
    ========================================================= */
+
 :root {
   --green: #91a795;
   --green-dark: #58715d;
@@ -11,6 +12,7 @@
   --line: #e7e8e4;
   --paper: #f4f5f2;
   --bottom-content-offset: 104px;
+  --route-sheet-height: 300px;
 }
 
 * { box-sizing: border-box; }
@@ -22,15 +24,26 @@ body {
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
   background: #f1f3f0;
+  width: 100%;
+  min-width: 320px;
+}
+
+body {
+  overflow: hidden;
+  background: #f5f5f2;
 }
 
 button,
-input { font: inherit; }
+input {
+  font: inherit;
+}
+
 button { cursor: pointer; }
 
 /* =========================================================
    2. Desktop landing / emulator layout
    ========================================================= */
+
 .desktop-shell {
   min-height: 100vh;
   display: grid;
@@ -121,7 +134,9 @@ button { cursor: pointer; }
 }
 
 .intro-points b,
-.intro-points small { display: block; }
+.intro-points small {
+  display: block;
+}
 
 .intro-points b {
   font-size: 14px;
@@ -204,6 +219,7 @@ button { cursor: pointer; }
 /* =========================================================
    3. Phone status bar and brand header
    ========================================================= */
+
 .status-bar {
   height: 36px;
   position: absolute;
@@ -241,8 +257,11 @@ button { cursor: pointer; }
 }
 
 .signal i:nth-child(1) { height: 5px; }
+
 .signal i:nth-child(2) { height: 7px; }
+
 .signal i:nth-child(3) { height: 9px; }
+
 .signal i:nth-child(4) { height: 11px; }
 
 .wifi {
@@ -322,12 +341,12 @@ button { cursor: pointer; }
 /* =========================================================
    4. Map screen, search, filters and station markers
    ========================================================= */
+
 .map-screen {
   position: absolute;
   inset: 0;
   background: #f5f5f2;
   overflow: hidden;
-  --bottom-content-offset: 104px;
 }
 
 .map-art {
@@ -379,27 +398,22 @@ button { cursor: pointer; }
   position: absolute;
   z-index: 4;
   top: 76px;
-  left: 0;               /* Stretch edge-to-edge inside the phone screen */
+  left: 0;
   right: 0;
   display: flex;
   gap: 7px;
-  
-  /* --- Horizontal Scroll Settings --- */
-  overflow-x: auto;      /* Enables horizontal scroll */
-  overflow-y: hidden;    /* Prevents vertical shifting */
-  white-space: nowrap;   /* Keeps all chips in one row */
-  padding: 0 16px;       /* Keeps 16px inset on start & end when scrolling */
-  -webkit-overflow-scrolling: touch; /* Momentum scrolling on iOS */
-
-  /* --- Optional: Hide scrollbars cleanly across browsers --- */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE / Edge */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  padding: 0 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* Hide scrollbar in Chrome, Safari, and Opera */
-.filter-row::-webkit-scrollbar {
-  display: none;
-}
+
+.filter-row::-webkit-scrollbar { display: none; }
 
 .filter-chip {
   white-space: nowrap;
@@ -415,9 +429,7 @@ button { cursor: pointer; }
   font-weight: 600;
   color: #242824;
   box-shadow: 0 1px 3px #00000004;
-
-  /* --- CRITICAL: Prevent chips from shrinking or compressing --- */
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
 .filter-chip.active {
@@ -478,11 +490,6 @@ button { cursor: pointer; }
 
 .station-marker.offline span { color: #aeb2ab; }
 
-
-:root {
-  --route-sheet-height: 300px;
-}
-
 .map-tools {
   position: absolute;
   right: 16px;
@@ -493,10 +500,8 @@ button { cursor: pointer; }
 }
 
 /* Keep the Locate Me button stationary on full-screen details */
-.station-details-screen ~ .map-tools {
-  bottom: 280px;
-}
 
+.station-details-screen ~ .map-tools { bottom: 280px; }
 
 .tool-button {
   width: 47px;
@@ -543,6 +548,7 @@ button { cursor: pointer; }
 /* =========================================================
    5. Map bottom content, legend and nearby card
    ========================================================= */
+
 .map-bottom-content {
   position: absolute;
   z-index: 4;
@@ -580,6 +586,7 @@ button { cursor: pointer; }
 }
 
 .green-dot { background: var(--green); }
+
 .gray-dot { background: #c9ccc6; }
 
 .nearby-card {
@@ -595,7 +602,7 @@ button { cursor: pointer; }
   text-align: left;
   padding: 0 15px;
   color: #8e958d;
-  margin-bottom:16px;
+  margin-bottom: 16px;
 }
 
 .nearby-icon {
@@ -614,7 +621,9 @@ button { cursor: pointer; }
 }
 
 .nearby-card b,
-.nearby-card small { display: block; }
+.nearby-card small {
+  display: block;
+}
 
 .nearby-card b {
   font-size: 16px;
@@ -632,6 +641,7 @@ button { cursor: pointer; }
 /* =========================================================
    6. Bottom navigation and home indicator
    ========================================================= */
+
 .bottom-nav {
   height: 68px;
   position: absolute;
@@ -644,7 +654,7 @@ button { cursor: pointer; }
   align-items: center;
   border-top: 1px solid #eff0ed;
   padding: 3px 8px 0;
-  bottom: 0px;
+  bottom: 0;
 }
 
 .bottom-nav button {
@@ -697,6 +707,7 @@ button { cursor: pointer; }
 /* =========================================================
    7. Shared buttons and route preview
    ========================================================= */
+
 .square-button {
   height: 47px;
   width: 47px;
@@ -715,7 +726,9 @@ button { cursor: pointer; }
 }
 
 .route-heading b,
-.route-heading small { display: block; }
+.route-heading small {
+  display: block;
+}
 
 .route-heading b {
   font: 700 19px Manrope, sans-serif;
@@ -752,7 +765,9 @@ button { cursor: pointer; }
 }
 
 .route-top-card > div:first-child { color: #858b83; }
+
 .route-top-card > div:last-child { font-weight: 600; }
+
 .route-top-card svg { color: var(--green); }
 
 .route-origin-dot {
@@ -799,7 +814,7 @@ button { cursor: pointer; }
   right: 0;
   bottom: 0;
   min-height: 0;
-  max-height: calc(100% - 210px);
+  max-height: min(58%, 520px);
   overflow-y: auto;
   overscroll-behavior: contain;
   background: #fff;
@@ -807,7 +822,6 @@ button { cursor: pointer; }
   padding: 12px 18px calc(100px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 18px #252a250a;
   touch-action: pan-y;
-  will-change: transform;
   box-sizing: border-box;
 }
 
@@ -848,8 +862,6 @@ button { cursor: pointer; }
   transform: translate(-50%, -50%);
   background: #d6d9d2;
 }
-
-.sheet-dragging .sheet-drag-handle { cursor: grabbing; }
 
 .route-time {
   display: flex;
@@ -908,13 +920,12 @@ button { cursor: pointer; }
   white-space: nowrap;
 }
 
-.primary-button {
+.primary-button,
+.secondary-button {
   width: 100%;
   min-height: 48px;
   height: 56px;
-  border: 0;
   border-radius: 15px;
-  background: var(--green);
   color: #26352a;
   display: flex;
   align-items: center;
@@ -922,28 +933,21 @@ button { cursor: pointer; }
   gap: 10px;
   font-size: 14px;
   font-weight: 500;
+}
+
+.primary-button {
+  border: 0;
+  background: var(--green);
   box-shadow: 0 5px 12px #526a5517;
 }
 
 .primary-button:hover { background: #829a86; }
 
 .secondary-button {
-  width: 100%;
-  min-height: 48px;
-  height: 56px;
   border: 1.5px solid #d4ddd6;
-  border-radius: 15px;
   background: #f1f5f2;
-  color: #26352a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 500;
   box-shadow: 0 5px 12px #526a550d;
   margin-top: 8px;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
@@ -955,6 +959,7 @@ button { cursor: pointer; }
 /* =========================================================
    8. Station details sheet and shared sheet elements
    ========================================================= */
+
 .station-sheet {
   position: absolute;
   z-index: 12;
@@ -962,7 +967,7 @@ button { cursor: pointer; }
   right: 0;
   bottom: 0;
   min-height: 0;
-  max-height: calc(100% - 100px);
+  max-height: calc(100% - 72px);
   overflow-y: auto;
   overscroll-behavior: contain;
   background: #fff;
@@ -970,11 +975,7 @@ button { cursor: pointer; }
   padding: 18px 16px 100px;
   box-shadow: 0 -4px 18px #252a250a;
   box-sizing: border-box;
-  transition: height .25s ease;
 }
-
-.station-sheet .sheet-drag-handle,
-.route-bottom-sheet .sheet-drag-handle { touch-action: none; }
 
 .sheet-overline {
   font-size: 9px;
@@ -1060,7 +1061,9 @@ button { cursor: pointer; }
 
 .spec-grid small,
 .spec-grid b,
-.spec-grid span { display: block; }
+.spec-grid span {
+  display: block;
+}
 
 .spec-grid small {
   font-size: 8px;
@@ -1094,13 +1097,14 @@ button { cursor: pointer; }
 /* =========================================================
    9. Sheet overlay and route chooser
    ========================================================= */
+
 .sheet-overlay {
   position: absolute;
-  z-index: 11; /* Right below bottom-nav (12) */
+  z-index: 11;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 85px; /* Sits right on top of bottom-nav + home-indicator */
+  bottom: 85px;
   background: #1b211d55;
   display: flex;
   align-items: flex-end;
@@ -1108,7 +1112,7 @@ button { cursor: pointer; }
 
 .chooser-sheet {
   position: relative;
-  width: 100%;
+  width: min(100%, 620px);
   background: #fff;
   border-radius: 27px 27px 0 0;
   padding: 16px 20px 24px;
@@ -1116,6 +1120,9 @@ button { cursor: pointer; }
   box-sizing: border-box;
   max-height: 100%;
   overflow-y: auto;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sheet-title-row {
@@ -1186,7 +1193,9 @@ button { cursor: pointer; }
 }
 
 .route-option-copy b,
-.route-option-copy small { display: block; }
+.route-option-copy small {
+  display: block;
+}
 
 .route-option-copy b {
   font-size: 13px;
@@ -1222,6 +1231,7 @@ button { cursor: pointer; }
 /* =========================================================
    10. Other tabs: saved, activity, profile and settings
    ========================================================= */
+
 .other-tab-screen {
   position: absolute;
   inset: 0;
@@ -1288,7 +1298,9 @@ button { cursor: pointer; }
 .saved-card b,
 .saved-card small,
 .activity-card b,
-.activity-card small { display: block; }
+.activity-card small {
+  display: block;
+}
 
 .saved-card b,
 .activity-card b {
@@ -1352,11 +1364,11 @@ button { cursor: pointer; }
 }
 
 .stat-cards b,
-.stat-cards small { display: block; }
-
-.stat-cards b {
-  font: 800 25px Manrope, sans-serif;
+.stat-cards small {
+  display: block;
 }
+
+.stat-cards b { font: 800 25px Manrope, sans-serif; }
 
 .stat-cards small {
   font-size: 10px;
@@ -1385,7 +1397,9 @@ button { cursor: pointer; }
 }
 
 .profile-card b,
-.profile-card small { display: block; }
+.profile-card small {
+  display: block;
+}
 
 .profile-card b { font-size: 13px; }
 
@@ -1464,6 +1478,7 @@ button { cursor: pointer; }
 /* =========================================================
    11. Leaflet / OpenStreetMap
    ========================================================= */
+
 .leaflet-map-root {
   position: absolute;
   inset: 0;
@@ -1599,16 +1614,15 @@ button { cursor: pointer; }
 }
 
 .leaflet-control-attribution a { color: #4e6753 !important; }
+
 .leaflet-control-attribution a:hover { color: #26352a !important; }
 
-.leaflet-map-root.is-routing .leaflet-popup {
-  display: none !important;
-}
-
+.leaflet-map-root.is-routing .leaflet-popup { display: none !important; }
 
 /* =========================================================
    12. Responsive: tablet and smaller desktop
    ========================================================= */
+
 @media (max-width: 850px) {
   .desktop-shell {
     display: flex;
@@ -1620,12 +1634,9 @@ button { cursor: pointer; }
     overflow: hidden;
   }
 
-  .desktop-intro {
-    display: none;
-  }
+  .desktop-intro { display: none; }
 
   .emulator-column {
-    width: 100%;
     max-width: 390px;
     height: 100%;
     min-height: 0;
@@ -1650,114 +1661,58 @@ button { cursor: pointer; }
   }
 }
 
-
-
 /* =========================================================
    13. Responsive: phones
    ========================================================= */
+
 @media (max-width: 520px) {
   html,
   body {
-    width: 100%;
     height: 100%;
-    min-height: 0;
-    margin: 0;
     overflow: hidden;
   }
 
   .desktop-shell {
-    display: flex;
     width: 100%;
     height: 100vh;
     height: 100dvh;
-    min-height: 0;
     padding: 0;
     margin: 0;
-    overflow: hidden;
     background: #f5f5f2;
   }
 
   .emulator-column {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
     max-width: none;
     margin: 0;
   }
 
   .phone-frame {
-    width: 100%;
     height: 100%;
     height: 100dvh;
     max-height: 100dvh;
-    min-height: 0;
-    padding: 0;
     border: 0;
     border-radius: 0;
     box-shadow: none;
   }
 
-  .phone-screen {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    border-radius: 0;
-  }
+  .phone-screen { border-radius: 0; }
 
-  .emulator-caption,
-  .emulator-footer {
-    display: none;
-  }
-
-  .status-bar {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+  .status-bar { padding-top: env(safe-area-inset-top, 0px); }
 
   .home-indicator {
     height: calc(20px + env(safe-area-inset-bottom, 0px));
     bottom: 0;
   }
 
-  .bottom-nav {
-    bottom:0px
-  }
+  .map-bottom-content { bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
 
-  .map-bottom-content {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  }
+  .station-sheet { padding: 18px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
 
-  .station-sheet {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-height: calc(100% - 100px);
-    padding: 18px 16px calc(72px + env(safe-area-inset-bottom, 0px));
-  }
+  .route-bottom-sheet { padding: 8px 16px calc(72px + env(safe-area-inset-bottom, 0px)); }
 
-  .route-bottom-sheet {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    min-height: 0;
-    max-height: min(48%, 360px);
-    padding: 8px 16px calc(72px + env(safe-area-inset-bottom, 0px));
-  }
+  .route-bottom-sheet .route-time strong { font-size: 28px; }
 
-  .route-bottom-sheet .route-time strong {
-    font-size: 28px;
-  }
-
-  .route-bottom-sheet h3 {
-    font-size: 18px;
-    line-height: 1.25;
-  }
-
-  .route-bottom-sheet .primary-button,
-  .station-sheet .primary-button {
-    min-height: 48px;
-  }
+  .route-bottom-sheet h3 { line-height: 1.25; }
 
   .route-top-card {
     top: 24px;
@@ -1787,6 +1742,7 @@ button { cursor: pointer; }
 /* =========================================================
    14. Responsive: short desktop viewports
    ========================================================= */
+
 @media (max-height: 760px) and (min-width: 851px) {
   .phone-frame {
     height: calc(100vh - 80px);
@@ -1799,20 +1755,16 @@ button { cursor: pointer; }
   }
 
   .eyebrow { margin-top: 36px; }
+
   .desktop-hint { margin-top: 35px; }
 }
 
+/* =========================================================
+   15. Draggable sheets and full-screen station details
+   ========================================================= */
 
-/* Draggable station, chooser, and route sheets */
-.sheet-drag-handle {
-  touch-action: none;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.sheet-dragging .sheet-drag-handle {
-  cursor: grabbing;
-}
+.sheet-dragging .sheet-drag-handle { cursor: grabbing; }
+
 .station-sheet,
 .route-bottom-sheet,
 .chooser-sheet {
@@ -1821,11 +1773,9 @@ button { cursor: pointer; }
 }
 
 /* Disable animation transition while actively tracking touch/mouse drag */
-.sheet-dragging {
-  transition: none !important;
-}
 
-/* Full-screen station details */
+.sheet-dragging { transition: none !important; }
+
 .station-details-screen {
   position: absolute;
   inset: 0;
@@ -1946,9 +1896,7 @@ button { cursor: pointer; }
   font-weight: 700;
 }
 
-.details-section {
-  margin-top: 22px;
-}
+.details-section { margin-top: 22px; }
 
 .details-section > h3,
 .details-section-heading h3 {
@@ -1989,9 +1937,7 @@ button { cursor: pointer; }
   background: #fff;
 }
 
-.details-stats svg {
-  color: #65816a;
-}
+.details-stats svg { color: #65816a; }
 
 .details-stats small,
 .connector-power small {
@@ -2005,7 +1951,6 @@ button { cursor: pointer; }
   overflow-wrap: anywhere;
 }
 
-.connector-card,
 .operating-card {
   display: flex;
   align-items: center;
@@ -2016,7 +1961,6 @@ button { cursor: pointer; }
   background: #fff;
 }
 
-.connector-card > div:nth-child(2),
 .operating-card > div {
   display: flex;
   flex: 1;
@@ -2025,13 +1969,11 @@ button { cursor: pointer; }
   min-width: 0;
 }
 
-.connector-card strong,
 .operating-card strong,
 .community-card strong {
   font-size: 13px;
 }
 
-.connector-card small,
 .community-card small {
   font-size: 10px;
   color: #7b8379;
@@ -2067,9 +2009,7 @@ button { cursor: pointer; }
   border-bottom: 1px solid #edf0eb;
 }
 
-.stall-row:last-child {
-  border-bottom: 0;
-}
+.stall-row:last-child { border-bottom: 0; }
 
 .stall-number {
   display: flex;
@@ -2078,9 +2018,7 @@ button { cursor: pointer; }
   font-size: 12px;
 }
 
-.stall-number svg {
-  color: #758674;
-}
+.stall-number svg { color: #758674; }
 
 .stall-row > small {
   grid-column: 1 / -1;
@@ -2104,17 +2042,9 @@ button { cursor: pointer; }
   background: currentColor;
 }
 
-.stall-available {
-  color: #39814d;
-}
+.stall-in-use { color: #a87622; }
 
-.stall-in-use {
-  color: #a87622;
-}
-
-.stall-offline {
-  color: #b34e48;
-}
+.stall-offline { color: #b34e48; }
 
 .wayfinding-list {
   display: flex;
@@ -2142,9 +2072,7 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
-.wayfinding-list strong {
-  font-size: 12px;
-}
+.wayfinding-list strong { font-size: 12px; }
 
 .wayfinding-list p {
   margin: 4px 0 0;
@@ -2193,7 +2121,6 @@ button { cursor: pointer; }
 
 .station-details-screen .primary-button,
 .station-details-screen .secondary-button {
-  width: 100%;
   margin-top: 8px;
 }
 
@@ -2218,17 +2145,11 @@ button { cursor: pointer; }
   z-index: 2;
 }
 
-.cancel-route-button:hover {
-  background: #f1f3f0;
-}
+.cancel-route-button:hover { background: #f1f3f0; }
 
-nearby-stations-sheet{
-   z-index: 4;
-}
-
-
-/* Available connector demonstration */
-
+/* =========================================================
+   16. Charger grid and connector selection
+   ========================================================= */
 
 .stall-grid {
   display: grid;
@@ -2274,7 +2195,6 @@ nearby-stations-sheet{
   font-variant-numeric: tabular-nums;
 }
 
-
 .connector-selection-screen {
   display: flex;
   flex-direction: column;
@@ -2295,9 +2215,7 @@ nearby-stations-sheet{
   padding: 14px 0 24px;
 }
 
-.connector-intro .details-location-icon {
-  margin: 0 auto 16px;
-}
+.connector-intro .details-location-icon { margin: 0 auto 16px; }
 
 .connector-intro h3 {
   margin: 0 0 8px;
@@ -2379,9 +2297,7 @@ nearby-stations-sheet{
   gap: 5px;
 }
 
-.connector-card-info strong {
-  font-size: 13px;
-}
+.connector-card-info strong { font-size: 13px; }
 
 .connector-card-info > small {
   color: var(--muted, #858983);
@@ -2396,9 +2312,7 @@ nearby-stations-sheet{
   font-weight: 600;
 }
 
-.available-status {
-  color: var(--green-dark, #58715d);
-}
+.available-status { color: var(--green-dark, #58715d); }
 
 .stall-status-dot,
 .occupied-status-dot {
@@ -2409,9 +2323,7 @@ nearby-stations-sheet{
   border-radius: 50%;
 }
 
-.stall-status-dot {
-  background: var(--green-dark, #58715d);
-}
+.stall-status-dot { background: var(--green-dark, #58715d); }
 
 .connector-select-icon {
   display: flex;
@@ -2433,13 +2345,9 @@ nearby-stations-sheet{
   color: #898d87;
 }
 
-.occupied-status {
-  color: #777b76;
-}
+.occupied-status { color: #777b76; }
 
-.occupied-status-dot {
-  background: #898d87;
-}
+.occupied-status-dot { background: #898d87; }
 
 .connector-note {
   display: flex;
@@ -2462,6 +2370,10 @@ nearby-stations-sheet{
   font-size: 11px;
   line-height: 1.6;
 }
+
+/* =========================================================
+   17. Search suggestions
+   ========================================================= */
 
 .search-suggestions {
   position: absolute;
@@ -2491,13 +2403,9 @@ nearby-stations-sheet{
   text-align: left;
 }
 
-.search-suggestion:last-child {
-  border-bottom: 0;
-}
+.search-suggestion:last-child { border-bottom: 0; }
 
-.search-suggestion:hover {
-  background: #f5f7f4;
-}
+.search-suggestion:hover { background: #f5f7f4; }
 
 .search-suggestion-icon {
   display: grid;
@@ -2534,22 +2442,9 @@ nearby-stations-sheet{
   color: #858983;
 }
 
-
 /* =========================================================
-   15. Responsive app canvas — no desktop phone emulator
+   18. Responsive app canvas — no desktop phone emulator
    ========================================================= */
-html,
-body {
-  width: 100%;
-  min-width: 320px;
-  min-height: 100%;
-  margin: 0;
-}
-
-body {
-  overflow: hidden;
-  background: #f5f5f2;
-}
 
 .app-shell {
   width: 100%;
@@ -2589,28 +2484,12 @@ body {
 
 /* App controls use the full viewport while keeping sheets readable
    on tablets, infotainment displays and wider laptop screens. */
+
 .station-sheet,
 .route-bottom-sheet {
   width: min(100%, 620px);
-  left: 0;
-  right: 0;
   margin-left: auto;
   margin-right: auto;
-}
-
-.chooser-sheet {
-  width: min(100%, 620px);
-  max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.station-sheet {
-  max-height: calc(100% - 72px);
-}
-
-.route-bottom-sheet {
-  max-height: min(58%, 520px);
 }
 
 .tab-content,
@@ -2632,9 +2511,7 @@ body {
     max-width: 720px;
   }
 
-  .map-tools {
-    right: 24px;
-  }
+  .map-tools { right: 24px; }
 
   .map-bottom-content {
     left: 24px;
@@ -2653,7 +2530,6 @@ body {
 
   .station-sheet,
   .route-bottom-sheet {
-    bottom: 0;
     border-radius: 24px 24px 0 0;
     box-shadow: 0 -8px 30px #252a2514;
   }
@@ -2686,9 +2562,7 @@ body {
     left: 20px;
   }
 
-  .map-tools {
-    right: 32px;
-  }
+  .map-tools { right: 32px; }
 
   .map-bottom-content {
     left: 32px;
