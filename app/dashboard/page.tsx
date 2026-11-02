@@ -31,6 +31,7 @@ import {
   Settings2,
   Star,
   UserRound,
+  UserStar,
   Wallet,
   ShieldCheck,
   X,
@@ -3856,7 +3857,7 @@ function selectConnector(connector: DbConnector) {
             },
             {
               label: "Reviews",
-              icon: <Activity size={18} />,
+              icon: <UserStar size={18} />,
             },
             {
               label: "Charging preferences",
