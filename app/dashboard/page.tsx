@@ -3956,9 +3956,6 @@ function selectConnector(connector: DbConnector) {
                   className={activeTab === item.name ? "active" : ""}
                   onClick={() => {
                     setActiveTab(item.name);
-
-                    if (item.name === "Explore") {
-                      window.dispatchEvent(new Event("be-electric-map-visible"));
                     }
                   }}
                 >
