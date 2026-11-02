@@ -3651,8 +3651,28 @@ function selectConnector(connector: DbConnector) {
                 {activeTab === "Profile" && (
   <>
     {showMyReviews ? (
-      <div className="my-reviews-screen" style={{ paddingBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <div
+        className="wallet-screen my-reviews-screen"
+        style={{
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
+          padding: "16px 0 20px",
+          overflowX: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            width: "100%",
+            minWidth: 0,
+            marginBottom: 8,
+            boxSizing: "border-box",
+          }}
+        >
           <button
             type="button"
             aria-label="Back to profile"
@@ -3661,68 +3681,342 @@ function selectConnector(connector: DbConnector) {
               setEditingReviewId(null);
               setMyReviewsError("");
             }}
-            style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #e2e6df", background: "#fff", color: "#344238", display: "grid", placeItems: "center", cursor: "pointer" }}
+            style={{
+              width: 36,
+              height: 36,
+              minWidth: 36,
+              flex: "0 0 36px",
+              borderRadius: 10,
+              border: "1px solid #e2e6df",
+              background: "#fff",
+              color: "#344238",
+              display: "grid",
+              placeItems: "center",
+              cursor: "pointer",
+              padding: 0,
+            }}
           >
             <ArrowLeft size={19} />
           </button>
-          <h2 style={{ paddingBottom: 16, paddingTop: 16 }}>My Reviews</h2>
-          <span style={{ marginLeft: "auto", color: "#788b77", fontSize: 11 }}>{myReviews.length} total</span>
+
+          <h2
+            style={{
+              margin: 0,
+              padding: 0,
+              flex: 1,
+              minWidth: 0,
+              fontSize: 20,
+              lineHeight: 1.25,
+              color: "#303a32",
+            }}
+          >
+            My Reviews
+          </h2>
+
+          <span
+            style={{
+              flex: "0 0 auto",
+              color: "#71866e",
+              background: "#e7ede5",
+              borderRadius: 20,
+              padding: "5px 9px",
+              fontSize: 10,
+              fontWeight: 650,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {myReviews.length} total
+          </span>
         </div>
-        <p className="tab-subtitle">Reviews you've written for charging stations.</p>
+
+        <p
+          className="tab-subtitle"
+          style={{ margin: "0 0 18px", lineHeight: 1.5 }}
+        >
+          Reviews you've written for charging stations.
+        </p>
 
         {myReviewsLoading ? (
-          <div className="empty-state"><Star size={25} /><b>Loading your reviews...</b><p>Retrieving your review history.</p></div>
+          <div className="empty-state">
+            <Star size={25} />
+            <b>Loading your reviews...</b>
+            <p>Retrieving your review history.</p>
+          </div>
         ) : myReviewsError ? (
           <div className="empty-state">
             <b>Unable to load your reviews</b>
             <p>{myReviewsError}</p>
-            <button type="button" onClick={() => void loadMyReviews()}>Try again</button>
+            <button type="button" onClick={() => void loadMyReviews()}>
+              Try again
+            </button>
           </div>
         ) : myReviews.length === 0 ? (
-          <div className="empty-state"><Star size={26} /><b>No reviews yet</b><p>Your station reviews will appear here.</p></div>
+          <div className="empty-state">
+            <Star size={26} />
+            <b>No reviews yet</b>
+            <p>Your station reviews will appear here.</p>
+          </div>
         ) : (
-          <div style={{ display: "grid", gap: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 12,
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             {myReviews.map((review) => (
-              <article key={review.id} className="saved-card" style={{ alignItems: "flex-start", cursor: "default" }}>
-                <span className="saved-zap"><Star size={18} /></span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <b style={{ display: "block" }}>{review.station_name}</b>
-                  {review.station_address && <small style={{ display: "block", marginTop: 3 }}>{review.station_address}</small>}
-                  <div aria-label={`${review.rating} out of 5 stars`} style={{ color: "#d49a36", letterSpacing: 1, margin: "7px 0 5px" }}>
-                    {"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}{"☆".repeat(5 - Math.max(0, Math.min(5, Number(review.rating) || 0)))}
-                  </div>
+              <article
+                key={review.id}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
+                  padding: 14,
+                  border: "1px solid #e7ebe4",
+                  borderRadius: 15,
+                  background: "#fff",
+                  boxShadow: "0 2px 8px rgba(35, 48, 37, 0.04)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    minWidth: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 36,
+                      height: 36,
+                      minWidth: 36,
+                      borderRadius: 11,
+                      background: "#f0f3ee",
+                      color: "#71866e",
+                      display: "grid",
+                      placeItems: "center",
+                    }}
+                  >
+                    <Star size={18} />
+                  </span>
 
-                  {editingReviewId === review.id ? (
-                    <div style={{ display: "grid", gap: 9, marginTop: 8 }}>
-                      <div>
-                        <small style={{ color: "#71836d", fontWeight: 700 }}>YOUR RATING</small>
-                        <div style={{ display: "flex", gap: 5, marginTop: 4 }}>
-                          {[1, 2, 3, 4, 5].map((rating) => (
-                            <button key={rating} type="button" aria-label={`${rating} stars`} onClick={() => setEditingReviewRating(rating)} style={{ border: 0, background: "transparent", color: rating <= editingReviewRating ? "#d49a36" : "#c5c5c5", fontSize: 25, cursor: "pointer", padding: 0 }}>★</button>
-                          ))}
-                        </div>
-                      </div>
-                      <textarea
-                        value={editingReviewComment}
-                        onChange={(event) => setEditingReviewComment(event.target.value)}
-                        maxLength={2000}
-                        placeholder="Write your review..."
-                        rows={4}
-                        style={{ width: "100%", boxSizing: "border-box", padding: 11, border: "1px solid #dce2dc", borderRadius: 10, resize: "vertical", font: "inherit" }}
-                      />
-                      <small style={{ textAlign: "right", color: "#858c83" }}>{editingReviewComment.length}/2000</small>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        <button type="button" className="primary-button" disabled={editingReviewSaving} onClick={() => void saveEditedReview(review)}>{editingReviewSaving ? "Saving..." : "Save changes"}</button>
-                        <button type="button" className="secondary-button" disabled={editingReviewSaving} onClick={() => setEditingReviewId(null)}>Cancel</button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b
+                      style={{
+                        display: "block",
+                        color: "#303a32",
+                        fontSize: 13,
+                        lineHeight: 1.4,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {review.station_name}
+                    </b>
+
+                    {review.station_address && (
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: 3,
+                          color: "#858c83",
+                          fontSize: 10,
+                          lineHeight: 1.45,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {review.station_address}
+                      </small>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  aria-label={`${review.rating} out of 5 stars`}
+                  style={{
+                    color: "#d49a36",
+                    letterSpacing: 1,
+                    fontSize: 17,
+                    lineHeight: 1,
+                    margin: "13px 0 9px",
+                  }}
+                >
+                  {"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}
+                  {"☆".repeat(5 - Math.max(0, Math.min(5, Number(review.rating) || 0)))}
+                  <span
+                    style={{
+                      marginLeft: 7,
+                      color: "#596458",
+                      fontSize: 11,
+                      fontWeight: 650,
+                      letterSpacing: 0,
+                      verticalAlign: "2px",
+                    }}
+                  >
+                    {Number(review.rating) || 0}/5
+                  </span>
+                </div>
+
+                {editingReviewId === review.id ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 10,
+                      marginTop: 10,
+                      minWidth: 0,
+                    }}
+                  >
+                    <div>
+                      <small
+                        style={{
+                          color: "#71836d",
+                          fontWeight: 700,
+                          fontSize: 10,
+                        }}
+                      >
+                        YOUR RATING
+                      </small>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 7,
+                          marginTop: 5,
+                        }}
+                      >
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            aria-label={`${rating} stars`}
+                            onClick={() => setEditingReviewRating(rating)}
+                            style={{
+                              border: 0,
+                              background: "transparent",
+                              color:
+                                rating <= editingReviewRating
+                                  ? "#d49a36"
+                                  : "#c5c5c5",
+                              fontSize: 27,
+                              cursor: "pointer",
+                              padding: 0,
+                              lineHeight: 1,
+                            }}
+                          >
+                            ★
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <p style={{ margin: "4px 0 7px", fontSize: 13, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{review.comment || "No written comment."}</p>
-                      <small style={{ color: "#858c83" }}>Reviewed {new Date(review.created_at).toLocaleDateString()}</small>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 11 }}>
-                        <button type="button" className="secondary-button" onClick={() => {
-                          const stationExists = stations.some((station) => String(station.id) === String(review.station_id));
+
+                    <textarea
+                      value={editingReviewComment}
+                      onChange={(event) =>
+                        setEditingReviewComment(event.target.value)
+                      }
+                      maxLength={2000}
+                      placeholder="Write your review..."
+                      rows={4}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        maxWidth: "100%",
+                        minWidth: 0,
+                        boxSizing: "border-box",
+                        padding: 11,
+                        border: "1px solid #dce2dc",
+                        borderRadius: 10,
+                        resize: "vertical",
+                        font: "inherit",
+                        fontSize: 12,
+                        lineHeight: 1.5,
+                      }}
+                    />
+
+                    <small
+                      style={{
+                        display: "block",
+                        textAlign: "right",
+                        color: "#858c83",
+                        fontSize: 10,
+                      }}
+                    >
+                      {editingReviewComment.length}/2000
+                    </small>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="primary-button"
+                        disabled={editingReviewSaving}
+                        onClick={() => void saveEditedReview(review)}
+                      >
+                        {editingReviewSaving ? "Saving..." : "Save changes"}
+                      </button>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        disabled={editingReviewSaving}
+                        onClick={() => setEditingReviewId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        margin: "0 0 10px",
+                        color: "#4c554d",
+                        fontSize: 12,
+                        lineHeight: 1.6,
+                        whiteSpace: "pre-wrap",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {review.comment || "No written comment."}
+                    </p>
+
+                    <small
+                      style={{
+                        display: "block",
+                        color: "#858c83",
+                        fontSize: 10,
+                      }}
+                    >
+                      Reviewed{" "}
+                      {review.created_at
+                        ? new Date(review.created_at).toLocaleDateString()
+                        : "Date unavailable"}
+                    </small>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        marginTop: 13,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => {
+                          const stationExists = stations.some(
+                            (station) =>
+                              String(station.id) === String(review.station_id)
+                          );
                           if (!stationExists) {
                             notify("This station is currently unavailable.");
                             return;
@@ -3732,17 +4026,26 @@ function selectConnector(connector: DbConnector) {
                           setPanel("station");
                           setShowMyReviews(false);
                           setEditingReviewId(null);
-                        }}>View station</button>
-                        <button type="button" className="secondary-button" onClick={() => {
+                        }}
+                      >
+                        View station
+                      </button>
+
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => {
                           setEditingReviewId(review.id);
                           setEditingReviewRating(Number(review.rating) || 5);
                           setEditingReviewComment(review.comment ?? "");
                           setMyReviewsError("");
-                        }}>Edit review</button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                        }}
+                      >
+                        Edit review
+                      </button>
+                    </div>
+                  </>
+                )}
               </article>
             ))}
           </div>
