@@ -15,7 +15,6 @@ import {
   Check,
   ChevronRight,
   CircleDot,
-  Compass,
   Crosshair,
   History,
   Layers,
@@ -122,37 +121,34 @@ type StationWithChargers = MapStation & {
   chargers?: DbCharger[];
 };
 
+const AVAILABLE_STATUSES = new Set(["available", "online", "idle", "ready"]);
+const IN_USE_STATUSES = new Set(["charging", "occupied", "in_use", "inuse"]);
+const UNAVAILABLE_STATUSES = new Set([
+  "unavailable",
+  "fault",
+  "faulted",
+  "error",
+  "offline",
+  "maintenance",
+  "out_of_service",
+  "disabled",
+]);
+
 function normalizeStatus(status: string | null | undefined) {
   return String(status ?? "")
     .trim()
     .toLowerCase()
-    .replace(/[\\s-]+/g, "_");
+    .replace(/[\s-]+/g, "_");
 }
 
-function isAvailableStatus(status: string | null | undefined) {
-  return ["available", "online", "idle", "ready"].includes(
-    normalizeStatus(status)
-  );
-}
+const isAvailableStatus = (status: string | null | undefined) =>
+  AVAILABLE_STATUSES.has(normalizeStatus(status));
 
-function isInUseStatus(status: string | null | undefined) {
-  return ["charging", "occupied", "in_use", "inuse"].includes(
-    normalizeStatus(status)
-  );
-}
+const isInUseStatus = (status: string | null | undefined) =>
+  IN_USE_STATUSES.has(normalizeStatus(status));
 
-function isUnavailableStatus(status: string | null | undefined) {
-  return [
-    "unavailable",
-    "fault",
-    "faulted",
-    "error",
-    "offline",
-    "maintenance",
-    "out_of_service",
-    "disabled",
-  ].includes(normalizeStatus(status));
-}
+const isUnavailableStatus = (status: string | null | undefined) =>
+  UNAVAILABLE_STATUSES.has(normalizeStatus(status));
 
 function getChargerDisplayStatus(charger: DbCharger) {
   const chargerStatus = normalizeStatus(charger.status);
@@ -179,35 +175,22 @@ function getChargerDisplayStatus(charger: DbCharger) {
 }
 
 function getConnectorStatusLabel(status: string | null | undefined) {
-  const normalized = String(status ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, "_");
+  const normalized = normalizeStatus(status);
 
-  if (["charging", "occupied", "in_use", "inuse"].includes(normalized)) {
-    return "Occupied";
-  }
-
-  if (["available", "online", "idle", "ready"].includes(normalized)) {
-    return "Available";
-  }
-
-  if (["fault", "faulted", "error"].includes(normalized)) {
-    return "Faulted";
-  }
-
-  if (normalized === "offline") {
-    return "Offline";
-  }
-
-  if (normalized === "maintenance") {
-    return "Maintenance";
-  }
+  if (isInUseStatus(normalized)) return "Occupied";
+  if (isAvailableStatus(normalized)) return "Available";
+  if (["fault", "faulted", "error"].includes(normalized)) return "Faulted";
+  if (normalized === "offline") return "Offline";
+  if (normalized === "maintenance") return "Maintenance";
 
   return status || "Unknown";
 }
 
 const CHARGING_TARGETS = [20, 30, 40, 50, 60, 70, 80, 90];
+
+// Qatar electricity grid average for 2025: 0.582 kg CO₂e per kWh.
+// Estimates emissions associated with charging, not emissions avoided.
+const QATAR_GRID_EMISSIONS_KG_PER_KWH = 0.582;
 
 function getDistanceKm(
   lat1: number,
@@ -233,24 +216,23 @@ function getPowerLabel(station: MapStation) {
   return station.power != null ? `${station.power} kW` : "Power unavailable";
 }
 
-function getAvailabilityLabel(station: MapStation) {
-  const stationWithChargers = station as StationWithChargers;
+function getStationChargers(station: MapStation): DbCharger[] {
+  const { chargers } = station as StationWithChargers;
+  return Array.isArray(chargers) ? chargers : [];
+}
 
-  const chargers = Array.isArray(stationWithChargers.chargers)
-    ? stationWithChargers.chargers
-    : [];
-
-  const total = chargers.length;
-
-  const available = chargers.filter((charger) =>
-    getChargerDisplayStatus(charger) === "Available"
+function countAvailableChargers(chargers: DbCharger[]) {
+  return chargers.filter(
+    (charger) => getChargerDisplayStatus(charger) === "Available"
   ).length;
+}
 
-  if (total === 0) {
-    return "No chargers available";
-  }
+function getAvailabilityLabel(station: MapStation) {
+  const chargers = getStationChargers(station);
 
-  return `${available} of ${total} chargers available`;
+  if (chargers.length === 0) return "No chargers available";
+
+  return `${countAvailableChargers(chargers)} of ${chargers.length} chargers available`;
 }
 
 function getPriceLabel(station: MapStation) {
@@ -276,53 +258,6 @@ function getStatusLabel(status: string) {
     default:
       return "Status unverified";
   }
-}
-
-function MapArtwork() {
-  return (
-    <svg
-      className="map-art"
-      viewBox="0 0 390 700"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      <rect width="390" height="700" fill="#f5f5f2" />
-      <path d="M278 -20 L390 0 L390 700 L315 700 L354 430 L316 318 L274 240 Z" fill="#e6e8e5" />
-      <path d="M250 0 L274 235 L305 278 L350 420 L310 700" fill="none" stroke="#c8cbc7" strokeWidth="7" />
-      <g stroke="#d6d8d4" strokeWidth="2.7" fill="none">
-        <path d="M-30 80 L360 470" />
-        <path d="M-20 160 L330 510" />
-        <path d="M-30 245 L290 565" />
-        <path d="M15 0 L390 375" />
-        <path d="M75 -10 L390 305" />
-        <path d="M150 -20 L390 220" />
-        <path d="M-30 350 L280 40" />
-        <path d="M-20 445 L330 95" />
-        <path d="M-30 550 L360 160" />
-        <path d="M15 660 L390 285" />
-        <path d="M95 710 L390 415" />
-        <path d="M-10 300 L390 700" />
-        <path d="M-10 410 L290 710" />
-        <path d="M90 0 L0 95" />
-        <path d="M210 0 L0 215" />
-      </g>
-      <g stroke="#fff" strokeWidth="5" fill="none" opacity=".9">
-        <path d="M-20 530 L130 380 L270 240 L390 120" />
-        <path d="M20 700 L155 565 L305 415 L390 330" />
-      </g>
-      <g fill="#7e827d" fontSize="9" fontFamily="Arial, sans-serif" letterSpacing=".6">
-        <text x="37" y="235">WEST BAY</text>
-        <text x="36" y="555">SOMA</text>
-        <text x="305" y="620">DOHA, QATAR</text>
-      </g>
-      <circle cx="98" cy="420" r="23" fill="#e8ece7" opacity=".9" />
-      <circle cx="98" cy="420" r="9" fill="#91a795" stroke="#fff" strokeWidth="4" />
-      <g fill="#a3a6a1" fontSize="9" fontFamily="Arial, sans-serif">
-        <text x="52" y="449">Your area</text>
-        <text x="20" y="600">Doha</text>
-      </g>
-    </svg>
-  );
 }
 
 type UserProfile = {
@@ -351,6 +286,27 @@ type MyReview = {
   comment: string | null;
   created_at: string;
   updated_at?: string;
+};
+
+type ChargingSession = {
+  id: string | number;
+  status: string;
+  connector_id: string | number;
+  connector_number?: number | null;
+  connector_type?: string | null;
+  energy_kwh?: number | string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+};
+
+type WalletTransaction = {
+  id: string | number;
+  type: string;
+  description?: string | null;
+  amount: number | string;
+  currency: string;
+  status: string;
+  createdAt: string;
 };
 
 type ActiveChargingSession = {
@@ -480,7 +436,7 @@ export default function Home() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [chargingBusy, setChargingBusy] = useState(false);
   const [chargingError, setChargingError] = useState("");
-  const [chargingHistory, setChargingHistory] = useState<any[]>([]);
+  const [chargingHistory, setChargingHistory] = useState<ChargingSession[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [chargingSessionsExpanded, setChargingSessionsExpanded] = useState(false);
   const [stationReviews, setStationReviews] = useState<StationReview[]>([]);
@@ -498,9 +454,6 @@ export default function Home() {
     0
   );
 
-  // Qatar electricity grid average for 2025: 0.582 kg CO₂e per kWh.
-  // This estimates emissions associated with charging, not emissions avoided.
-  const QATAR_GRID_EMISSIONS_KG_PER_KWH = 0.582;
   const estimatedChargingCo2Kg =
     totalEnergyKwh * QATAR_GRID_EMISSIONS_KG_PER_KWH;
 
@@ -510,7 +463,7 @@ export default function Home() {
   const [walletLoading, setWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [walletStatus, setWalletStatus] = useState("active");
-  const [walletTransactions, setWalletTransactions] = useState<any[]>([]);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactionsError, setTransactionsError] = useState("");
   
@@ -617,16 +570,13 @@ const handleCableConnection = () => {
   handshakeSocketRef.current?.close();
   handshakeSocketRef.current = null;
 
-  const selectedChargerData =
-  chargers.find((charger) => charger.id === selectedCharger) ?? null;
+  if (!activeCharger) {
+    setHandshakeError("Select a charger and connector first.");
+    return;
+  }
 
-if (!selectedChargerData || !selectedConnector) {
-  setHandshakeError("Select a charger and connector first.");
-  return;
-}
-
-const chargerId = String(selectedChargerData.chargerId);
-const connectorId = String(selectedConnector.id);
+  const chargerId = String(activeCharger.chargerId);
+  const connectorId = String(selectedConnector.id);
 
   const wsUrl =
     process.env.NEXT_PUBLIC_SIMULATOR_WS_URL ||
@@ -645,12 +595,6 @@ const connectorId = String(selectedConnector.id);
   setHandshakeCompleted(false);
   setHandshakePending(true);
   setHandshakeError("");
-
-  socket.onopen = () => {
-    // IMPORTANT:
-    // Do not send RUN_HANDSHAKE here.
-    // Wait for the simulator dashboard to initiate it.
-  };
 
 socket.onmessage = (event) => {
   if (handshakeSocketRef.current !== socket) return;
@@ -801,7 +745,6 @@ const restoreActiveChargingSession = async () => {
       powerKw,
     });
 
-    // Reopen the active session screen.
     setChargingError("");
   } catch (error) {
     console.error("Could not restore active charging session:", error);
@@ -1339,6 +1282,9 @@ const chargers: ChargerDisplay[] = databaseChargers.map(
 
 
   
+const activeCharger =
+  chargers.find((charger) => charger.id === selectedCharger) ?? null;
+
 const availableChargers = chargers.filter((charger) =>
   isAvailableStatus(charger.status)
 );
@@ -1414,15 +1360,9 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
         const matchesKind =
           (!fastOnly || station.kind === "DC fast") &&
           (!acOnly || station.kind === "AC");
-
-         const stationWithChargers = station as StationWithChargers;
-        const stationChargers = Array.isArray(stationWithChargers.chargers)
-          ? stationWithChargers.chargers
-          : [];
+        const stationChargers = getStationChargers(station);
         const availableCount = stationChargers.length
-          ? stationChargers.filter(
-              (charger) => getChargerDisplayStatus(charger) === "Available"
-            ).length
+          ? countAvailableChargers(stationChargers)
           : Number(station.available ?? 0);
 
         const matchesAvailability =
@@ -1544,8 +1484,8 @@ const columns = Math.max(1, Math.ceil(Math.sqrt(availableChargers.length)));
     const origin = `${effectiveLocation[0]},${effectiveLocation[1]}`;
 
     const urls: Record<string, string> = {
-        "Google Maps": `https://www.google.com/maps/dir/?api=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}&destination=${destination}&travelmode=driving&dir_action=navigate`,
-      "Apple Maps": `https://maps.apple.com/?${origin ? `saddr=${encodeURIComponent(origin)}&` : ""}daddr=${destination}`,
+      "Google Maps": `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${destination}&travelmode=driving&dir_action=navigate`,
+      "Apple Maps": `https://maps.apple.com/?saddr=${encodeURIComponent(origin)}&daddr=${destination}`,
       Waze: `https://waze.com/ul?ll=${encodeURIComponent(`${selected.lat},${selected.lng}`)}&navigate=yes`,
     };
 
@@ -2101,12 +2041,13 @@ function selectConnector(connector: DbConnector) {
                           </span>
                           <span style={{ textAlign: "right", flexShrink: 0 }}>
                             <b>
-                              `${getDistanceKm(
+                              {getDistanceKm(
                                 effectiveLocation[0],
                                 effectiveLocation[1],
                                 station.lat,
                                 station.lng
-                              ).toFixed(1)} km`
+                              ).toFixed(1)}{" "}
+                              km
                             </b>
                             <small style={{ display: "block", marginTop: 4 }}>
                               {station.status}
@@ -2257,7 +2198,7 @@ function selectConnector(connector: DbConnector) {
                           lineHeight: 1.6,
                         }}
                       >
-                        Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
+                        Charger {activeCharger?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                         <br />
                         DC fast charging
                       </p>
@@ -2690,7 +2631,7 @@ function selectConnector(connector: DbConnector) {
                           margin: 0,
                         }}
                       >
-                        Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
+                        Charger {activeCharger?.chargerId ?? "—"} · {selectedConnector?.connector_type ?? "Connector not selected"}
                       </p>
                     </div>
 
@@ -2930,7 +2871,7 @@ function selectConnector(connector: DbConnector) {
                     </button>
                     <div>
                       <small>CONNECTOR SELECTION</small>
-                      <h2>Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"}</h2>
+                      <h2>Charger {activeCharger?.chargerId ?? "—"}</h2>
                     </div>
                     <span className="details-live-dot" />
                   </header>
@@ -2945,12 +2886,12 @@ function selectConnector(connector: DbConnector) {
                     </div>
 
                     <div className="connector-summary">
-                      <span>Charger {chargers.find((item) => item.id === selectedCharger)?.chargerId ?? "—"}</span>
-                      <span>{chargers.find((item) => item.id === selectedCharger)?.connectors.length ?? 0} connectors</span>
+                      <span>Charger {activeCharger?.chargerId ?? "—"}</span>
+                      <span>{activeCharger?.connectors.length ?? 0} connectors</span>
                     </div>
 
                     <div className="connector-list">
-                      {(chargers.find((item) => item.id === selectedCharger)?.connectors ?? []).map((connector) => {
+                      {(activeCharger?.connectors ?? []).map((connector) => {
                         const available = isAvailableStatus(connector.status);
                         return (
                           <button
@@ -2983,7 +2924,7 @@ function selectConnector(connector: DbConnector) {
                           </button>
                         );
                       })}
-                      {(chargers.find((item) => item.id === selectedCharger)?.connectors.length ?? 0) === 0 && (
+                      {(activeCharger?.connectors.length ?? 0) === 0 && (
                         <div className="empty-state">
                           <PlugZap size={24} />
                           <b>No connectors found</b>
@@ -3342,19 +3283,7 @@ function selectConnector(connector: DbConnector) {
 
 <div className="station-summary">
   <span>
-    {(() => {
-      const station = stations.find(
-        (item) => String(item.id) === String(selected.id)
-      ) as StationWithChargers | undefined;
-
-      const chargers = station?.chargers ?? [];
-
-      const available = chargers.filter((charger) =>
-        isAvailableStatus(charger.status)
-      ).length;
-
-      return `${available} of ${chargers.length} chargers available`;
-    })()}
+    {getAvailabilityLabel(selected)}
   </span>
 
   <small>
