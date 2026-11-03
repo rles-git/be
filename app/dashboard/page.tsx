@@ -35,6 +35,13 @@ import {
   ShieldCheck,
   X,
   Zap,
+  Fan,
+  Wind,
+  Volume2,
+  ChevronDown,
+  ChevronUp,
+  Thermometer,
+  Snowflake,
 } from "lucide-react";
 import { useStations, type MapStation } from "../hooks/useStations";
 
@@ -405,6 +412,11 @@ export default function Home() {
   const [savingStationId, setSavingStationId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [layersOpen, setLayersOpen] = useState(false);
+  const [demoTemp, setDemoTemp] = useState(21);
+  const [demoFan, setDemoFan] = useState(2);
+  const [demoVolume, setDemoVolume] = useState(24);
+  const [demoAc, setDemoAc] = useState(true);
+  const [demoSync, setDemoSync] = useState(true);
   const [sheetDragY, setSheetDragY] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const [selectedCharger, setSelectedCharger] = useState<number | null>(null);
@@ -1600,7 +1612,21 @@ function selectConnector(connector: DbConnector) {
 
       <section className="app-viewport">
         
-          <div className="app-screen">
+          <div className="app-screen be-dashboard-screen">
+            <header className="be-desktop-header">
+              <div className="be-header-brand"><span className="be-brand-mark">be.</span><strong>Be-Electric</strong><span className="be-header-divider" /><span className="be-header-city">{userLocation ? "Current location" : "Doha"}</span></div>
+              <div className="be-header-vehicle"><span className="be-parked-pill"><CarFront size={14} /> Parked</span><span className="be-battery"><BatteryCharging size={15} /> 62%</span><span>158 mi</span><span className="be-header-divider" /><span>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>
+            </header>
+            <aside className="be-desktop-sidebar" aria-label="Main navigation">
+              <div className="be-sidebar-logo">be.</div>
+              {[{ name: "Explore" as Tab, icon: <Map size={19} /> }, { name: "Saved" as Tab, icon: <Bookmark size={19} /> }, { name: "Activity" as Tab, icon: <Activity size={19} /> }, { name: "Profile" as Tab, icon: <UserRound size={19} /> }].map((item) => (
+                <button key={item.name} className={activeTab === item.name ? "active" : ""} onClick={() => setActiveTab(item.name)}>{item.icon}<span>{item.name}</span></button>
+              ))}
+              <div className="be-sidebar-spacer" />
+              <button onClick={() => notify("Media controls are demonstration-only.")}><Volume2 size={18} /><span>Media</span></button>
+              <button onClick={() => notify("Vehicle controls are demonstration-only.")}><CarFront size={18} /><span>Vehicle</span></button>
+              <button onClick={() => setActiveTab("Profile")}><Settings2 size={18} /><span>Settings</span></button>
+            </aside>
             
 {activeSession &&
   !(activeTab === "Explore" && panel === "charging-active") && (
@@ -3364,6 +3390,21 @@ function selectConnector(connector: DbConnector) {
               )}
             </div>
 
+            {activeTab === "Explore" && (
+              <aside className="be-station-sidebar" aria-label="Selected charging station">
+                <div className="be-nearby-heading"><div><strong>{nearbyStations.length} stations nearby</strong><small>{fastOnly ? "DC fast chargers" : acOnly ? "AC chargers" : "All charging stations"}</small></div><button type="button" aria-label="Show nearby stations" onClick={() => setPanel("nearby")}><List size={19} /></button></div>
+                <div className="be-selected-label">SELECTED STATION</div>
+                <div className="be-station-title-row"><h2>{selected.name}</h2><button type="button" aria-label={saved.includes(String(selected.id)) ? "Remove saved station" : "Save station"} onClick={() => void toggleSavedStation(selected.id)}>{saved.includes(String(selected.id)) ? <BookmarkCheck size={19} /> : <Bookmark size={19} />}</button></div>
+                <p className="be-station-address">{selected.address || selected.shortName}</p>
+                <div className="be-distance-line"><Route size={17} /> {getDistanceKm(effectiveLocation[0], effectiveLocation[1], selected.lat, selected.lng).toFixed(1)} km <span>·</span> {selected.minutes ?? activeMinutes} min</div>
+                <div className="be-availability-card"><strong><Check size={15} /> {getAvailabilityLabel(selected)}</strong><div className="be-availability-bars"><i /><i /><i /><i /><i /></div></div>
+                <div className="be-station-specs"><div><strong>{getPowerLabel(selected)}</strong><small>Max charging speed</small></div><div><strong>{getPriceLabel(selected)}</strong><small>Charging rate</small></div></div>
+                <button className="be-directions-button" type="button" onClick={openRoute}><Navigation size={17} /> Get Directions</button>
+                <div className="be-updated-note"><Check size={12} /> Station data from Neon</div>
+                <div className="be-compatibility-note"><PlugZap size={14} /> Check connector compatibility with your vehicle</div>
+              </aside>
+            )}
+
             {activeTab !== "Explore" && (
               <div className="other-tab-screen">
                 {activeTab === "Saved" && (
@@ -4366,6 +4407,15 @@ function selectConnector(connector: DbConnector) {
 )}
               </div>
             )}
+
+            <footer className="be-climate-bar" aria-label="Demonstration vehicle controls">
+              <div className="be-climate-temp"><button type="button" aria-label="Decrease temperature" onClick={() => setDemoTemp((v) => Math.max(16, v - 1))}><ChevronDown size={16} /></button><strong>{demoTemp}°</strong><button type="button" aria-label="Increase temperature" onClick={() => setDemoTemp((v) => Math.min(30, v + 1))}><ChevronUp size={16} /></button><small>Driver</small></div>
+              <div className="be-climate-control"><Wind size={17} /><button type="button" onClick={() => setDemoFan((v) => v >= 5 ? 0 : v + 1)}>Fan <strong>{demoFan}</strong></button></div>
+              <button type="button" className={demoAc ? "is-on" : ""} onClick={() => setDemoAc((v) => !v)}><Snowflake size={17} /> A/C</button>
+              <div className="be-volume-control"><Volume2 size={17} /><input aria-label="Demo volume" type="range" min="0" max="30" value={demoVolume} onChange={(event) => setDemoVolume(Number(event.target.value))} /><small>{demoVolume}</small></div>
+              <button type="button" className={demoSync ? "is-on" : ""} onClick={() => setDemoSync((v) => !v)}>SYNC</button>
+              <div className="be-climate-temp passenger"><button type="button" aria-label="Decrease passenger temperature" onClick={() => setDemoTemp((v) => Math.max(16, v - 1))}><ChevronDown size={16} /></button><strong>{demoTemp}°</strong><button type="button" aria-label="Increase passenger temperature" onClick={() => setDemoTemp((v) => Math.min(30, v + 1))}><ChevronUp size={16} /></button><small>Passenger</small></div>
+            </footer>
 
             <nav className="bottom-nav">
               {(
