@@ -2569,3 +2569,87 @@ button { cursor: pointer; }
     bottom: 28px;
   }
 }
+
+/* Be-Electric responsive desktop / tablet dashboard */
+.be-dashboard-screen { --be-sidebar-width: 74px; --be-panel-width: 292px; --be-header-height: 50px; --be-climate-height: 58px; }
+.be-desktop-header { display:none; }
+.be-desktop-sidebar,.be-station-sidebar,.be-climate-bar { display:none; }
+
+@media (min-width:700px) {
+  .be-dashboard-screen { background:#f5f5f2; }
+  .be-desktop-header { position:absolute; z-index:30; top:0; left:0; right:0; height:var(--be-header-height); display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 22px; background:#fff; border-bottom:1px solid #e7e8e4; color:#343b35; }
+  .be-header-brand,.be-header-vehicle { display:flex; align-items:center; gap:14px; min-width:0; font-size:12px; }
+  .be-brand-mark { color:#58715d; font-size:23px; font-weight:700; letter-spacing:-1.5px; }
+  .be-header-brand strong { font-size:15px; font-weight:600; }
+  .be-header-divider { width:1px; height:20px; background:#e6e8e3; }
+  .be-header-city,.be-header-vehicle>span { color:#7c837b; white-space:nowrap; }
+  .be-parked-pill,.be-battery { display:flex; align-items:center; gap:5px; color:#526b56!important; }
+  .be-desktop-sidebar { position:absolute; z-index:28; top:var(--be-header-height); bottom:var(--be-climate-height); left:0; width:var(--be-sidebar-width); display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 7px; background:#f0f1ee; border-right:1px solid #e5e7e2; }
+  .be-sidebar-logo { height:32px; display:grid; place-items:center; color:#58715d; font-size:21px; font-weight:700; margin-bottom:5px; }
+  .be-desktop-sidebar button { width:100%; min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:0; border-radius:12px; background:transparent; color:#7d857d; font-size:9px; cursor:pointer; }
+  .be-desktop-sidebar button.active { background:#e5ebe5; color:#58715d; }
+  .be-sidebar-spacer { flex:1; }
+  .be-dashboard-screen .map-screen { top:var(--be-header-height); left:var(--be-sidebar-width); right:var(--be-panel-width); bottom:var(--be-climate-height); }
+  .be-dashboard-screen .search-wrap { top:16px; left:16px; right:16px; max-width:560px; }
+  .be-dashboard-screen .filter-row { top:75px; left:8px; right:8px; max-width:720px; }
+  .be-dashboard-screen .map-tools { right:16px; }
+  .be-dashboard-screen .map-bottom-content { left:16px; right:16px; bottom:14px; max-width:420px; }
+  .be-dashboard-screen .nearby-card { display:none; }
+  .be-station-sidebar { position:absolute; z-index:20; top:var(--be-header-height); right:0; bottom:var(--be-climate-height); width:var(--be-panel-width); display:flex; flex-direction:column; gap:0; overflow-y:auto; padding:18px 18px 16px; background:#fff; border-left:1px solid #e7e8e4; color:#303831; }
+  .be-nearby-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:15px; border-bottom:1px solid #e9ebe7; }
+  .be-nearby-heading strong,.be-nearby-heading small { display:block; }
+  .be-nearby-heading strong { font-size:14px; }
+  .be-nearby-heading small { margin-top:4px; color:#818880; font-size:10px; }
+  .be-nearby-heading button { width:36px; height:36px; border:0; border-radius:12px; background:#f3f5f2; color:#68766a; cursor:pointer; }
+  .be-selected-label { margin:17px 0 8px; color:#71836f; font-size:9px; font-weight:700; letter-spacing:1px; }
+  .be-station-title-row { display:flex; align-items:flex-start; gap:8px; }
+  .be-station-title-row h2 { flex:1; margin:0; font:700 21px/1.18 Manrope,sans-serif; letter-spacing:-.6px; }
+  .be-station-title-row button { border:0; background:transparent; color:#667367; padding:3px; cursor:pointer; }
+  .be-station-address { margin:7px 0 14px; color:#7f867e; font-size:11px; line-height:1.5; }
+  .be-distance-line { display:flex; align-items:center; gap:8px; margin-bottom:15px; color:#3e4940; font-size:14px; }
+  .be-availability-card { padding:12px; border-radius:13px; background:#e9eeea; color:#58715d; }
+  .be-availability-card strong { display:flex; align-items:center; gap:6px; font-size:12px; }
+  .be-availability-bars { display:flex; gap:5px; margin-top:9px; }
+  .be-availability-bars i { height:5px; flex:1; border-radius:8px; background:#a1b3a2; }
+  .be-availability-bars i:nth-last-child(-n+2) { background:#d0d6cf; }
+  .be-station-specs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0; }
+  .be-station-specs>div+div { border-left:1px solid #e7e9e5; padding-left:12px; }
+  .be-station-specs strong,.be-station-specs small { display:block; }
+  .be-station-specs strong { font-size:15px; letter-spacing:-.3px; }
+  .be-station-specs small { margin-top:4px; color:#858c84; font-size:9px; }
+  .be-directions-button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:12px; background:#91a795; color:#26352a; font-size:13px; font-weight:600; cursor:pointer; }
+  .be-updated-note { display:flex; align-items:center; justify-content:center; gap:5px; margin:14px 0; color:#858d84; font-size:9px; }
+  .be-compatibility-note { display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:#f4f5f3; color:#737c73; font-size:9px; }
+  .be-climate-bar { position:absolute; z-index:32; left:0; right:0; bottom:0; height:var(--be-climate-height); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 18px; background:#fff; border-top:1px solid #e8eae6; color:#5e6d60; }
+  .be-climate-bar>button,.be-climate-control button { display:flex; align-items:center; gap:7px; border:0; background:transparent; color:#68756a; font-size:11px; cursor:pointer; }
+  .be-climate-bar>button.is-on { color:#4e6953; font-weight:700; }
+  .be-climate-temp { display:grid; grid-template-columns:20px auto 20px; align-items:center; gap:4px; min-width:74px; }
+  .be-climate-temp button { border:0; padding:2px; background:transparent; color:#7c867c; cursor:pointer; }
+  .be-climate-temp strong { font-size:19px; font-weight:500; color:#303831; text-align:center; }
+  .be-climate-temp small { grid-column:1/-1; text-align:center; color:#8b928a; font-size:8px; }
+  .be-climate-control { display:flex; align-items:center; gap:7px; }
+  .be-volume-control { display:flex; align-items:center; gap:8px; min-width:120px; }
+  .be-volume-control input { width:78px; accent-color:#91a795; }
+  .be-volume-control small { font-size:10px; color:#737c73; }
+  .be-dashboard-screen .bottom-nav { display:none; }
+  .be-dashboard-screen .other-tab-screen { position:absolute; z-index:10; top:var(--be-header-height); left:var(--be-sidebar-width); right:var(--be-panel-width); bottom:var(--be-climate-height); padding:24px; overflow:auto; }
+  .be-dashboard-screen .other-tab-screen h2 { margin-top:4px; }
+}
+
+@media (min-width:700px) and (max-width:1050px) {
+  .be-dashboard-screen { --be-sidebar-width:62px; --be-panel-width:258px; --be-climate-height:56px; }
+  .be-desktop-header { padding:0 14px; }
+  .be-header-brand,.be-header-vehicle { gap:9px; }
+  .be-station-sidebar { padding:15px 13px; }
+  .be-station-title-row h2 { font-size:18px; }
+  .be-dashboard-screen .other-tab-screen { padding:18px; }
+  .be-climate-bar { gap:7px; padding:0 10px; }
+  .be-volume-control { min-width:88px; }
+  .be-volume-control input { width:48px; }
+  .be-climate-temp strong { font-size:17px; }
+}
+
+@media (max-width:699px) {
+  .be-desktop-header,.be-desktop-sidebar,.be-station-sidebar,.be-climate-bar { display:none !important; }
+  .be-dashboard-screen .map-screen { inset:0; }
+}
