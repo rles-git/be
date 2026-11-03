@@ -2092,7 +2092,7 @@ function selectConnector(connector: DbConnector) {
                       sheetDragging ? "sheet-dragging" : ""
                     }`}
                     style={{
-                      transform: `translateY(clamp(86.66px, ${sheetDragY}px, 360px))`,
+                      transform: `translateY(clamp(0px, ${sheetDragY}px, 360px))`,
                       transition: sheetDragging
                         ? "none"
                         : "transform 180ms ease-out",
