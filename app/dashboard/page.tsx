@@ -3400,7 +3400,6 @@ function selectConnector(connector: DbConnector) {
                 <div className="be-availability-card"><strong><Check size={15} /> {getAvailabilityLabel(selected)}</strong><div className="be-availability-bars"><i /><i /><i /><i /><i /></div></div>
                 <div className="be-station-specs"><div><strong>{getPowerLabel(selected)}</strong><small>Max charging speed</small></div><div><strong>{getPriceLabel(selected)}</strong><small>Charging rate</small></div></div>
                 <button className="be-directions-button" type="button" onClick={openRoute}><Navigation size={17} /> Get Directions</button>
-                <div className="be-updated-note"><Check size={12} /> Station data from Neon</div>
                 <div className="be-compatibility-note"><PlugZap size={14} /> Check connector compatibility with your vehicle</div>
               </aside>
             )}
