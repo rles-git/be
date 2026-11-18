@@ -23,10 +23,11 @@ body {
   min-height: 100%;
   font-family: 'DM Sans', sans-serif;
   color: var(--ink);
-  background: #f1f3f0;
   width: 100%;
   min-width: 320px;
 }
+
+html { background: #f1f3f0; }
 
 body {
   overflow: hidden;
@@ -257,11 +258,8 @@ button { cursor: pointer; }
 }
 
 .signal i:nth-child(1) { height: 5px; }
-
 .signal i:nth-child(2) { height: 7px; }
-
 .signal i:nth-child(3) { height: 9px; }
-
 .signal i:nth-child(4) { height: 11px; }
 
 .wifi {
@@ -412,7 +410,6 @@ button { cursor: pointer; }
 }
 
 /* Hide scrollbar in Chrome, Safari, and Opera */
-
 .filter-row::-webkit-scrollbar { display: none; }
 
 .filter-chip {
@@ -500,7 +497,6 @@ button { cursor: pointer; }
 }
 
 /* Keep the Locate Me button stationary on full-screen details */
-
 .station-details-screen ~ .map-tools { bottom: 280px; }
 
 .tool-button {
@@ -586,7 +582,6 @@ button { cursor: pointer; }
 }
 
 .green-dot { background: var(--green); }
-
 .gray-dot { background: #c9ccc6; }
 
 .nearby-card {
@@ -648,13 +643,13 @@ button { cursor: pointer; }
   z-index: 12;
   left: 0;
   right: 0;
+  bottom: 0;
   background: #fff;
   display: flex;
   justify-content: space-around;
   align-items: center;
   border-top: 1px solid #eff0ed;
   padding: 3px 8px 0;
-  bottom: 0;
 }
 
 .bottom-nav button {
@@ -748,7 +743,6 @@ button { cursor: pointer; }
   left: 16px;
   right: 16px;
   max-width: calc(100% - 28px);
-  box-sizing: border-box;
   background: #fff;
   border-radius: 15px;
   padding: 13px 15px;
@@ -765,7 +759,6 @@ button { cursor: pointer; }
 }
 
 .route-top-card > div:first-child { color: #858b83; }
-
 .route-top-card > div:last-child { font-weight: 600; }
 
 .route-top-card svg { color: var(--green); }
@@ -822,7 +815,6 @@ button { cursor: pointer; }
   padding: 12px 18px calc(100px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 18px #252a250a;
   touch-action: pan-y;
-  box-sizing: border-box;
 }
 
 .sheet-grabber {
@@ -844,7 +836,6 @@ button { cursor: pointer; }
   border: 0;
   border-radius: 0;
   background: transparent;
-  box-sizing: border-box;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -974,7 +965,6 @@ button { cursor: pointer; }
   border-radius: 28px 28px 0 0;
   padding: 18px 16px 100px;
   box-shadow: 0 -4px 18px #252a250a;
-  box-sizing: border-box;
 }
 
 .sheet-overline {
@@ -1117,7 +1107,6 @@ button { cursor: pointer; }
   border-radius: 27px 27px 0 0;
   padding: 16px 20px 24px;
   box-shadow: 0 -5px 22px #00000012;
-  box-sizing: border-box;
   max-height: 100%;
   overflow-y: auto;
   max-width: 100%;
@@ -1539,7 +1528,6 @@ button { cursor: pointer; }
 .leaflet-station-icon.is-selected {
   width: 64px;
   height: 62px;
-  box-sizing: border-box;
   border: 2px solid #91a795;
   border-radius: 23px;
   flex-wrap: wrap;
@@ -1614,7 +1602,6 @@ button { cursor: pointer; }
 }
 
 .leaflet-control-attribution a { color: #4e6753 !important; }
-
 .leaflet-control-attribution a:hover { color: #26352a !important; }
 
 .leaflet-map-root.is-routing .leaflet-popup { display: none !important; }
@@ -1652,13 +1639,9 @@ button { cursor: pointer; }
     height: 100%;
     max-height: 100%;
     min-height: 0;
-    border-radius: 43px;
   }
 
-  .phone-screen {
-    height: 100%;
-    min-height: 0;
-  }
+  .phone-screen { min-height: 0; }
 }
 
 /* =========================================================
@@ -1715,7 +1698,6 @@ button { cursor: pointer; }
   .route-bottom-sheet h3 { line-height: 1.25; }
 
   .route-top-card {
-    top: 24px;
     left: 10px;
     right: 10px;
     width: auto;
@@ -1734,7 +1716,6 @@ button { cursor: pointer; }
   .chooser-sheet {
     padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     max-height: 90%;
-    overflow-y: auto;
     top: 20px;
   }
 }
@@ -1773,7 +1754,6 @@ button { cursor: pointer; }
 }
 
 /* Disable animation transition while actively tracking touch/mouse drag */
-
 .sheet-dragging { transition: none !important; }
 
 .station-details-screen {
@@ -1840,8 +1820,7 @@ button { cursor: pointer; }
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 15px;
-  padding-bottom: 30px;
+  padding: 15px 15px 30px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -2043,7 +2022,6 @@ button { cursor: pointer; }
 }
 
 .stall-in-use { color: #a87622; }
-
 .stall-offline { color: #b34e48; }
 
 .wayfinding-list {
@@ -2119,10 +2097,8 @@ button { cursor: pointer; }
   color: #697267;
 }
 
-.station-details-screen .primary-button,
-.station-details-screen .secondary-button {
-  margin-top: 8px;
-}
+/* .secondary-button already has margin-top: 8px */
+.station-details-screen .primary-button { margin-top: 8px; }
 
 .details-bottom-space {
   height: 20px;
@@ -2171,14 +2147,10 @@ button { cursor: pointer; }
   color: #426b49;
   cursor: pointer;
   font-family: inherit;
-  box-sizing: border-box;
 }
 
-.stall-available {
-  border-color: #d5e5d5;
-  background: #f1f7ef;
-  color: #426b49;
-}
+/* Background and color are inherited from .stall-option */
+.stall-available { border-color: #d5e5d5; }
 
 .stall-occupied {
   border-color: #e5dfd9;
@@ -2200,7 +2172,7 @@ button { cursor: pointer; }
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: var(--paper, #f4f5f2);
+  background: var(--paper);
 }
 
 .connector-scroll {
@@ -2220,14 +2192,14 @@ button { cursor: pointer; }
 .connector-intro h3 {
   margin: 0 0 8px;
   font-size: 21px;
-  color: var(--ink, #202522);
+  color: var(--ink);
 }
 
 .connector-intro p {
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
-  color: var(--muted, #858983);
+  color: var(--muted);
 }
 
 .connector-summary {
@@ -2240,8 +2212,8 @@ button { cursor: pointer; }
   margin-bottom: 16px;
   border-radius: 13px;
   background: #fff;
-  border: 1px solid var(--line, #e7e8e4);
-  color: var(--ink, #202522);
+  border: 1px solid var(--line);
+  color: var(--ink);
   font-size: 12px;
   font-weight: 600;
 }
@@ -2259,22 +2231,22 @@ button { cursor: pointer; }
   width: 100%;
   padding: 17px 14px;
   text-align: left;
-  border: 1px solid var(--line, #e7e8e4);
+  border: 1px solid var(--line);
   border-radius: 16px;
   background: #fff;
-  color: var(--ink, #202522);
+  color: var(--ink);
   font: inherit;
   transition: border-color 160ms ease, background 160ms ease;
 }
 
 .connector-available {
   cursor: pointer;
-  border-color: var(--green, #91a795);
+  border-color: var(--green);
 }
 
 .connector-available:hover {
   background: #f5f8f4;
-  border-color: var(--green-dark, #58715d);
+  border-color: var(--green-dark);
 }
 
 .connector-card-icon {
@@ -2286,7 +2258,7 @@ button { cursor: pointer; }
   flex-shrink: 0;
   border-radius: 12px;
   background: #edf3ed;
-  color: var(--green-dark, #58715d);
+  color: var(--green-dark);
 }
 
 .connector-card-info {
@@ -2300,7 +2272,7 @@ button { cursor: pointer; }
 .connector-card-info strong { font-size: 13px; }
 
 .connector-card-info > small {
-  color: var(--muted, #858983);
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -2312,7 +2284,7 @@ button { cursor: pointer; }
   font-weight: 600;
 }
 
-.available-status { color: var(--green-dark, #58715d); }
+.available-status { color: var(--green-dark); }
 
 .stall-status-dot,
 .occupied-status-dot {
@@ -2323,12 +2295,12 @@ button { cursor: pointer; }
   border-radius: 50%;
 }
 
-.stall-status-dot { background: var(--green-dark, #58715d); }
+.stall-status-dot { background: var(--green-dark); }
 
 .connector-select-icon {
   display: flex;
   align-items: center;
-  color: var(--green-dark, #58715d);
+  color: var(--green-dark);
 }
 
 .connector-occupied,
@@ -2357,7 +2329,7 @@ button { cursor: pointer; }
   padding: 13px;
   border-radius: 12px;
   background: #fff;
-  color: var(--muted, #858983);
+  color: var(--muted);
 }
 
 .connector-note svg {
@@ -2443,7 +2415,7 @@ button { cursor: pointer; }
 }
 
 /* =========================================================
-   18. Responsive app canvas — no desktop phone emulator
+   18. Responsive app canvas (no desktop phone emulator)
    ========================================================= */
 
 .app-shell {
@@ -2484,7 +2456,6 @@ button { cursor: pointer; }
 
 /* App controls use the full viewport while keeping sheets readable
    on tablets, infotainment displays and wider laptop screens. */
-
 .station-sheet,
 .route-bottom-sheet {
   width: min(100%, 620px);
@@ -2530,18 +2501,10 @@ button { cursor: pointer; }
 
   .station-sheet,
   .route-bottom-sheet {
+    padding-left: 24px;
+    padding-right: 24px;
     border-radius: 24px 24px 0 0;
     box-shadow: 0 -8px 30px #252a2514;
-  }
-
-  .station-sheet {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  .route-bottom-sheet {
-    padding-left: 24px;
-    padding-right: 24px;
   }
 }
 
@@ -2570,13 +2533,28 @@ button { cursor: pointer; }
   }
 }
 
-/* Be-Electric responsive desktop / tablet dashboard */
-.be-dashboard-screen { --be-sidebar-width: 74px; --be-panel-width: 292px; --be-header-height: 50px; --be-climate-height: 58px; }
-.be-desktop-header { display:none; }
-.be-desktop-sidebar,.be-station-sidebar,.be-climate-bar { display:none; }
+/* =========================================================
+   19. Be-Electric responsive desktop / tablet dashboard
+   ========================================================= */
 
-@media (min-width:700px) {
-  .be-dashboard-screen { background:#f5f5f2; }
+.be-dashboard-screen {
+  --be-sidebar-width: 74px;
+  --be-panel-width: 292px;
+  --be-header-height: 50px;
+  --be-climate-height: 58px;
+}
+
+/* Hidden by default (phones); shown from 700px up */
+.be-desktop-header,
+.be-desktop-sidebar,
+.be-station-sidebar,
+.be-climate-bar {
+  display: none;
+}
+
+@media (min-width: 700px) {
+  .be-dashboard-screen { background: #f5f5f2; }
+
   .be-desktop-header { position:absolute; z-index:30; top:0; left:0; right:0; height:var(--be-header-height); display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 22px; background:#fff; border-bottom:1px solid #e7e8e4; color:#343b35; }
   .be-header-brand,.be-header-vehicle { display:flex; align-items:center; gap:14px; min-width:0; font-size:12px; }
   .be-brand-mark { color:#58715d; font-size:23px; font-weight:700; letter-spacing:-1.5px; }
@@ -2584,17 +2562,20 @@ button { cursor: pointer; }
   .be-header-divider { width:1px; height:20px; background:#e6e8e3; }
   .be-header-city,.be-header-vehicle>span { color:#7c837b; white-space:nowrap; }
   .be-parked-pill,.be-battery { display:flex; align-items:center; gap:5px; color:#526b56!important; }
+
   .be-desktop-sidebar { position:absolute; z-index:28; top:var(--be-header-height); bottom:var(--be-climate-height); left:0; width:var(--be-sidebar-width); display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 7px; background:#f0f1ee; border-right:1px solid #e5e7e2; }
   .be-sidebar-logo { height:32px; display:grid; place-items:center; color:#58715d; font-size:21px; font-weight:700; margin-bottom:5px; }
   .be-desktop-sidebar button { width:100%; min-height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:0; border-radius:12px; background:transparent; color:#7d857d; font-size:9px; cursor:pointer; }
   .be-desktop-sidebar button.active { background:#e5ebe5; color:#58715d; }
   .be-sidebar-spacer { flex:1; }
+
   .be-dashboard-screen .map-screen { top:var(--be-header-height); left:var(--be-sidebar-width); right:var(--be-panel-width); bottom:var(--be-climate-height); }
   .be-dashboard-screen .search-wrap { top:16px; left:16px; right:16px; max-width:560px; }
   .be-dashboard-screen .filter-row { top:75px; left:8px; right:8px; max-width:720px; }
   .be-dashboard-screen .map-tools { right:16px; }
   .be-dashboard-screen .map-bottom-content { left:16px; right:16px; bottom:14px; max-width:420px; }
   .be-dashboard-screen .nearby-card { display:none; }
+
   .be-station-sidebar { position:absolute; z-index:20; top:var(--be-header-height); right:0; bottom:var(--be-climate-height); width:var(--be-panel-width); display:flex; flex-direction:column; gap:0; overflow-y:auto; padding:18px 18px 16px; background:#fff; border-left:1px solid #e7e8e4; color:#303831; }
   .be-nearby-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:15px; border-bottom:1px solid #e9ebe7; }
   .be-nearby-heading strong,.be-nearby-heading small { display:block; }
@@ -2620,6 +2601,7 @@ button { cursor: pointer; }
   .be-directions-button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:12px; background:#91a795; color:#26352a; font-size:13px; font-weight:600; cursor:pointer; }
   .be-updated-note { display:flex; align-items:center; justify-content:center; gap:5px; margin:14px 0; color:#858d84; font-size:9px; }
   .be-compatibility-note { display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:#f4f5f3; color:#737c73; font-size:9px; }
+
   .be-climate-bar { position:absolute; z-index:32; left:0; right:0; bottom:0; height:var(--be-climate-height); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 18px; background:#fff; border-top:1px solid #e8eae6; color:#5e6d60; }
   .be-climate-bar>button,.be-climate-control button { display:flex; align-items:center; gap:7px; border:0; background:transparent; color:#68756a; font-size:11px; cursor:pointer; }
   .be-climate-bar>button.is-on { color:#4e6953; font-weight:700; }
@@ -2631,12 +2613,13 @@ button { cursor: pointer; }
   .be-volume-control { display:flex; align-items:center; gap:8px; min-width:120px; }
   .be-volume-control input { width:78px; accent-color:#91a795; }
   .be-volume-control small { font-size:10px; color:#737c73; }
+
   .be-dashboard-screen .bottom-nav { display:none; }
   .be-dashboard-screen .other-tab-screen { position:absolute; z-index:10; top:var(--be-header-height); left:var(--be-sidebar-width); right:var(--be-panel-width); bottom:var(--be-climate-height); padding:24px; overflow:auto; }
   .be-dashboard-screen .other-tab-screen h2 { margin-top:4px; }
 }
 
-@media (min-width:700px) and (max-width:1050px) {
+@media (min-width: 700px) and (max-width: 1050px) {
   .be-dashboard-screen { --be-sidebar-width:62px; --be-panel-width:258px; --be-climate-height:56px; }
   .be-desktop-header { padding:0 14px; }
   .be-header-brand,.be-header-vehicle { gap:9px; }
@@ -2647,9 +2630,4 @@ button { cursor: pointer; }
   .be-volume-control { min-width:88px; }
   .be-volume-control input { width:48px; }
   .be-climate-temp strong { font-size:17px; }
-}
-
-@media (max-width:699px) {
-  .be-desktop-header,.be-desktop-sidebar,.be-station-sidebar,.be-climate-bar { display:none !important; }
-  .be-dashboard-screen .map-screen { inset:0; }
 }
