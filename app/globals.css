@@ -2631,3 +2631,22 @@ button { cursor: pointer; }
   .be-volume-control input { width:48px; }
   .be-climate-temp strong { font-size:17px; }
 }
+
+@media (min-width: 700px) {
+  .be-dashboard-screen .sheet-overlay {
+    position: fixed;
+    inset: 0;            /* cancels the bottom: 85px */
+    z-index: 1300;       /* above header (30), sidebar (28), climate bar (32) */
+    align-items: center; /* centered dialog instead of bottom sheet */
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .be-dashboard-screen .chooser-sheet {
+    width: min(100%, 520px);
+    max-height: calc(100% - 48px);
+    margin: 0;
+    border-radius: 24px; /* all corners rounded */
+    padding-bottom: 24px;
+  }
+}
